@@ -1,0 +1,29 @@
+{
+  "name": "epoch-dashboard",
+  "version": "0.1.0",
+  "dependencies": [
+    "catch2",
+    "dataframe",
+    "drogon",
+    "glaze",
+    "spdlog",
+    "trompeloeil",
+    "duckdb",
+    "yaml-cpp",
+    "tabulate",
+    "tbb",
+    "protobuf",
+    {
+      "name": "arrow",
+      "features": [
+        "acero",
+        "compute",
+        "csv",
+        "json",
+        "parquet",
+        "s3",
+        "filesystem"
+      ]
+    }
+  ]
+}
