@@ -7,3 +7,5 @@ coverage
 .idea
 *.log
 *.tsbuildinfo
+.next
+.claude
