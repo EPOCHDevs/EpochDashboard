@@ -44,7 +44,7 @@ interface NavigationProps {
 export default function Navigation({ currentView, onNavigate }: NavigationProps) {
   const routes = [
     { id: 'card', label: 'Card', status: 'done' as const },
-    { id: 'table', label: 'Table', status: 'pending' as const },
+    { id: 'table', label: 'Table', status: 'done' as const },
     { id: 'line', label: 'Line Chart', status: 'pending' as const },
     { id: 'bar', label: 'Bar Chart', status: 'pending' as const },
     { id: 'heatmap', label: 'Heatmap', status: 'pending' as const },

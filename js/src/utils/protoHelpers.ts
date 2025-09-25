@@ -1,80 +1,53 @@
 import { Scalar, EpochFolioType } from '../types/proto'
+import ms from 'ms'
 
 export const getScalarValue = (scalar: Scalar | undefined | null): any => {
-  if (!scalar || !scalar.value) return null
+  if (!scalar) return null
 
-  const valueCase = Object.keys(scalar.value)[0]
+  // Check all possible scalar value fields directly on the object
+  if (scalar.stringValue !== undefined && scalar.stringValue !== null) return scalar.stringValue
+  if (scalar.integerValue !== undefined && scalar.integerValue !== null) return scalar.integerValue
+  if (scalar.decimalValue !== undefined && scalar.decimalValue !== null) return scalar.decimalValue
+  if (scalar.percentValue !== undefined && scalar.percentValue !== null) return scalar.percentValue
+  if (scalar.booleanValue !== undefined && scalar.booleanValue !== null) return scalar.booleanValue
+  if (scalar.timestampMs !== undefined && scalar.timestampMs !== null) return scalar.timestampMs
+  if (scalar.dateValue !== undefined && scalar.dateValue !== null) return scalar.dateValue
+  if (scalar.dayDuration !== undefined && scalar.dayDuration !== null) return scalar.dayDuration
+  if (scalar.monetaryValue !== undefined && scalar.monetaryValue !== null) return scalar.monetaryValue
+  if (scalar.durationMs !== undefined && scalar.durationMs !== null) return scalar.durationMs
+  if (scalar.nullValue !== undefined) return null
 
-  switch (valueCase) {
-    case 'stringValue':
-      return scalar.value.stringValue
-    case 'integerValue':
-      return scalar.value.integerValue
-    case 'decimalValue':
-      return scalar.value.decimalValue
-    case 'percentValue':
-      return scalar.value.percentValue
-    case 'booleanValue':
-      return scalar.value.booleanValue
-    case 'timestampMs':
-      return scalar.value.timestampMs
-    case 'dateValue':
-      return scalar.value.dateValue
-    case 'dayDuration':
-      return scalar.value.dayDuration
-    case 'monetaryValue':
-      return scalar.value.monetaryValue
-    case 'durationMs':
-      return scalar.value.durationMs
-    case 'nullValue':
-      return null
-    default:
-      return null
-  }
+  return null
 }
 
 export const getScalarNumericValue = (scalar: Scalar | undefined | null, defaultValue: number = 0): number => {
-  if (!scalar || !scalar.value) return defaultValue
+  if (!scalar) return defaultValue
 
-  const valueCase = Object.keys(scalar.value)[0]
+  if (scalar.integerValue !== undefined && scalar.integerValue !== null) return Number(scalar.integerValue)
+  if (scalar.decimalValue !== undefined && scalar.decimalValue !== null) return scalar.decimalValue
+  if (scalar.percentValue !== undefined && scalar.percentValue !== null) return scalar.percentValue
+  if (scalar.monetaryValue !== undefined && scalar.monetaryValue !== null) return scalar.monetaryValue
+  if (scalar.timestampMs !== undefined && scalar.timestampMs !== null) return Number(scalar.timestampMs)
+  if (scalar.durationMs !== undefined && scalar.durationMs !== null) return Number(scalar.durationMs)
 
-  switch (valueCase) {
-    case 'integerValue':
-      return Number(scalar.value.integerValue) || defaultValue
-    case 'decimalValue':
-      return scalar.value.decimalValue || defaultValue
-    case 'percentValue':
-      return scalar.value.percentValue || defaultValue
-    case 'monetaryValue':
-      return scalar.value.monetaryValue || defaultValue
-    case 'timestampMs':
-      return Number(scalar.value.timestampMs) || defaultValue
-    case 'durationMs':
-      return Number(scalar.value.durationMs) || defaultValue
-    default:
-      return defaultValue
-  }
+  return defaultValue
 }
 
 export const getScalarStringValue = (scalar: Scalar | undefined | null, defaultValue: string = ''): string => {
-  if (!scalar || !scalar.value) return defaultValue
+  if (!scalar) return defaultValue
 
-  const valueCase = Object.keys(scalar.value)[0]
-
-  if (valueCase === 'stringValue') {
-    return scalar.value.stringValue || defaultValue
+  if (scalar.stringValue !== undefined && scalar.stringValue !== null) {
+    return scalar.stringValue
   }
 
   return String(getScalarValue(scalar) ?? defaultValue)
 }
 
 export const getScalarDatetimeValue = (scalar: Scalar | undefined | null, defaultValue: number = 0): number => {
-  if (!scalar || !scalar.value) return defaultValue
+  if (!scalar) return defaultValue
 
-  const valueCase = Object.keys(scalar.value)[0]
-
-  if (valueCase === 'timestampMs') {
-    return Number(scalar.value.timestampMs) || defaultValue
+  if (scalar.timestampMs !== undefined && scalar.timestampMs !== null) {
+    return Number(scalar.timestampMs)
   }
 
   return defaultValue
@@ -96,7 +69,7 @@ export const formatScalarByType = (scalar: Scalar | undefined | null, type: Epoc
       return Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })
 
     case EpochFolioType.TypePercent:
-      return `${(Number(value) * 100).toFixed(2)}%`
+      return `${Number(value).toFixed(2)}%`
 
     case EpochFolioType.TypeMonetary:
       return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -108,15 +81,13 @@ export const formatScalarByType = (scalar: Scalar | undefined | null, type: Epoc
       return new Date(Number(value)).toLocaleString('en-US')
 
     case EpochFolioType.TypeDate:
-      return new Date(Number(value) * 86400000).toLocaleDateString('en-US')
+      return new Date(Number(value)).toLocaleDateString('en-US')
 
     case EpochFolioType.TypeDayDuration:
       return `${value} days`
 
     case EpochFolioType.TypeDuration:
-      const hours = Math.floor(Number(value) / 3600000)
-      const minutes = Math.floor((Number(value) % 3600000) / 60000)
-      return `${hours}h ${minutes}m`
+      return ms(Number(value), { long: false })
 
     default:
       return String(value)

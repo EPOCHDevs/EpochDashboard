@@ -5,7 +5,7 @@ export const createMockCardDef = (): CardDef => {
     {
       title: 'Total Return',
       value: {
-        percentValue: 0.1542
+        percentValue: 15.42
       } as Scalar,
       type: EpochFolioType.TypePercent,
       group: 0
@@ -21,7 +21,7 @@ export const createMockCardDef = (): CardDef => {
     {
       title: 'Max Drawdown',
       value: {
-        percentValue: -0.0823
+        percentValue: -8.23
       } as Scalar,
       type: EpochFolioType.TypePercent,
       group: 0
@@ -29,7 +29,7 @@ export const createMockCardDef = (): CardDef => {
     {
       title: 'Win Rate',
       value: {
-        percentValue: 0.6234
+        percentValue: 62.34
       } as Scalar,
       type: EpochFolioType.TypePercent,
       group: 0
@@ -48,7 +48,7 @@ export const createMockCardDef = (): CardDef => {
     {
       title: 'Avg Trade Duration',
       value: {
-        durationMs: 3600000 * 24 * 5
+        durationMs: 3600000 * 48 + 1800000 // 48.5 hours
       } as Scalar,
       type: EpochFolioType.TypeDuration,
       group: 1
