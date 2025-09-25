@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,7 +8,6 @@ import {
   getSortedRowModel,
   SortingState,
 } from '@tanstack/react-table'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import clsx from 'clsx'
 import { Scalar, EpochFolioType } from '../types/proto'
 import { formatScalarByType, getScalarValue } from '../utils/protoHelpers'
@@ -20,15 +19,12 @@ interface TableProps {
   className?: string
 }
 
-const ROW_HEIGHT = 43
-
 const Table: React.FC<TableProps> = ({
   headers,
   rows,
   columnTypes,
   className = ''
 }) => {
-  const parentRef = useRef<HTMLDivElement>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   // Convert rows to objects for TanStack Table
@@ -45,6 +41,7 @@ const Table: React.FC<TableProps> = ({
       return rowObj
     })
   }, [rows, headers, columnTypes])
+
 
   // Create column definitions
   const columnHelper = createColumnHelper<typeof tableData[0]>()
@@ -90,38 +87,24 @@ const Table: React.FC<TableProps> = ({
 
   const { rows: tableRows } = table.getRowModel()
 
-  // Virtualization
-  const rowVirtualizer = useVirtualizer({
-    count: tableRows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 5,
-  })
-
   return (
     <div className={clsx('w-full', className)}>
-      <div
-        ref={parentRef}
-        className="h-[400px] overflow-auto rounded-2 border border-primary-white/5 bg-primary-white/2 scrollbar-hide"
-      >
-        <table className="w-full" style={{ tableLayout: 'fixed' }}>
-          <colgroup>
-            {table.getAllColumns().map((_, index) => (
-              <col key={index} style={{ width: `${100 / table.getAllColumns().length}%` }} />
-            ))}
-          </colgroup>
+      <div className="h-[400px] overflow-auto rounded-2 border border-primary-white/5 bg-primary-white/2 scrollbar-horizontal-only">
+        <table className="min-w-full">
           <thead className="sticky top-0 z-10 bg-secondary-mildCementGrey">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className="border-b border-primary-white/10">
                 {headerGroup.headers.map(header => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-secondary-ashGrey uppercase cursor-pointer hover:bg-primary-white/5 transition-colors"
+                    className="px-4 py-3 text-left text-xs font-medium text-secondary-ashGrey uppercase cursor-pointer hover:bg-primary-white/5 transition-colors whitespace-nowrap"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      <span className="text-xs opacity-60 ml-1">
+                      <span>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                      <span className="text-xs opacity-60 ml-1 flex-shrink-0">
                         {{
                           asc: '▲',
                           desc: '▼',
@@ -133,50 +116,26 @@ const Table: React.FC<TableProps> = ({
               </tr>
             ))}
           </thead>
-          <tbody
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              position: 'relative'
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map(virtualItem => {
-              const row = tableRows[virtualItem.index]
-              return (
-                <tr
-                  key={row.id}
-                  className="border-b border-primary-white/5 hover:bg-primary-white/3 transition-colors"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: `${virtualItem.size}px`,
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
-                      className="px-4 py-3 text-sm text-primary-white truncate"
-                      style={{
-                        width: `${100 / table.getAllColumns().length}%`,
-                        maxWidth: 0
-                      }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              )
-            })}
+          <tbody>
+            {tableRows.map(row => (
+              <tr
+                key={row.id}
+                className="border-b border-primary-white/5 hover:bg-primary-white/3 transition-colors"
+              >
+                {row.getVisibleCells().map(cell => (
+                  <td
+                    key={cell.id}
+                    className="px-4 py-3 text-sm text-primary-white whitespace-nowrap"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* Stats */}
-      <div className="mt-4 text-sm text-secondary-ashGrey">
-        Showing {tableRows.length} entries with virtualized scrolling
-      </div>
     </div>
   )
 }

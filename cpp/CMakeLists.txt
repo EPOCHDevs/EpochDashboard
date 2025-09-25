@@ -73,12 +73,12 @@ if(BUILD_SHARED_LIBS)
     )
 endif()
 
+add_subdirectory(thirdparty)
 target_compile_definitions(epoch_dashboard PUBLIC -DSPDLOG_USE_STD_FORMAT)
 
 target_include_directories(epoch_dashboard
         PUBLIC
         ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/thirdparty/epoch_protos/include
         PRIVATE
         ${PROJECT_SOURCE_DIR}/src
 )
@@ -97,8 +97,7 @@ target_link_libraries(epoch_dashboard PUBLIC
         epoch::data_sdk
         glaze::glaze
         spdlog::spdlog_header_only
-        ${PROJECT_SOURCE_DIR}/thirdparty/epoch_protos/lib/libepoch_protos_cpp.a
-        protobuf::libprotobuf)
+        epoch::proto)
 
 if (BUILD_TEST)
     add_subdirectory(tests)

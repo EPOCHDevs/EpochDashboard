@@ -6,7 +6,48 @@ export interface TableData {
   columnTypes: EpochFolioType[]
 }
 
-export const createMockTableData = (): TableData => {
+const generateRandomMockRow = (index: number): Scalar[] => {
+  const strategies = [
+    'Momentum Alpha Strategy',
+    'Mean Reversion Beta',
+    'Arbitrage Gamma Engine',
+    'Trend Following Delta Model',
+    'Statistical Edge Framework',
+    'Volatility Trading System',
+    'Cross-Asset Correlation Analysis',
+    'High-Frequency Scalping Bot',
+    'Pairs Trading Algorithm',
+    'Risk Parity Allocation Model',
+    'Event-Driven Strategy Engine',
+    'Market Neutral Hedge Fund Strategy'
+  ]
+
+  const longNames = [
+    'Long Term Growth and Capital Appreciation Strategy with Risk Management',
+    'Advanced Statistical Arbitrage with Machine Learning Enhancement',
+    'Multi-Asset Cross-Correlation Analysis and Trading Framework',
+    'High-Frequency Market Making with Latency Optimization Engine'
+  ]
+
+  const strategyName = Math.random() > 0.7
+    ? longNames[index % longNames.length]
+    : `${strategies[index % strategies.length]} v${Math.floor(index / strategies.length) + 1}`
+
+  return [
+    { stringValue: strategyName } as Scalar,
+    { integerValue: 1001 + index } as Scalar,
+    { decimalValue: (Math.random() - 0.3) * 50 } as Scalar,
+    { percentValue: Math.random() * 40 + 30 } as Scalar, // 30-70%
+    { booleanValue: Math.random() > 0.3 } as Scalar,
+    { timestampMs: Date.now() - Math.random() * 86400000 * 30 } as Scalar, // within 30 days
+    { dateValue: Date.now() - Math.random() * 86400000 * 365 * 3 } as Scalar, // within 3 years
+    { dayDuration: Math.floor(Math.random() * 1000) + 1 } as Scalar,
+    { monetaryValue: Math.floor(Math.random() * 50000000) } as Scalar,
+    { durationMs: Math.floor(Math.random() * 86400000) + 60000 } as Scalar // 1min to 24h
+  ]
+}
+
+export const createMockTableData = (numRows: number = 150): TableData => {
   const headers = [
     'Strategy Name',      // TypeString
     'ID',                // TypeInteger
@@ -33,68 +74,7 @@ export const createMockTableData = (): TableData => {
     EpochFolioType.TypeDuration
   ]
 
-  const rows: Scalar[][] = [
-    [
-      { stringValue: 'Momentum Alpha' } as Scalar,
-      { integerValue: 1001 } as Scalar,
-      { decimalValue: 12.45 } as Scalar,
-      { percentValue: 78.5 } as Scalar,
-      { booleanValue: true } as Scalar,
-      { timestampMs: Date.now() - 3600000 } as Scalar, // 1 hour ago
-      { dateValue: 1609459200000 } as Scalar, // Jan 1, 2021
-      { dayDuration: 365 } as Scalar,
-      { monetaryValue: 1250000 } as Scalar,
-      { durationMs: 7200000 } as Scalar // 2 hours
-    ],
-    [
-      { stringValue: 'Mean Reversion Beta' } as Scalar,
-      { integerValue: 1002 } as Scalar,
-      { decimalValue: -3.21 } as Scalar,
-      { percentValue: 45.2 } as Scalar,
-      { booleanValue: false } as Scalar,
-      { timestampMs: Date.now() - 86400000 } as Scalar, // 1 day ago
-      { dateValue: 1640995200000 } as Scalar, // Jan 1, 2022
-      { dayDuration: 180 } as Scalar,
-      { monetaryValue: 750000 } as Scalar,
-      { durationMs: 1800000 } as Scalar // 30 minutes
-    ],
-    [
-      { stringValue: 'Arbitrage Gamma' } as Scalar,
-      { integerValue: 1003 } as Scalar,
-      { decimalValue: 25.67 } as Scalar,
-      { percentValue: 92.1 } as Scalar,
-      { booleanValue: true } as Scalar,
-      { timestampMs: Date.now() - 7200000 } as Scalar, // 2 hours ago
-      { dateValue: 1672531200000 } as Scalar, // Jan 1, 2023
-      { dayDuration: 90 } as Scalar,
-      { monetaryValue: 2000000 } as Scalar,
-      { durationMs: 14400000 } as Scalar // 4 hours
-    ],
-    [
-      { stringValue: 'Trend Following Delta' } as Scalar,
-      { integerValue: 1004 } as Scalar,
-      { decimalValue: 8.93 } as Scalar,
-      { percentValue: 65.8 } as Scalar,
-      { booleanValue: true } as Scalar,
-      { timestampMs: Date.now() - 1800000 } as Scalar, // 30 minutes ago
-      { dateValue: 1704067200000 } as Scalar, // Jan 1, 2024
-      { dayDuration: 45 } as Scalar,
-      { monetaryValue: 500000 } as Scalar,
-      { durationMs: 5400000 } as Scalar // 1.5 hours
-    ],
-    [
-      { stringValue: 'Statistical Edge' } as Scalar,
-      { integerValue: 1005 } as Scalar,
-      { decimalValue: 0.0 } as Scalar,
-      { percentValue: 0.0 } as Scalar,
-      { booleanValue: false } as Scalar,
-      { timestampMs: Date.now() } as Scalar, // now
-      { dateValue: Date.now() } as Scalar, // today
-      { dayDuration: 1 } as Scalar,
-      { monetaryValue: 0 } as Scalar,
-      { durationMs: 300000 } as Scalar // 5 minutes
-    ]
-  ]
+  const rows: Scalar[][] = Array.from({ length: numRows }, (_, index) => generateRandomMockRow(index))
 
   return {
     headers,

@@ -69,7 +69,7 @@ TEST_CASE("ScalarFactory: Basic conversions", "[scalar]") {
     SECTION("null") {
         auto proto = ScalarFactory::null();
         REQUIRE(proto.has_null_value());
-        REQUIRE(proto.null_value() == google::protobuf::NULL_VALUE);
+        REQUIRE(proto.null_value() == epoch_proto::NULL_VALUE);
     }
 }
 

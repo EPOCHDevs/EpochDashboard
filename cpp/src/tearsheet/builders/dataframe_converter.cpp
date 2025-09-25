@@ -81,7 +81,7 @@ epoch_proto::TableRow DataFrameFactory::toTableRow(const epoch_frame::DataFrame&
             epoch_frame::Scalar ef_scalar(arrow_scalar);
             *row.add_values() = ScalarFactory::create(ef_scalar);
         } else {
-            row.add_values()->set_null_value(google::protobuf::NULL_VALUE);
+            row.add_values()->set_null_value(epoch_proto::NULL_VALUE);
         }
     }
 
@@ -97,7 +97,7 @@ epoch_proto::TableRow DataFrameFactory::toTableRow(const epoch_frame::DataFrame&
     for (const auto& col_name : columns) {
         auto column = arrow_table->GetColumnByName(col_name);
         if (!column) {
-            row.add_values()->set_null_value(google::protobuf::NULL_VALUE);
+            row.add_values()->set_null_value(epoch_proto::NULL_VALUE);
             continue;
         }
 
@@ -108,7 +108,7 @@ epoch_proto::TableRow DataFrameFactory::toTableRow(const epoch_frame::DataFrame&
             epoch_frame::Scalar ef_scalar(arrow_scalar);
             *row.add_values() = ScalarFactory::create(ef_scalar);
         } else {
-            row.add_values()->set_null_value(google::protobuf::NULL_VALUE);
+            row.add_values()->set_null_value(epoch_proto::NULL_VALUE);
         }
     }
 
@@ -181,7 +181,7 @@ epoch_proto::Array DataFrameFactory::toArray(const epoch_frame::DataFrame& df,
             epoch_frame::Scalar ef_scalar(arrow_scalar);
             *array.add_values() = ScalarFactory::create(ef_scalar);
         } else {
-            array.add_values()->set_null_value(google::protobuf::NULL_VALUE);
+            array.add_values()->set_null_value(epoch_proto::NULL_VALUE);
         }
     }
 

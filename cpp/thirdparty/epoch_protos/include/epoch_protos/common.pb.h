@@ -30,7 +30,6 @@
 #include "google/protobuf/extension_set.h"  // IWYU pragma: export
 #include "google/protobuf/generated_enum_reflection.h"
 #include "google/protobuf/unknown_field_set.h"
-#include "google/protobuf/struct.pb.h"
 // @@protoc_insertion_point(includes)
 
 // Must be included last.
@@ -151,6 +150,38 @@ inline const std::string& EpochFolioType_Name(EpochFolioType value) {
 inline bool EpochFolioType_Parse(absl::string_view name, EpochFolioType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<EpochFolioType>(
       EpochFolioType_descriptor(), name, value);
+}
+enum NullValue : int {
+  NULL_VALUE = 0,
+  NullValue_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::min(),
+  NullValue_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::max(),
+};
+
+bool NullValue_IsValid(int value);
+extern const uint32_t NullValue_internal_data_[];
+constexpr NullValue NullValue_MIN = static_cast<NullValue>(0);
+constexpr NullValue NullValue_MAX = static_cast<NullValue>(0);
+constexpr int NullValue_ARRAYSIZE = 0 + 1;
+const ::google::protobuf::EnumDescriptor*
+NullValue_descriptor();
+template <typename T>
+const std::string& NullValue_Name(T value) {
+  static_assert(std::is_same<T, NullValue>::value ||
+                    std::is_integral<T>::value,
+                "Incorrect type passed to NullValue_Name().");
+  return NullValue_Name(static_cast<NullValue>(value));
+}
+template <>
+inline const std::string& NullValue_Name(NullValue value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<NullValue_descriptor,
+                                                 0, 0>(
+      static_cast<int>(value));
+}
+inline bool NullValue_Parse(absl::string_view name, NullValue* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<NullValue>(
+      NullValue_descriptor(), name, value);
 }
 enum AxisType : int {
   AxisUnspecified = 0,
@@ -525,15 +556,15 @@ class Scalar final : public ::google::protobuf::Message
   void _internal_set_duration_ms(::int64_t value);
 
   public:
-  // .google.protobuf.NullValue null_value = 11;
+  // .epoch_proto.NullValue null_value = 11;
   bool has_null_value() const;
   void clear_null_value() ;
-  ::google::protobuf::NullValue null_value() const;
-  void set_null_value(::google::protobuf::NullValue value);
+  ::epoch_proto::NullValue null_value() const;
+  void set_null_value(::epoch_proto::NullValue value);
 
   private:
-  ::google::protobuf::NullValue _internal_null_value() const;
-  void _internal_set_null_value(::google::protobuf::NullValue value);
+  ::epoch_proto::NullValue _internal_null_value() const;
+  void _internal_set_null_value(::epoch_proto::NullValue value);
 
   public:
   void clear_value();
@@ -1192,7 +1223,7 @@ inline ::int64_t Scalar::_internal_duration_ms() const {
   return ::int64_t{0};
 }
 
-// .google.protobuf.NullValue null_value = 11;
+// .epoch_proto.NullValue null_value = 11;
 inline bool Scalar::has_null_value() const {
   return value_case() == kNullValue;
 }
@@ -1206,11 +1237,11 @@ inline void Scalar::clear_null_value() {
     clear_has_value();
   }
 }
-inline ::google::protobuf::NullValue Scalar::null_value() const {
+inline ::epoch_proto::NullValue Scalar::null_value() const {
   // @@protoc_insertion_point(field_get:epoch_proto.Scalar.null_value)
   return _internal_null_value();
 }
-inline void Scalar::set_null_value(::google::protobuf::NullValue value) {
+inline void Scalar::set_null_value(::epoch_proto::NullValue value) {
   if (value_case() != kNullValue) {
     clear_value();
     set_has_null_value();
@@ -1218,11 +1249,11 @@ inline void Scalar::set_null_value(::google::protobuf::NullValue value) {
   _impl_.value_.null_value_ = value;
   // @@protoc_insertion_point(field_set:epoch_proto.Scalar.null_value)
 }
-inline ::google::protobuf::NullValue Scalar::_internal_null_value() const {
+inline ::epoch_proto::NullValue Scalar::_internal_null_value() const {
   if (value_case() == kNullValue) {
-    return static_cast<::google::protobuf::NullValue>(_impl_.value_.null_value_);
+    return static_cast<::epoch_proto::NullValue>(_impl_.value_.null_value_);
   }
-  return static_cast<::google::protobuf::NullValue>(0);
+  return static_cast<::epoch_proto::NullValue>(0);
 }
 
 inline bool Scalar::has_value() const {
@@ -1309,6 +1340,12 @@ struct is_proto_enum<::epoch_proto::EpochFolioType> : std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor<::epoch_proto::EpochFolioType>() {
   return ::epoch_proto::EpochFolioType_descriptor();
+}
+template <>
+struct is_proto_enum<::epoch_proto::NullValue> : std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor<::epoch_proto::NullValue>() {
+  return ::epoch_proto::NullValue_descriptor();
 }
 template <>
 struct is_proto_enum<::epoch_proto::AxisType> : std::true_type {};

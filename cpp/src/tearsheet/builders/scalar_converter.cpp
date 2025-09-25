@@ -8,7 +8,7 @@ epoch_proto::Scalar ScalarFactory::create(const epoch_frame::Scalar& scalar) {
     epoch_proto::Scalar result;
 
     if (scalar.is_null()) {
-        result.set_null_value(google::protobuf::NULL_VALUE);
+        result.set_null_value(epoch_proto::NULL_VALUE);
         return result;
     }
 
@@ -92,7 +92,7 @@ epoch_proto::Scalar ScalarFactory::fromTimestamp(std::chrono::seconds s) {
 
 epoch_proto::Scalar ScalarFactory::null() {
     epoch_proto::Scalar scalar;
-    scalar.set_null_value(google::protobuf::NULL_VALUE);
+    scalar.set_null_value(epoch_proto::NULL_VALUE);
     return scalar;
 }
 
