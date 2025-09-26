@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "epoch_protos/chart_def.pb.h"
+#include "epoch_dashboard/tearsheet/chart_builder_base.h"
 
 namespace epoch_frame {
     class DataFrame;
@@ -11,14 +12,14 @@ namespace epoch_frame {
 
 namespace epoch_tearsheet {
 
-class LinesChartBuilder {
+class LinesChartBuilder : public ChartBuilderBase<LinesChartBuilder> {
 public:
     LinesChartBuilder();
 
-    LinesChartBuilder& setTitle(const std::string& title);
-    LinesChartBuilder& setCategory(const std::string& category);
-    LinesChartBuilder& setXAxisLabel(const std::string& label);
-    LinesChartBuilder& setYAxisLabel(const std::string& label);
+    // Required for CRTP base class
+    epoch_proto::ChartDef* getChartDefImpl() { return lines_def_.mutable_chart_def(); }
+
+    // Chart-specific methods
     LinesChartBuilder& addLine(const epoch_proto::Line& line);
     LinesChartBuilder& addLines(const std::vector<epoch_proto::Line>& lines);
     LinesChartBuilder& addStraightLine(const epoch_proto::StraightLineDef& line);

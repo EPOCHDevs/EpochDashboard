@@ -1,19 +1,21 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "epoch_protos/chart_def.pb.h"
+#include "epoch_dashboard/tearsheet/chart_builder_base.h"
 
 namespace epoch_tearsheet {
 
-class BoxPlotChartBuilder {
+class BoxPlotChartBuilder : public ChartBuilderBase<BoxPlotChartBuilder> {
 public:
     BoxPlotChartBuilder();
 
-    BoxPlotChartBuilder& setTitle(const std::string& title);
-    BoxPlotChartBuilder& setCategory(const std::string& category);
-    BoxPlotChartBuilder& setXAxisLabel(const std::string& label);
-    BoxPlotChartBuilder& setYAxisLabel(const std::string& label);
+    // Required for CRTP base class
+    epoch_proto::ChartDef* getChartDefImpl() { return box_plot_def_.mutable_chart_def(); }
+
+    // Chart-specific methods
     BoxPlotChartBuilder& addOutlier(const epoch_proto::BoxPlotOutlier& outlier);
     BoxPlotChartBuilder& addDataPoint(const epoch_proto::BoxPlotDataPoint& point);
 

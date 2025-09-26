@@ -4,6 +4,12 @@ import ms from 'ms'
 export const getScalarValue = (scalar: Scalar | undefined | null): any => {
   if (!scalar) return null
 
+  // First check if this is an explicit null value (epoch-proto null)
+  // The nullValue field indicates an explicit null (not undefined)
+  if ('nullValue' in scalar && scalar.nullValue !== undefined) {
+    return null
+  }
+
   // Check all possible scalar value fields directly on the object
   if (scalar.stringValue !== undefined && scalar.stringValue !== null) return scalar.stringValue
   if (scalar.integerValue !== undefined && scalar.integerValue !== null) return scalar.integerValue
@@ -15,13 +21,17 @@ export const getScalarValue = (scalar: Scalar | undefined | null): any => {
   if (scalar.dayDuration !== undefined && scalar.dayDuration !== null) return scalar.dayDuration
   if (scalar.monetaryValue !== undefined && scalar.monetaryValue !== null) return scalar.monetaryValue
   if (scalar.durationMs !== undefined && scalar.durationMs !== null) return scalar.durationMs
-  if (scalar.nullValue !== undefined) return null
 
   return null
 }
 
 export const getScalarNumericValue = (scalar: Scalar | undefined | null, defaultValue: number = 0): number => {
   if (!scalar) return defaultValue
+
+  // Check for explicit null value (epoch-proto null)
+  if ('nullValue' in scalar && scalar.nullValue !== undefined) {
+    return defaultValue
+  }
 
   if (scalar.integerValue !== undefined && scalar.integerValue !== null) return Number(scalar.integerValue)
   if (scalar.decimalValue !== undefined && scalar.decimalValue !== null) return scalar.decimalValue
@@ -36,6 +46,11 @@ export const getScalarNumericValue = (scalar: Scalar | undefined | null, default
 export const getScalarStringValue = (scalar: Scalar | undefined | null, defaultValue: string = ''): string => {
   if (!scalar) return defaultValue
 
+  // Check for explicit null value (epoch-proto null)
+  if ('nullValue' in scalar && scalar.nullValue !== undefined) {
+    return defaultValue
+  }
+
   if (scalar.stringValue !== undefined && scalar.stringValue !== null) {
     return scalar.stringValue
   }
@@ -45,6 +60,11 @@ export const getScalarStringValue = (scalar: Scalar | undefined | null, defaultV
 
 export const getScalarDatetimeValue = (scalar: Scalar | undefined | null, defaultValue: number = 0): number => {
   if (!scalar) return defaultValue
+
+  // Check for explicit null value (epoch-proto null)
+  if ('nullValue' in scalar && scalar.nullValue !== undefined) {
+    return defaultValue
+  }
 
   if (scalar.timestampMs !== undefined && scalar.timestampMs !== null) {
     return Number(scalar.timestampMs)

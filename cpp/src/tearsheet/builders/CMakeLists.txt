@@ -8,6 +8,7 @@ target_sources(epoch_dashboard PRIVATE
         card_builder.cpp
         table_builder.cpp
         line_builder.cpp
+        area_chart_builder.cpp
         lines_chart_builder.cpp
         heatmap_chart_builder.cpp
         bar_chart_builder.cpp

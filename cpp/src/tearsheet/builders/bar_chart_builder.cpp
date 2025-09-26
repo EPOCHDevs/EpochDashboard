@@ -8,28 +8,23 @@ BarChartBuilder::BarChartBuilder() {
     bar_def_.mutable_chart_def()->set_type(epoch_proto::WidgetBar);
 }
 
-BarChartBuilder& BarChartBuilder::setTitle(const std::string& title) {
-    bar_def_.mutable_chart_def()->set_title(title);
-    return *this;
-}
-
-BarChartBuilder& BarChartBuilder::setCategory(const std::string& category) {
-    bar_def_.mutable_chart_def()->set_category(category);
-    return *this;
-}
-
-BarChartBuilder& BarChartBuilder::setXAxisLabel(const std::string& label) {
-    bar_def_.mutable_chart_def()->mutable_x_axis()->set_label(label);
-    return *this;
-}
-
-BarChartBuilder& BarChartBuilder::setYAxisLabel(const std::string& label) {
-    bar_def_.mutable_chart_def()->mutable_y_axis()->set_label(label);
-    return *this;
-}
-
 BarChartBuilder& BarChartBuilder::setData(const epoch_proto::Array& data) {
-    *bar_def_.mutable_data() = data;
+    // Legacy method - converts Array to BarData format
+    bar_def_.clear_data();
+    auto* bar_data = bar_def_.add_data();
+    bar_data->set_name("Series 1");
+    for (const auto& scalar : data.values()) {
+        if (scalar.has_decimal_value()) {
+            bar_data->add_values(scalar.decimal_value());
+        } else if (scalar.has_integer_value()) {
+            bar_data->add_values(static_cast<double>(scalar.integer_value()));
+        }
+    }
+    return *this;
+}
+
+BarChartBuilder& BarChartBuilder::addBarData(const epoch_proto::BarData& data) {
+    *bar_def_.add_data() = data;
     return *this;
 }
 
@@ -48,13 +43,45 @@ BarChartBuilder& BarChartBuilder::setVertical(bool vertical) {
     return *this;
 }
 
+BarChartBuilder& BarChartBuilder::setStacked(bool stacked) {
+    bar_def_.set_stacked(stacked);
+    return *this;
+}
+
+BarChartBuilder& BarChartBuilder::setStackType(epoch_proto::StackType stack_type) {
+    bar_def_.set_stack_type(stack_type);
+    return *this;
+}
+
 BarChartBuilder& BarChartBuilder::fromSeries(const epoch_frame::Series& series) {
-    *bar_def_.mutable_data() = SeriesFactory::toArray(series);
+    // Convert Series to BarData format
+    auto array = SeriesFactory::toArray(series);
+    bar_def_.clear_data();
+    auto* bar_data = bar_def_.add_data();
+    bar_data->set_name("Series 1");
+    for (const auto& scalar : array.values()) {
+        if (scalar.has_decimal_value()) {
+            bar_data->add_values(scalar.decimal_value());
+        } else if (scalar.has_integer_value()) {
+            bar_data->add_values(static_cast<double>(scalar.integer_value()));
+        }
+    }
     return *this;
 }
 
 BarChartBuilder& BarChartBuilder::fromDataFrame(const epoch_frame::DataFrame& df, const std::string& column) {
-    *bar_def_.mutable_data() = DataFrameFactory::toArray(df, column);
+    // Convert DataFrame column to BarData format
+    auto array = DataFrameFactory::toArray(df, column);
+    bar_def_.clear_data();
+    auto* bar_data = bar_def_.add_data();
+    bar_data->set_name(column);
+    for (const auto& scalar : array.values()) {
+        if (scalar.has_decimal_value()) {
+            bar_data->add_values(scalar.decimal_value());
+        } else if (scalar.has_integer_value()) {
+            bar_data->add_values(static_cast<double>(scalar.integer_value()));
+        }
+    }
     return *this;
 }
 

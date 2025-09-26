@@ -7,6 +7,8 @@ add_executable(epoch_dashboard_test
     test_series_converter.cpp
     test_dataframe_factory.cpp
     test_table_builder.cpp
+    test_area_chart_builder.cpp
+    test_chart_builder_base.cpp
     test_lines_chart_builder.cpp
     test_bar_chart_builder.cpp
     test_histogram_chart_builder.cpp

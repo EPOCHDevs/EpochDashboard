@@ -238,7 +238,9 @@ TEST_CASE("BarChartBuilder: fromDataFrame integration", "[dataframe]") {
 
     REQUIRE(chart.has_bar_def());
     REQUIRE(chart.bar_def().chart_def().title() == "Sales");
-    REQUIRE(chart.bar_def().data().values_size() == 3);
+    // The setData method converts to BarData format, so we check data_size()
+    REQUIRE(chart.bar_def().data_size() == 1);
+    REQUIRE(chart.bar_def().data(0).values_size() == 3);
 }
 
 TEST_CASE("HistogramChartBuilder: fromDataFrame integration", "[dataframe]") {

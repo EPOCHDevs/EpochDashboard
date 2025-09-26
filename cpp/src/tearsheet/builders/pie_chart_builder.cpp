@@ -8,16 +8,6 @@ PieChartBuilder::PieChartBuilder() {
     pie_def_.mutable_chart_def()->set_type(epoch_proto::WidgetPie);
 }
 
-PieChartBuilder& PieChartBuilder::setTitle(const std::string& title) {
-    pie_def_.mutable_chart_def()->set_title(title);
-    return *this;
-}
-
-PieChartBuilder& PieChartBuilder::setCategory(const std::string& category) {
-    pie_def_.mutable_chart_def()->set_category(category);
-    return *this;
-}
-
 PieChartBuilder& PieChartBuilder::addSeries(const std::string& name,
                                               const std::vector<epoch_proto::PieData>& points,
                                               const PieSize& size,

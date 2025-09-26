@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import Navigation from './components/Navigation'
 import CardExample from './pages/CardExample'
+import TableExample from './pages/TableExample'
+import LineChartExample from './pages/LineChartExample'
+import HistogramExample from './pages/HistogramExample'
+import BarChartExample from './pages/BarChartExample'
+import AreaChartExample from './pages/AreaChartExample'
+import HeatMapExample from './pages/HeatMapExample'
 import '../styles/globals.css'
 
 function App() {
@@ -11,15 +17,17 @@ function App() {
       case 'card':
         return <CardExample />
       case 'table':
-        return <div className="text-secondary-ashGrey">Table component coming soon...</div>
+        return <TableExample />
       case 'line':
-        return <div className="text-secondary-ashGrey">Line chart coming soon...</div>
+        return <LineChartExample />
       case 'bar':
-        return <div className="text-secondary-ashGrey">Bar chart coming soon...</div>
+        return <BarChartExample />
+      case 'area':
+        return <AreaChartExample />
       case 'heatmap':
-        return <div className="text-secondary-ashGrey">Heatmap coming soon...</div>
+        return <HeatMapExample />
       case 'histogram':
-        return <div className="text-secondary-ashGrey">Histogram coming soon...</div>
+        return <HistogramExample />
       case 'boxplot':
         return <div className="text-secondary-ashGrey">Box plot coming soon...</div>
       case 'xrange':

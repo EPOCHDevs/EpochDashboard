@@ -1,8 +1,10 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "epoch_protos/chart_def.pb.h"
+#include "epoch_dashboard/tearsheet/chart_builder_base.h"
 
 namespace epoch_frame {
     class DataFrame;
@@ -11,14 +13,14 @@ namespace epoch_frame {
 
 namespace epoch_tearsheet {
 
-class HistogramChartBuilder {
+class HistogramChartBuilder : public ChartBuilderBase<HistogramChartBuilder> {
 public:
     HistogramChartBuilder();
 
-    HistogramChartBuilder& setTitle(const std::string& title);
-    HistogramChartBuilder& setCategory(const std::string& category);
-    HistogramChartBuilder& setXAxisLabel(const std::string& label);
-    HistogramChartBuilder& setYAxisLabel(const std::string& label);
+    // Required for CRTP base class
+    epoch_proto::ChartDef* getChartDefImpl() { return histogram_def_.mutable_chart_def(); }
+
+    // Chart-specific methods
     HistogramChartBuilder& setData(const epoch_proto::Array& data);
     HistogramChartBuilder& addStraightLine(const epoch_proto::StraightLineDef& line);
     HistogramChartBuilder& setBinsCount(uint32_t bins);

@@ -15,7 +15,7 @@ import { formatScalarByType, getScalarValue } from '../utils/protoHelpers'
 interface TableProps {
   headers: string[]
   rows: Scalar[][]
-  columnTypes: EpochFolioType[]
+  columnTypes: (typeof EpochFolioType[keyof typeof EpochFolioType])[]
   className?: string
 }
 
@@ -54,8 +54,8 @@ const Table: React.FC<TableProps> = ({
           return cellData?.formatted || '-'
         },
         sortingFn: (rowA, rowB, columnId) => {
-          const aVal = getScalarValue(rowA.getValue(columnId)?.value)
-          const bVal = getScalarValue(rowB.getValue(columnId)?.value)
+          const aVal = getScalarValue((rowA.getValue(columnId) as any)?.value)
+          const bVal = getScalarValue((rowB.getValue(columnId) as any)?.value)
 
           if (aVal === null && bVal === null) return 0
           if (aVal === null) return 1
@@ -89,7 +89,7 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <div className={clsx('w-full', className)}>
-      <div className="h-[400px] overflow-auto rounded-2 border border-primary-white/5 bg-primary-white/2 scrollbar-horizontal-only">
+      <div className="h-[400px] overflow-x-auto overflow-y-hidden rounded-2 border border-primary-white/5 bg-primary-white/2 epoch-scrollbar-horizontal">
         <table className="min-w-full">
           <thead className="sticky top-0 z-10 bg-secondary-mildCementGrey">
             {table.getHeaderGroups().map(headerGroup => (

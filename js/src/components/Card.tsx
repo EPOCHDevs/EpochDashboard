@@ -22,7 +22,7 @@ const Card: React.FC<CardProps> = ({ cardDef, className = '' }) => {
     const groupedCards: CardData[][] = []
 
     const groupNumbers = Array.from(
-      new Set(cardDataArray.map((c) => c.group))
+      new Set(cardDataArray.map((c: CardData) => c.group))
     ).sort((a, b) => {
       if (a === undefined || a === null) return 1
       if (b === undefined || b === null) return -1
@@ -30,7 +30,7 @@ const Card: React.FC<CardProps> = ({ cardDef, className = '' }) => {
     })
 
     for (const groupNum of groupNumbers) {
-      const group = cardDataArray.filter((card) => card.group === groupNum)
+      const group = cardDataArray.filter((card: CardData) => card.group === groupNum)
       if (group.length > 0) {
         groupedCards.push(group)
       }

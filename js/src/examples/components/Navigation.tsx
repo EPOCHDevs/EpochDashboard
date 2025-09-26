@@ -45,13 +45,14 @@ export default function Navigation({ currentView, onNavigate }: NavigationProps)
   const routes = [
     { id: 'card', label: 'Card', status: 'done' as const },
     { id: 'table', label: 'Table', status: 'done' as const },
-    { id: 'line', label: 'Line Chart', status: 'pending' as const },
-    { id: 'bar', label: 'Bar Chart', status: 'pending' as const },
-    { id: 'heatmap', label: 'Heatmap', status: 'pending' as const },
-    { id: 'histogram', label: 'Histogram', status: 'pending' as const },
-    { id: 'boxplot', label: 'Box Plot', status: 'pending' as const },
-    { id: 'xrange', label: 'X-Range', status: 'pending' as const },
-    { id: 'pie', label: 'Pie Chart', status: 'pending' as const },
+    { id: 'line', label: 'Line Chart', status: 'done' as const },
+    { id: 'bar', label: 'Bar Chart', status: 'done' as const },
+    { id: 'area', label: 'Area Chart', status: 'done' as const },
+    { id: 'heatmap', label: 'Heatmap', status: 'done' as const },
+    { id: 'histogram', label: 'Histogram', status: 'done' as const },
+    { id: 'boxplot', label: 'Box Plot', status: 'done' as const },
+    { id: 'xrange', label: 'X-Range', status: 'done' as const },
+    { id: 'pie', label: 'Pie Chart', status: 'done' as const },
     { id: 'full', label: 'Full Dashboard', status: 'pending' as const },
   ]
 

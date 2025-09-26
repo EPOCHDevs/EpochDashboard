@@ -1,8 +1,10 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "epoch_protos/chart_def.pb.h"
+#include "epoch_dashboard/tearsheet/chart_builder_base.h"
 
 namespace epoch_frame {
     class DataFrame;
@@ -11,18 +13,21 @@ namespace epoch_frame {
 
 namespace epoch_tearsheet {
 
-class BarChartBuilder {
+class BarChartBuilder : public ChartBuilderBase<BarChartBuilder> {
 public:
     BarChartBuilder();
 
-    BarChartBuilder& setTitle(const std::string& title);
-    BarChartBuilder& setCategory(const std::string& category);
-    BarChartBuilder& setXAxisLabel(const std::string& label);
-    BarChartBuilder& setYAxisLabel(const std::string& label);
+    // Required for CRTP base class
+    epoch_proto::ChartDef* getChartDefImpl() { return bar_def_.mutable_chart_def(); }
+
+    // Chart-specific methods
     BarChartBuilder& setData(const epoch_proto::Array& data);
+    BarChartBuilder& addBarData(const epoch_proto::BarData& data);
     BarChartBuilder& addStraightLine(const epoch_proto::StraightLineDef& line);
     BarChartBuilder& setBarWidth(uint32_t width);
     BarChartBuilder& setVertical(bool vertical);
+    BarChartBuilder& setStacked(bool stacked);
+    BarChartBuilder& setStackType(epoch_proto::StackType stack_type);
     BarChartBuilder& fromSeries(const epoch_frame::Series& series);
     BarChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::string& column);
 

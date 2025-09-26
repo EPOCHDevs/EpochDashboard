@@ -28,6 +28,7 @@
 #include "google/protobuf/message_lite.h"
 #include "google/protobuf/repeated_field.h"  // IWYU pragma: export
 #include "google/protobuf/extension_set.h"  // IWYU pragma: export
+#include "google/protobuf/generated_enum_reflection.h"
 #include "google/protobuf/unknown_field_set.h"
 #include "common.pb.h"
 // @@protoc_insertion_point(includes)
@@ -53,12 +54,18 @@ struct TableStruct_chart_5fdef_2eproto {
 extern const ::google::protobuf::internal::DescriptorTable
     descriptor_table_chart_5fdef_2eproto;
 namespace epoch_proto {
+class AreaDef;
+struct AreaDefDefaultTypeInternal;
+extern AreaDefDefaultTypeInternal _AreaDef_default_instance_;
 class AxisDef;
 struct AxisDefDefaultTypeInternal;
 extern AxisDefDefaultTypeInternal _AxisDef_default_instance_;
 class Band;
 struct BandDefaultTypeInternal;
 extern BandDefaultTypeInternal _Band_default_instance_;
+class BarData;
+struct BarDataDefaultTypeInternal;
+extern BarDataDefaultTypeInternal _BarData_default_instance_;
 class BarDef;
 struct BarDefDefaultTypeInternal;
 extern BarDefDefaultTypeInternal _BarDef_default_instance_;
@@ -123,6 +130,40 @@ namespace protobuf {
 }  // namespace google
 
 namespace epoch_proto {
+enum StackType : int {
+  StackTypeUnspecified = 0,
+  StackTypeNormal = 1,
+  StackTypePercent = 2,
+  StackType_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::min(),
+  StackType_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::max(),
+};
+
+bool StackType_IsValid(int value);
+extern const uint32_t StackType_internal_data_[];
+constexpr StackType StackType_MIN = static_cast<StackType>(0);
+constexpr StackType StackType_MAX = static_cast<StackType>(2);
+constexpr int StackType_ARRAYSIZE = 2 + 1;
+const ::google::protobuf::EnumDescriptor*
+StackType_descriptor();
+template <typename T>
+const std::string& StackType_Name(T value) {
+  static_assert(std::is_same<T, StackType>::value ||
+                    std::is_integral<T>::value,
+                "Incorrect type passed to StackType_Name().");
+  return StackType_Name(static_cast<StackType>(value));
+}
+template <>
+inline const std::string& StackType_Name(StackType value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<StackType_descriptor,
+                                                 0, 2>(
+      static_cast<int>(value));
+}
+inline bool StackType_Parse(absl::string_view name, StackType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<StackType>(
+      StackType_descriptor(), name, value);
+}
 
 // ===================================================================
 
@@ -188,7 +229,7 @@ class XRangePoint final : public ::google::protobuf::Message
     return reinterpret_cast<const XRangePoint*>(
         &_XRangePoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 15;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(XRangePoint& a, XRangePoint& b) { a.Swap(&b); }
   inline void Swap(XRangePoint* other) {
     if (other == this) return;
@@ -836,7 +877,7 @@ class PieData final : public ::google::protobuf::Message
     return reinterpret_cast<const PieData*>(
         &_PieData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 17;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(PieData& a, PieData& b) { a.Swap(&b); }
   inline void Swap(PieData* other) {
     if (other == this) return;
@@ -1258,7 +1299,7 @@ class BoxPlotOutlier final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotOutlier*>(
         &_BoxPlotOutlier_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 14;
   friend void swap(BoxPlotOutlier& a, BoxPlotOutlier& b) { a.Swap(&b); }
   inline void Swap(BoxPlotOutlier* other) {
     if (other == this) return;
@@ -1460,7 +1501,7 @@ class BoxPlotDataPoint final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDataPoint*>(
         &_BoxPlotDataPoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 11;
+  static constexpr int kIndexInFileMessages = 13;
   friend void swap(BoxPlotDataPoint& a, BoxPlotDataPoint& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDataPoint* other) {
     if (other == this) return;
@@ -1632,6 +1673,242 @@ class BoxPlotDataPoint final : public ::google::protobuf::Message
     double q3_;
     double high_;
     ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chart_5fdef_2eproto;
+};
+// -------------------------------------------------------------------
+
+class BarData final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:epoch_proto.BarData) */ {
+ public:
+  inline BarData() : BarData(nullptr) {}
+  ~BarData() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(BarData* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(BarData));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR BarData(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline BarData(const BarData& from) : BarData(nullptr, from) {}
+  inline BarData(BarData&& from) noexcept
+      : BarData(nullptr, std::move(from)) {}
+  inline BarData& operator=(const BarData& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline BarData& operator=(BarData&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const BarData& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const BarData* internal_default_instance() {
+    return reinterpret_cast<const BarData*>(
+        &_BarData_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 10;
+  friend void swap(BarData& a, BarData& b) { a.Swap(&b); }
+  inline void Swap(BarData* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(BarData* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  BarData* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<BarData>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const BarData& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const BarData& from) { BarData::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(BarData* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "epoch_proto.BarData"; }
+
+ protected:
+  explicit BarData(::google::protobuf::Arena* arena);
+  BarData(::google::protobuf::Arena* arena, const BarData& from);
+  BarData(::google::protobuf::Arena* arena, BarData&& from) noexcept
+      : BarData(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kValuesFieldNumber = 2,
+    kNameFieldNumber = 1,
+    kStackFieldNumber = 3,
+  };
+  // repeated double values = 2;
+  int values_size() const;
+  private:
+  int _internal_values_size() const;
+
+  public:
+  void clear_values() ;
+  double values(int index) const;
+  void set_values(int index, double value);
+  void add_values(double value);
+  const ::google::protobuf::RepeatedField<double>& values() const;
+  ::google::protobuf::RepeatedField<double>* mutable_values();
+
+  private:
+  const ::google::protobuf::RepeatedField<double>& _internal_values() const;
+  ::google::protobuf::RepeatedField<double>* _internal_mutable_values();
+
+  public:
+  // string name = 1;
+  void clear_name() ;
+  const std::string& name() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_name(Arg_&& arg, Args_... args);
+  std::string* mutable_name();
+  PROTOBUF_NODISCARD std::string* release_name();
+  void set_allocated_name(std::string* value);
+
+  private:
+  const std::string& _internal_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(
+      const std::string& value);
+  std::string* _internal_mutable_name();
+
+  public:
+  // optional string stack = 3;
+  bool has_stack() const;
+  void clear_stack() ;
+  const std::string& stack() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_stack(Arg_&& arg, Args_... args);
+  std::string* mutable_stack();
+  PROTOBUF_NODISCARD std::string* release_stack();
+  void set_allocated_stack(std::string* value);
+
+  private:
+  const std::string& _internal_stack() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_stack(
+      const std::string& value);
+  std::string* _internal_mutable_stack();
+
+  public:
+  // @@protoc_insertion_point(class_scope:epoch_proto.BarData)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 3, 0,
+      37, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const BarData& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedField<double> values_;
+    ::google::protobuf::internal::ArenaStringPtr name_;
+    ::google::protobuf::internal::ArenaStringPtr stack_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -1933,7 +2210,7 @@ class PieDataDef final : public ::google::protobuf::Message
     return reinterpret_cast<const PieDataDef*>(
         &_PieDataDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 18;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(PieDataDef& a, PieDataDef& b) { a.Swap(&b); }
   inline void Swap(PieDataDef* other) {
     if (other == this) return;
@@ -2707,7 +2984,7 @@ class BoxPlotDataPointDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDataPointDef*>(
         &_BoxPlotDataPointDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 13;
+  static constexpr int kIndexInFileMessages = 15;
   friend void swap(BoxPlotDataPointDef& a, BoxPlotDataPointDef& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDataPointDef* other) {
     if (other == this) return;
@@ -3136,7 +3413,7 @@ class XRangeDef final : public ::google::protobuf::Message
     return reinterpret_cast<const XRangeDef*>(
         &_XRangeDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(XRangeDef& a, XRangeDef& b) { a.Swap(&b); }
   inline void Swap(XRangeDef* other) {
     if (other == this) return;
@@ -3375,7 +3652,7 @@ class PieDef final : public ::google::protobuf::Message
     return reinterpret_cast<const PieDef*>(
         &_PieDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 19;
+  static constexpr int kIndexInFileMessages = 21;
   friend void swap(PieDef& a, PieDef& b) { a.Swap(&b); }
   inline void Swap(PieDef* other) {
     if (other == this) return;
@@ -3891,7 +4168,7 @@ class HistogramDef final : public ::google::protobuf::Message
     return reinterpret_cast<const HistogramDef*>(
         &_HistogramDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 10;
+  static constexpr int kIndexInFileMessages = 12;
   friend void swap(HistogramDef& a, HistogramDef& b) { a.Swap(&b); }
   inline void Swap(HistogramDef* other) {
     if (other == this) return;
@@ -4351,7 +4628,7 @@ class BoxPlotDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDef*>(
         &_BoxPlotDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 14;
+  static constexpr int kIndexInFileMessages = 16;
   friend void swap(BoxPlotDef& a, BoxPlotDef& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDef* other) {
     if (other == this) return;
@@ -4564,7 +4841,7 @@ class BarDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BarDef*>(
         &_BarDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 9;
+  static constexpr int kIndexInFileMessages = 11;
   friend void swap(BarDef& a, BarDef& b) { a.Swap(&b); }
   inline void Swap(BarDef* other) {
     if (other == this) return;
@@ -4651,12 +4928,31 @@ class BarDef final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
+    kDataFieldNumber = 2,
     kStraightLinesFieldNumber = 3,
     kChartDefFieldNumber = 1,
-    kDataFieldNumber = 2,
     kBarWidthFieldNumber = 4,
     kVerticalFieldNumber = 5,
+    kStackedFieldNumber = 6,
+    kStackTypeFieldNumber = 7,
   };
+  // repeated .epoch_proto.BarData data = 2;
+  int data_size() const;
+  private:
+  int _internal_data_size() const;
+
+  public:
+  void clear_data() ;
+  ::epoch_proto::BarData* mutable_data(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>* mutable_data();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>& _internal_data() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>* _internal_mutable_data();
+  public:
+  const ::epoch_proto::BarData& data(int index) const;
+  ::epoch_proto::BarData* add_data();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>& data() const;
   // repeated .epoch_proto.StraightLineDef straight_lines = 3;
   int straight_lines_size() const;
   private:
@@ -4689,21 +4985,6 @@ class BarDef final : public ::google::protobuf::Message
   ::epoch_proto::ChartDef* _internal_mutable_chart_def();
 
   public:
-  // .epoch_proto.Array data = 2;
-  bool has_data() const;
-  void clear_data() ;
-  const ::epoch_proto::Array& data() const;
-  PROTOBUF_NODISCARD ::epoch_proto::Array* release_data();
-  ::epoch_proto::Array* mutable_data();
-  void set_allocated_data(::epoch_proto::Array* value);
-  void unsafe_arena_set_allocated_data(::epoch_proto::Array* value);
-  ::epoch_proto::Array* unsafe_arena_release_data();
-
-  private:
-  const ::epoch_proto::Array& _internal_data() const;
-  ::epoch_proto::Array* _internal_mutable_data();
-
-  public:
   // optional uint32 bar_width = 4;
   bool has_bar_width() const;
   void clear_bar_width() ;
@@ -4725,12 +5006,33 @@ class BarDef final : public ::google::protobuf::Message
   void _internal_set_vertical(bool value);
 
   public:
+  // bool stacked = 6;
+  void clear_stacked() ;
+  bool stacked() const;
+  void set_stacked(bool value);
+
+  private:
+  bool _internal_stacked() const;
+  void _internal_set_stacked(bool value);
+
+  public:
+  // optional .epoch_proto.StackType stack_type = 7;
+  bool has_stack_type() const;
+  void clear_stack_type() ;
+  ::epoch_proto::StackType stack_type() const;
+  void set_stack_type(::epoch_proto::StackType value);
+
+  private:
+  ::epoch_proto::StackType _internal_stack_type() const;
+  void _internal_set_stack_type(::epoch_proto::StackType value);
+
+  public:
   // @@protoc_insertion_point(class_scope:epoch_proto.BarDef)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 3,
+      3, 7, 3,
       0, 2>
       _table_;
 
@@ -4750,11 +5052,253 @@ class BarDef final : public ::google::protobuf::Message
                           const BarDef& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::BarData > data_;
     ::google::protobuf::RepeatedPtrField< ::epoch_proto::StraightLineDef > straight_lines_;
     ::epoch_proto::ChartDef* chart_def_;
-    ::epoch_proto::Array* data_;
     ::uint32_t bar_width_;
     bool vertical_;
+    bool stacked_;
+    int stack_type_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chart_5fdef_2eproto;
+};
+// -------------------------------------------------------------------
+
+class AreaDef final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:epoch_proto.AreaDef) */ {
+ public:
+  inline AreaDef() : AreaDef(nullptr) {}
+  ~AreaDef() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(AreaDef* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(AreaDef));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR AreaDef(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline AreaDef(const AreaDef& from) : AreaDef(nullptr, from) {}
+  inline AreaDef(AreaDef&& from) noexcept
+      : AreaDef(nullptr, std::move(from)) {}
+  inline AreaDef& operator=(const AreaDef& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AreaDef& operator=(AreaDef&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AreaDef& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const AreaDef* internal_default_instance() {
+    return reinterpret_cast<const AreaDef*>(
+        &_AreaDef_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 9;
+  friend void swap(AreaDef& a, AreaDef& b) { a.Swap(&b); }
+  inline void Swap(AreaDef* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AreaDef* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AreaDef* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<AreaDef>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const AreaDef& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const AreaDef& from) { AreaDef::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(AreaDef* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "epoch_proto.AreaDef"; }
+
+ protected:
+  explicit AreaDef(::google::protobuf::Arena* arena);
+  AreaDef(::google::protobuf::Arena* arena, const AreaDef& from);
+  AreaDef(::google::protobuf::Arena* arena, AreaDef&& from) noexcept
+      : AreaDef(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kAreasFieldNumber = 2,
+    kChartDefFieldNumber = 1,
+    kStackedFieldNumber = 3,
+    kStackTypeFieldNumber = 4,
+  };
+  // repeated .epoch_proto.Line areas = 2;
+  int areas_size() const;
+  private:
+  int _internal_areas_size() const;
+
+  public:
+  void clear_areas() ;
+  ::epoch_proto::Line* mutable_areas(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>* mutable_areas();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>& _internal_areas() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>* _internal_mutable_areas();
+  public:
+  const ::epoch_proto::Line& areas(int index) const;
+  ::epoch_proto::Line* add_areas();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>& areas() const;
+  // .epoch_proto.ChartDef chart_def = 1;
+  bool has_chart_def() const;
+  void clear_chart_def() ;
+  const ::epoch_proto::ChartDef& chart_def() const;
+  PROTOBUF_NODISCARD ::epoch_proto::ChartDef* release_chart_def();
+  ::epoch_proto::ChartDef* mutable_chart_def();
+  void set_allocated_chart_def(::epoch_proto::ChartDef* value);
+  void unsafe_arena_set_allocated_chart_def(::epoch_proto::ChartDef* value);
+  ::epoch_proto::ChartDef* unsafe_arena_release_chart_def();
+
+  private:
+  const ::epoch_proto::ChartDef& _internal_chart_def() const;
+  ::epoch_proto::ChartDef* _internal_mutable_chart_def();
+
+  public:
+  // bool stacked = 3;
+  void clear_stacked() ;
+  bool stacked() const;
+  void set_stacked(bool value);
+
+  private:
+  bool _internal_stacked() const;
+  void _internal_set_stacked(bool value);
+
+  public:
+  // optional .epoch_proto.StackType stack_type = 4;
+  bool has_stack_type() const;
+  void clear_stack_type() ;
+  ::epoch_proto::StackType stack_type() const;
+  void set_stack_type(::epoch_proto::StackType value);
+
+  private:
+  ::epoch_proto::StackType _internal_stack_type() const;
+  void _internal_set_stack_type(::epoch_proto::StackType value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:epoch_proto.AreaDef)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 4, 2,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const AreaDef& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::Line > areas_;
+    ::epoch_proto::ChartDef* chart_def_;
+    bool stacked_;
+    int stack_type_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -4825,13 +5369,14 @@ class Chart final : public ::google::protobuf::Message
     kBoxPlotDef = 5,
     kXRangeDef = 6,
     kPieDef = 7,
+    kAreaDef = 8,
     CHART_TYPE_NOT_SET = 0,
   };
   static inline const Chart* internal_default_instance() {
     return reinterpret_cast<const Chart*>(
         &_Chart_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 20;
+  static constexpr int kIndexInFileMessages = 22;
   friend void swap(Chart& a, Chart& b) { a.Swap(&b); }
   inline void Swap(Chart* other) {
     if (other == this) return;
@@ -4925,6 +5470,7 @@ class Chart final : public ::google::protobuf::Message
     kBoxPlotDefFieldNumber = 5,
     kXRangeDefFieldNumber = 6,
     kPieDefFieldNumber = 7,
+    kAreaDefFieldNumber = 8,
   };
   // .epoch_proto.LinesDef lines_def = 1;
   bool has_lines_def() const;
@@ -5059,6 +5605,25 @@ class Chart final : public ::google::protobuf::Message
   ::epoch_proto::PieDef* _internal_mutable_pie_def();
 
   public:
+  // .epoch_proto.AreaDef area_def = 8;
+  bool has_area_def() const;
+  private:
+  bool _internal_has_area_def() const;
+
+  public:
+  void clear_area_def() ;
+  const ::epoch_proto::AreaDef& area_def() const;
+  PROTOBUF_NODISCARD ::epoch_proto::AreaDef* release_area_def();
+  ::epoch_proto::AreaDef* mutable_area_def();
+  void set_allocated_area_def(::epoch_proto::AreaDef* value);
+  void unsafe_arena_set_allocated_area_def(::epoch_proto::AreaDef* value);
+  ::epoch_proto::AreaDef* unsafe_arena_release_area_def();
+
+  private:
+  const ::epoch_proto::AreaDef& _internal_area_def() const;
+  ::epoch_proto::AreaDef* _internal_mutable_area_def();
+
+  public:
   void clear_chart_type();
   ChartTypeCase chart_type_case() const;
   // @@protoc_insertion_point(class_scope:epoch_proto.Chart)
@@ -5071,11 +5636,12 @@ class Chart final : public ::google::protobuf::Message
   void set_has_box_plot_def();
   void set_has_x_range_def();
   void set_has_pie_def();
+  void set_has_area_def();
   inline bool has_chart_type() const;
   inline void clear_has_chart_type();
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 7, 7,
+      0, 8, 8,
       0, 2>
       _table_;
 
@@ -5103,6 +5669,7 @@ class Chart final : public ::google::protobuf::Message
       ::epoch_proto::BoxPlotDef* box_plot_def_;
       ::epoch_proto::XRangeDef* x_range_def_;
       ::epoch_proto::PieDef* pie_def_;
+      ::epoch_proto::AreaDef* area_def_;
     } chart_type_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::uint32_t _oneof_case_[1];
@@ -6773,6 +7340,371 @@ HeatMapDef::_internal_mutable_points() {
 
 // -------------------------------------------------------------------
 
+// AreaDef
+
+// .epoch_proto.ChartDef chart_def = 1;
+inline bool AreaDef::has_chart_def() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.chart_def_ != nullptr);
+  return value;
+}
+inline void AreaDef::clear_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.chart_def_ != nullptr) _impl_.chart_def_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::epoch_proto::ChartDef& AreaDef::_internal_chart_def() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::epoch_proto::ChartDef* p = _impl_.chart_def_;
+  return p != nullptr ? *p : reinterpret_cast<const ::epoch_proto::ChartDef&>(::epoch_proto::_ChartDef_default_instance_);
+}
+inline const ::epoch_proto::ChartDef& AreaDef::chart_def() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.AreaDef.chart_def)
+  return _internal_chart_def();
+}
+inline void AreaDef::unsafe_arena_set_allocated_chart_def(::epoch_proto::ChartDef* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.chart_def_);
+  }
+  _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.AreaDef.chart_def)
+}
+inline ::epoch_proto::ChartDef* AreaDef::release_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::epoch_proto::ChartDef* released = _impl_.chart_def_;
+  _impl_.chart_def_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::epoch_proto::ChartDef* AreaDef::unsafe_arena_release_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.AreaDef.chart_def)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::epoch_proto::ChartDef* temp = _impl_.chart_def_;
+  _impl_.chart_def_ = nullptr;
+  return temp;
+}
+inline ::epoch_proto::ChartDef* AreaDef::_internal_mutable_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.chart_def_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::epoch_proto::ChartDef>(GetArena());
+    _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(p);
+  }
+  return _impl_.chart_def_;
+}
+inline ::epoch_proto::ChartDef* AreaDef::mutable_chart_def() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::epoch_proto::ChartDef* _msg = _internal_mutable_chart_def();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.AreaDef.chart_def)
+  return _msg;
+}
+inline void AreaDef::set_allocated_chart_def(::epoch_proto::ChartDef* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.chart_def_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(value);
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.AreaDef.chart_def)
+}
+
+// repeated .epoch_proto.Line areas = 2;
+inline int AreaDef::_internal_areas_size() const {
+  return _internal_areas().size();
+}
+inline int AreaDef::areas_size() const {
+  return _internal_areas_size();
+}
+inline void AreaDef::clear_areas() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.areas_.Clear();
+}
+inline ::epoch_proto::Line* AreaDef::mutable_areas(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.AreaDef.areas)
+  return _internal_mutable_areas()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>* AreaDef::mutable_areas()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.AreaDef.areas)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_areas();
+}
+inline const ::epoch_proto::Line& AreaDef::areas(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.AreaDef.areas)
+  return _internal_areas().Get(index);
+}
+inline ::epoch_proto::Line* AreaDef::add_areas() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::Line* _add = _internal_mutable_areas()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.AreaDef.areas)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>& AreaDef::areas() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.AreaDef.areas)
+  return _internal_areas();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>&
+AreaDef::_internal_areas() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.areas_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Line>*
+AreaDef::_internal_mutable_areas() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.areas_;
+}
+
+// bool stacked = 3;
+inline void AreaDef::clear_stacked() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = false;
+}
+inline bool AreaDef::stacked() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.AreaDef.stacked)
+  return _internal_stacked();
+}
+inline void AreaDef::set_stacked(bool value) {
+  _internal_set_stacked(value);
+  // @@protoc_insertion_point(field_set:epoch_proto.AreaDef.stacked)
+}
+inline bool AreaDef::_internal_stacked() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.stacked_;
+}
+inline void AreaDef::_internal_set_stacked(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = value;
+}
+
+// optional .epoch_proto.StackType stack_type = 4;
+inline bool AreaDef::has_stack_type() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline void AreaDef::clear_stack_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stack_type_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline ::epoch_proto::StackType AreaDef::stack_type() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.AreaDef.stack_type)
+  return _internal_stack_type();
+}
+inline void AreaDef::set_stack_type(::epoch_proto::StackType value) {
+  _internal_set_stack_type(value);
+  _impl_._has_bits_[0] |= 0x00000002u;
+  // @@protoc_insertion_point(field_set:epoch_proto.AreaDef.stack_type)
+}
+inline ::epoch_proto::StackType AreaDef::_internal_stack_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::epoch_proto::StackType>(_impl_.stack_type_);
+}
+inline void AreaDef::_internal_set_stack_type(::epoch_proto::StackType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stack_type_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// BarData
+
+// string name = 1;
+inline void BarData::clear_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.ClearToEmpty();
+}
+inline const std::string& BarData::name() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.BarData.name)
+  return _internal_name();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void BarData::set_name(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:epoch_proto.BarData.name)
+}
+inline std::string* BarData::mutable_name() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.BarData.name)
+  return _s;
+}
+inline const std::string& BarData::_internal_name() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.name_.Get();
+}
+inline void BarData::_internal_set_name(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.Set(value, GetArena());
+}
+inline std::string* BarData::_internal_mutable_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.name_.Mutable( GetArena());
+}
+inline std::string* BarData::release_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.BarData.name)
+  return _impl_.name_.Release();
+}
+inline void BarData::set_allocated_name(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.BarData.name)
+}
+
+// repeated double values = 2;
+inline int BarData::_internal_values_size() const {
+  return _internal_values().size();
+}
+inline int BarData::values_size() const {
+  return _internal_values_size();
+}
+inline void BarData::clear_values() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.values_.Clear();
+}
+inline double BarData::values(int index) const {
+  // @@protoc_insertion_point(field_get:epoch_proto.BarData.values)
+  return _internal_values().Get(index);
+}
+inline void BarData::set_values(int index, double value) {
+  _internal_mutable_values()->Set(index, value);
+  // @@protoc_insertion_point(field_set:epoch_proto.BarData.values)
+}
+inline void BarData::add_values(double value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _internal_mutable_values()->Add(value);
+  // @@protoc_insertion_point(field_add:epoch_proto.BarData.values)
+}
+inline const ::google::protobuf::RepeatedField<double>& BarData::values() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.BarData.values)
+  return _internal_values();
+}
+inline ::google::protobuf::RepeatedField<double>* BarData::mutable_values()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.BarData.values)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_values();
+}
+inline const ::google::protobuf::RepeatedField<double>&
+BarData::_internal_values() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.values_;
+}
+inline ::google::protobuf::RepeatedField<double>* BarData::_internal_mutable_values() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.values_;
+}
+
+// optional string stack = 3;
+inline bool BarData::has_stack() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline void BarData::clear_stack() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stack_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& BarData::stack() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.BarData.stack)
+  return _internal_stack();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void BarData::set_stack(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.stack_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:epoch_proto.BarData.stack)
+}
+inline std::string* BarData::mutable_stack() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_stack();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.BarData.stack)
+  return _s;
+}
+inline const std::string& BarData::_internal_stack() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.stack_.Get();
+}
+inline void BarData::_internal_set_stack(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.stack_.Set(value, GetArena());
+}
+inline std::string* BarData::_internal_mutable_stack() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.stack_.Mutable( GetArena());
+}
+inline std::string* BarData::release_stack() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.BarData.stack)
+  if ((_impl_._has_bits_[0] & 0x00000001u) == 0) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* released = _impl_.stack_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.stack_.Set("", GetArena());
+  }
+  return released;
+}
+inline void BarData::set_allocated_stack(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.stack_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.stack_.IsDefault()) {
+    _impl_.stack_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.BarData.stack)
+}
+
+// -------------------------------------------------------------------
+
 // BarDef
 
 // .epoch_proto.ChartDef chart_def = 1;
@@ -6871,95 +7803,53 @@ inline void BarDef::set_allocated_chart_def(::epoch_proto::ChartDef* value) {
   // @@protoc_insertion_point(field_set_allocated:epoch_proto.BarDef.chart_def)
 }
 
-// .epoch_proto.Array data = 2;
-inline bool BarDef::has_data() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
-  PROTOBUF_ASSUME(!value || _impl_.data_ != nullptr);
-  return value;
+// repeated .epoch_proto.BarData data = 2;
+inline int BarDef::_internal_data_size() const {
+  return _internal_data().size();
 }
-inline const ::epoch_proto::Array& BarDef::_internal_data() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  const ::epoch_proto::Array* p = _impl_.data_;
-  return p != nullptr ? *p : reinterpret_cast<const ::epoch_proto::Array&>(::epoch_proto::_Array_default_instance_);
+inline int BarDef::data_size() const {
+  return _internal_data_size();
 }
-inline const ::epoch_proto::Array& BarDef::data() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+inline void BarDef::clear_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.Clear();
+}
+inline ::epoch_proto::BarData* BarDef::mutable_data(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.BarDef.data)
+  return _internal_mutable_data()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>* BarDef::mutable_data()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.BarDef.data)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_data();
+}
+inline const ::epoch_proto::BarData& BarDef::data(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
   // @@protoc_insertion_point(field_get:epoch_proto.BarDef.data)
+  return _internal_data().Get(index);
+}
+inline ::epoch_proto::BarData* BarDef::add_data() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::BarData* _add = _internal_mutable_data()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.BarDef.data)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>& BarDef::data() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.BarDef.data)
   return _internal_data();
 }
-inline void BarDef::unsafe_arena_set_allocated_data(::epoch_proto::Array* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (GetArena() == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.data_);
-  }
-  _impl_.data_ = reinterpret_cast<::epoch_proto::Array*>(value);
-  if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000002u;
-  } else {
-    _impl_._has_bits_[0] &= ~0x00000002u;
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.BarDef.data)
-}
-inline ::epoch_proto::Array* BarDef::release_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-
-  _impl_._has_bits_[0] &= ~0x00000002u;
-  ::epoch_proto::Array* released = _impl_.data_;
-  _impl_.data_ = nullptr;
-  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
-    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
-    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    if (GetArena() == nullptr) {
-      delete old;
-    }
-  } else {
-    if (GetArena() != nullptr) {
-      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    }
-  }
-  return released;
-}
-inline ::epoch_proto::Array* BarDef::unsafe_arena_release_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:epoch_proto.BarDef.data)
-
-  _impl_._has_bits_[0] &= ~0x00000002u;
-  ::epoch_proto::Array* temp = _impl_.data_;
-  _impl_.data_ = nullptr;
-  return temp;
-}
-inline ::epoch_proto::Array* BarDef::_internal_mutable_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.data_ == nullptr) {
-    auto* p = ::google::protobuf::Message::DefaultConstruct<::epoch_proto::Array>(GetArena());
-    _impl_.data_ = reinterpret_cast<::epoch_proto::Array*>(p);
-  }
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>&
+BarDef::_internal_data() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
   return _impl_.data_;
 }
-inline ::epoch_proto::Array* BarDef::mutable_data() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000002u;
-  ::epoch_proto::Array* _msg = _internal_mutable_data();
-  // @@protoc_insertion_point(field_mutable:epoch_proto.BarDef.data)
-  return _msg;
-}
-inline void BarDef::set_allocated_data(::epoch_proto::Array* value) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (message_arena == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.data_);
-  }
-
-  if (value != nullptr) {
-    ::google::protobuf::Arena* submessage_arena = reinterpret_cast<::google::protobuf::MessageLite*>(value)->GetArena();
-    if (message_arena != submessage_arena) {
-      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
-    }
-    _impl_._has_bits_[0] |= 0x00000002u;
-  } else {
-    _impl_._has_bits_[0] &= ~0x00000002u;
-  }
-
-  _impl_.data_ = reinterpret_cast<::epoch_proto::Array*>(value);
-  // @@protoc_insertion_point(field_set_allocated:epoch_proto.BarDef.data)
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::BarData>*
+BarDef::_internal_mutable_data() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.data_;
 }
 
 // repeated .epoch_proto.StraightLineDef straight_lines = 3;
@@ -7013,13 +7903,13 @@ BarDef::_internal_mutable_straight_lines() {
 
 // optional uint32 bar_width = 4;
 inline bool BarDef::has_bar_width() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline void BarDef::clear_bar_width() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.bar_width_ = 0u;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline ::uint32_t BarDef::bar_width() const {
   // @@protoc_insertion_point(field_get:epoch_proto.BarDef.bar_width)
@@ -7027,7 +7917,7 @@ inline ::uint32_t BarDef::bar_width() const {
 }
 inline void BarDef::set_bar_width(::uint32_t value) {
   _internal_set_bar_width(value);
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000002u;
   // @@protoc_insertion_point(field_set:epoch_proto.BarDef.bar_width)
 }
 inline ::uint32_t BarDef::_internal_bar_width() const {
@@ -7059,6 +7949,56 @@ inline bool BarDef::_internal_vertical() const {
 inline void BarDef::_internal_set_vertical(bool value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.vertical_ = value;
+}
+
+// bool stacked = 6;
+inline void BarDef::clear_stacked() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = false;
+}
+inline bool BarDef::stacked() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.BarDef.stacked)
+  return _internal_stacked();
+}
+inline void BarDef::set_stacked(bool value) {
+  _internal_set_stacked(value);
+  // @@protoc_insertion_point(field_set:epoch_proto.BarDef.stacked)
+}
+inline bool BarDef::_internal_stacked() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.stacked_;
+}
+inline void BarDef::_internal_set_stacked(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = value;
+}
+
+// optional .epoch_proto.StackType stack_type = 7;
+inline bool BarDef::has_stack_type() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline void BarDef::clear_stack_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stack_type_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline ::epoch_proto::StackType BarDef::stack_type() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.BarDef.stack_type)
+  return _internal_stack_type();
+}
+inline void BarDef::set_stack_type(::epoch_proto::StackType value) {
+  _internal_set_stack_type(value);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  // @@protoc_insertion_point(field_set:epoch_proto.BarDef.stack_type)
+}
+inline ::epoch_proto::StackType BarDef::_internal_stack_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::epoch_proto::StackType>(_impl_.stack_type_);
+}
+inline void BarDef::_internal_set_stack_type(::epoch_proto::StackType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stack_type_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -9092,6 +10032,85 @@ inline ::epoch_proto::PieDef* Chart::mutable_pie_def() ABSL_ATTRIBUTE_LIFETIME_B
   return _msg;
 }
 
+// .epoch_proto.AreaDef area_def = 8;
+inline bool Chart::has_area_def() const {
+  return chart_type_case() == kAreaDef;
+}
+inline bool Chart::_internal_has_area_def() const {
+  return chart_type_case() == kAreaDef;
+}
+inline void Chart::set_has_area_def() {
+  _impl_._oneof_case_[0] = kAreaDef;
+}
+inline void Chart::clear_area_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (chart_type_case() == kAreaDef) {
+    if (GetArena() == nullptr) {
+      delete _impl_.chart_type_.area_def_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.chart_type_.area_def_);
+    }
+    clear_has_chart_type();
+  }
+}
+inline ::epoch_proto::AreaDef* Chart::release_area_def() {
+  // @@protoc_insertion_point(field_release:epoch_proto.Chart.area_def)
+  if (chart_type_case() == kAreaDef) {
+    clear_has_chart_type();
+    auto* temp = _impl_.chart_type_.area_def_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.chart_type_.area_def_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::epoch_proto::AreaDef& Chart::_internal_area_def() const {
+  return chart_type_case() == kAreaDef ? *_impl_.chart_type_.area_def_ : reinterpret_cast<::epoch_proto::AreaDef&>(::epoch_proto::_AreaDef_default_instance_);
+}
+inline const ::epoch_proto::AreaDef& Chart::area_def() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.Chart.area_def)
+  return _internal_area_def();
+}
+inline ::epoch_proto::AreaDef* Chart::unsafe_arena_release_area_def() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:epoch_proto.Chart.area_def)
+  if (chart_type_case() == kAreaDef) {
+    clear_has_chart_type();
+    auto* temp = _impl_.chart_type_.area_def_;
+    _impl_.chart_type_.area_def_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Chart::unsafe_arena_set_allocated_area_def(::epoch_proto::AreaDef* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_chart_type();
+  if (value) {
+    set_has_area_def();
+    _impl_.chart_type_.area_def_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.Chart.area_def)
+}
+inline ::epoch_proto::AreaDef* Chart::_internal_mutable_area_def() {
+  if (chart_type_case() != kAreaDef) {
+    clear_chart_type();
+    set_has_area_def();
+    _impl_.chart_type_.area_def_ =
+        ::google::protobuf::Message::DefaultConstruct<::epoch_proto::AreaDef>(GetArena());
+  }
+  return _impl_.chart_type_.area_def_;
+}
+inline ::epoch_proto::AreaDef* Chart::mutable_area_def() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::epoch_proto::AreaDef* _msg = _internal_mutable_area_def();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.Chart.area_def)
+  return _msg;
+}
+
 inline bool Chart::has_chart_type() const {
   return chart_type_case() != CHART_TYPE_NOT_SET;
 }
@@ -9108,6 +10127,19 @@ inline Chart::ChartTypeCase Chart::chart_type_case() const {
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace epoch_proto
 
+
+namespace google {
+namespace protobuf {
+
+template <>
+struct is_proto_enum<::epoch_proto::StackType> : std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor<::epoch_proto::StackType>() {
+  return ::epoch_proto::StackType_descriptor();
+}
+
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 

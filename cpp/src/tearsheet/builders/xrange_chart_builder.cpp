@@ -6,26 +6,6 @@ XRangeChartBuilder::XRangeChartBuilder() {
     x_range_def_.mutable_chart_def()->set_type(epoch_proto::WidgetXRange);
 }
 
-XRangeChartBuilder& XRangeChartBuilder::setTitle(const std::string& title) {
-    x_range_def_.mutable_chart_def()->set_title(title);
-    return *this;
-}
-
-XRangeChartBuilder& XRangeChartBuilder::setCategory(const std::string& category) {
-    x_range_def_.mutable_chart_def()->set_category(category);
-    return *this;
-}
-
-XRangeChartBuilder& XRangeChartBuilder::setXAxisLabel(const std::string& label) {
-    x_range_def_.mutable_chart_def()->mutable_x_axis()->set_label(label);
-    return *this;
-}
-
-XRangeChartBuilder& XRangeChartBuilder::setYAxisLabel(const std::string& label) {
-    x_range_def_.mutable_chart_def()->mutable_y_axis()->set_label(label);
-    return *this;
-}
-
 XRangeChartBuilder& XRangeChartBuilder::addCategory(const std::string& category) {
     x_range_def_.add_categories(category);
     return *this;

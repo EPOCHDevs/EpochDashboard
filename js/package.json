@@ -35,8 +35,8 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "clsx": "^2.1.1",
-    "highcharts": "latest",
-    "highcharts-react-official": "latest",
+    "highcharts": "^11.4.8",
+    "highcharts-react-official": "^3.2.1",
     "ms": "^2.1.3",
     "next": "^15.5.4",
     "protobufjs": "latest"

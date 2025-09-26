@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "epoch_protos/chart_def.pb.h"
+#include "epoch_dashboard/tearsheet/chart_builder_base.h"
 #include "epoch_dashboard/tearsheet/chart_types.h"
 
 namespace epoch_frame {
@@ -13,12 +14,14 @@ namespace epoch_frame {
 
 namespace epoch_tearsheet {
 
-class PieChartBuilder {
+class PieChartBuilder : public ChartBuilderBase<PieChartBuilder> {
 public:
     PieChartBuilder();
 
-    PieChartBuilder& setTitle(const std::string& title);
-    PieChartBuilder& setCategory(const std::string& category);
+    // Required for CRTP base class
+    epoch_proto::ChartDef* getChartDefImpl() { return pie_def_.mutable_chart_def(); }
+
+    // Chart-specific methods
     PieChartBuilder& addSeries(const std::string& name,
                                 const std::vector<epoch_proto::PieData>& points,
                                 const PieSize& size,

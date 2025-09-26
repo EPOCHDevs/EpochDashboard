@@ -2,6 +2,14 @@ import { useState } from 'react'
 import Navigation from '../src/examples/components/Navigation'
 import CardExample from '../src/examples/pages/CardExample'
 import TableExample from '../src/examples/pages/TableExample'
+import LineChartExample from '../src/examples/pages/LineChartExample'
+import BarChartExample from '../src/examples/pages/BarChartExample'
+import AreaChartExample from '../src/examples/pages/AreaChartExample'
+import HeatMapExample from '../src/examples/pages/HeatMapExample'
+import PieChartExample from '../src/examples/pages/PieChartExample'
+import XRangeExample from '../src/examples/pages/XRangeExample'
+import HistogramExample from '../src/examples/pages/HistogramExample'
+import BoxPlotExample from '../src/examples/pages/BoxPlotExample'
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState('card')
@@ -13,19 +21,21 @@ export default function HomePage() {
       case 'table':
         return <TableExample />
       case 'line':
-        return <div className="text-secondary-ashGrey">Line chart coming soon...</div>
+        return <LineChartExample />
       case 'bar':
-        return <div className="text-secondary-ashGrey">Bar chart coming soon...</div>
+        return <BarChartExample />
+      case 'area':
+        return <AreaChartExample />
       case 'heatmap':
-        return <div className="text-secondary-ashGrey">Heatmap coming soon...</div>
+        return <HeatMapExample />
       case 'histogram':
-        return <div className="text-secondary-ashGrey">Histogram coming soon...</div>
+        return <HistogramExample />
       case 'boxplot':
-        return <div className="text-secondary-ashGrey">Box plot coming soon...</div>
+        return <BoxPlotExample />
       case 'xrange':
-        return <div className="text-secondary-ashGrey">X-Range coming soon...</div>
+        return <XRangeExample />
       case 'pie':
-        return <div className="text-secondary-ashGrey">Pie chart coming soon...</div>
+        return <PieChartExample />
       case 'full':
         return <div className="text-secondary-ashGrey">Full dashboard coming soon...</div>
       default:

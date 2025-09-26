@@ -11,24 +11,44 @@
     display: none;
   }
 
-  .scrollbar-horizontal-only {
-    /* Hide vertical scrollbar but keep horizontal */
-    -ms-overflow-style: none;
+  /* EpochWeb styled scrollbar - horizontal only */
+  .epoch-scrollbar-horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
   }
-  .scrollbar-horizontal-only::-webkit-scrollbar {
-    height: 8px; /* Horizontal scrollbar height */
-    width: 0px;  /* Hide vertical scrollbar */
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar {
+    height: 12px;
   }
-  .scrollbar-horizontal-only::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    margin: 0 8px;
   }
-  .scrollbar-horizontal-only::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
-  .scrollbar-horizontal-only::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: padding-box;
+  }
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.35);
+    background-clip: padding-box;
+  }
+
+  /* Force hide vertical scrollbar */
+  .epoch-scrollbar-horizontal::-webkit-scrollbar:vertical {
+    width: 0;
+    display: none;
   }
 }

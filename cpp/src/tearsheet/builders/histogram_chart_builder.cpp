@@ -8,26 +8,6 @@ HistogramChartBuilder::HistogramChartBuilder() {
     histogram_def_.mutable_chart_def()->set_type(epoch_proto::WidgetHistogram);
 }
 
-HistogramChartBuilder& HistogramChartBuilder::setTitle(const std::string& title) {
-    histogram_def_.mutable_chart_def()->set_title(title);
-    return *this;
-}
-
-HistogramChartBuilder& HistogramChartBuilder::setCategory(const std::string& category) {
-    histogram_def_.mutable_chart_def()->set_category(category);
-    return *this;
-}
-
-HistogramChartBuilder& HistogramChartBuilder::setXAxisLabel(const std::string& label) {
-    histogram_def_.mutable_chart_def()->mutable_x_axis()->set_label(label);
-    return *this;
-}
-
-HistogramChartBuilder& HistogramChartBuilder::setYAxisLabel(const std::string& label) {
-    histogram_def_.mutable_chart_def()->mutable_y_axis()->set_label(label);
-    return *this;
-}
-
 HistogramChartBuilder& HistogramChartBuilder::setData(const epoch_proto::Array& data) {
     *histogram_def_.mutable_data() = data;
     return *this;

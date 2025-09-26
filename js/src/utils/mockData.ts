@@ -71,10 +71,46 @@ export const createMockCardDef = (): CardDef => {
     }
   ]
 
+  // Add a third group with some null values to demonstrate proper handling
+  const cardDataGroup3: CardData[] = [
+    {
+      title: 'Pending Orders',
+      value: {
+        nullValue: 0  // Using epoch-proto null representation
+      } as Scalar,
+      type: EpochFolioType.TypeInteger,
+      group: 2
+    },
+    {
+      title: 'Next Rebalance',
+      value: {
+        nullValue: 0  // Using epoch-proto null representation
+      } as Scalar,
+      type: EpochFolioType.TypeDate,
+      group: 2
+    },
+    {
+      title: 'Volatility',
+      value: {
+        percentValue: 18.75
+      } as Scalar,
+      type: EpochFolioType.TypePercent,
+      group: 2
+    },
+    {
+      title: 'Beta',
+      value: {
+        decimalValue: 0.87
+      } as Scalar,
+      type: EpochFolioType.TypeDecimal,
+      group: 2
+    }
+  ]
+
   return {
     type: 1,
     category: 'Performance Metrics',
-    data: [...cardDataGroup1, ...cardDataGroup2],
+    data: [...cardDataGroup1, ...cardDataGroup2, ...cardDataGroup3],
     groupSize: 2
   }
 }

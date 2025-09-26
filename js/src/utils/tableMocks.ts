@@ -33,17 +33,20 @@ const generateRandomMockRow = (index: number): Scalar[] => {
     ? longNames[index % longNames.length]
     : `${strategies[index % strategies.length]} v${Math.floor(index / strategies.length) + 1}`
 
+  // Introduce some null values randomly (10% chance for numeric fields)
+  const shouldBeNull = () => Math.random() < 0.1
+
   return [
     { stringValue: strategyName } as Scalar,
     { integerValue: 1001 + index } as Scalar,
-    { decimalValue: (Math.random() - 0.3) * 50 } as Scalar,
-    { percentValue: Math.random() * 40 + 30 } as Scalar, // 30-70%
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { decimalValue: (Math.random() - 0.3) * 50 } as Scalar,
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { percentValue: Math.random() * 40 + 30 } as Scalar, // 30-70%
     { booleanValue: Math.random() > 0.3 } as Scalar,
     { timestampMs: Date.now() - Math.random() * 86400000 * 30 } as Scalar, // within 30 days
-    { dateValue: Date.now() - Math.random() * 86400000 * 365 * 3 } as Scalar, // within 3 years
-    { dayDuration: Math.floor(Math.random() * 1000) + 1 } as Scalar,
-    { monetaryValue: Math.floor(Math.random() * 50000000) } as Scalar,
-    { durationMs: Math.floor(Math.random() * 86400000) + 60000 } as Scalar // 1min to 24h
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { dateValue: Date.now() - Math.random() * 86400000 * 365 * 3 } as Scalar, // within 3 years
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { dayDuration: Math.floor(Math.random() * 1000) + 1 } as Scalar,
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { monetaryValue: Math.floor(Math.random() * 50000000) } as Scalar,
+    shouldBeNull() ? { nullValue: 0 } as Scalar : { durationMs: Math.floor(Math.random() * 86400000) + 60000 } as Scalar // 1min to 24h
   ]
 }
 
