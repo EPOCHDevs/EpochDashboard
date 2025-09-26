@@ -17,7 +17,7 @@ export type CardDef = InstanceType<typeof tableModule.epoch_proto.CardDef>
 export type Scalar = InstanceType<typeof commonModule.epoch_proto.Scalar>
 export type IScalar = InstanceType<typeof commonModule.epoch_proto.Scalar>
 
-// Chart types
+// Chart types - only export types that actually exist in the proto modules
 export type ChartDef = InstanceType<typeof chartModule.epoch_proto.ChartDef>
 export type AxisDef = InstanceType<typeof chartModule.epoch_proto.AxisDef>
 export type StraightLineDef = InstanceType<typeof chartModule.epoch_proto.StraightLineDef>
@@ -28,8 +28,24 @@ export type LinesDef = InstanceType<typeof chartModule.epoch_proto.LinesDef>
 export type HeatMapPoint = InstanceType<typeof chartModule.epoch_proto.HeatMapPoint>
 export type HeatMapDef = InstanceType<typeof chartModule.epoch_proto.HeatMapDef>
 export type BarDef = InstanceType<typeof chartModule.epoch_proto.BarDef>
-export type BarData = InstanceType<typeof chartModule.epoch_proto.BarData>
-export type AreaDef = InstanceType<typeof chartModule.epoch_proto.AreaDef>
+// BarData doesn't exist, using any for now
+export type BarData = any
+// AreaDef doesn't exist in proto, create interface
+export interface AreaDef {
+  chartDef?: ChartDef
+  areas?: Array<{
+    name?: string
+    data?: any[]
+    fillOpacity?: number
+    lineWidth?: number
+    dashStyle?: any
+  }>
+  xPlotBands?: Band[]
+  yPlotBands?: Band[]
+  straightLines?: StraightLineDef[]
+  stacked?: boolean
+  stackType?: any
+}
 export type HistogramDef = InstanceType<typeof chartModule.epoch_proto.HistogramDef>
 export type BoxPlotDataPoint = InstanceType<typeof chartModule.epoch_proto.BoxPlotDataPoint>
 export type BoxPlotOutlier = InstanceType<typeof chartModule.epoch_proto.BoxPlotOutlier>
@@ -47,4 +63,9 @@ export const EpochFolioType = commonModule.epoch_proto.EpochFolioType
 export const EpochFolioDashboardWidget = commonModule.epoch_proto.EpochFolioDashboardWidget
 export const AxisType = commonModule.epoch_proto.AxisType
 export const DashStyle = commonModule.epoch_proto.DashStyle
-export const StackType = chartModule.epoch_proto.StackType
+// StackType doesn't exist in proto, create enum
+export enum StackType {
+  StackTypeUnspecified = 0,
+  StackTypeNormal = 1,
+  StackTypePercent = 2
+}
