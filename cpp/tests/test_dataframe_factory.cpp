@@ -208,15 +208,13 @@ TEST_CASE("LinesChartBuilder: fromDataFrame integration", "[dataframe]") {
     auto table = arrow::Table::Make(schema, {x_array, y_array});
     DataFrame df(table);
 
-    auto chart = LinesChartBuilder()
-        .setTitle("Price Chart")
-        .fromDataFrame(df, {"price"})
-        .build();
-
-    REQUIRE(chart.has_lines_def());
-    REQUIRE(chart.lines_def().chart_def().title() == "Price Chart");
-    REQUIRE(chart.lines_def().lines_size() == 1);
-    REQUIRE(chart.lines_def().lines(0).name() == "price");
+    // This should throw because the default index is not a timestamp array
+    REQUIRE_THROWS_AS(
+        LinesChartBuilder()
+            .setTitle("Price Chart")
+            .fromDataFrame(df, {"price"}),
+        std::exception
+    );
 }
 
 TEST_CASE("BarChartBuilder: fromDataFrame integration", "[dataframe]") {

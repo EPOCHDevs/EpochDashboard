@@ -4,6 +4,7 @@
 #include <epoch_frame/series.h>
 #include <epoch_frame/factory/series_factory.h>
 #include <epoch_frame/factory/index_factory.h>
+#include <arrow/api.h>
 
 using namespace epoch_tearsheet;
 using namespace epoch_frame;
@@ -20,6 +21,20 @@ public:
         (void)builder.AppendValues(idx_values);
         auto idx_array = builder.Finish().ValueOrDie();
         return epoch_frame::factory::index::make_index(idx_array, std::nullopt, "index");
+    }
+
+    epoch_frame::IndexPtr createTimestampIndex(size_t size) {
+        // Create timestamp values in nanoseconds (starting from Jan 1, 2022)
+        std::vector<int64_t> timestamp_values;
+        int64_t base_timestamp = 1640995200000000000LL; // 2022-01-01 00:00:00 in nanoseconds
+        for (size_t i = 0; i < size; ++i) {
+            timestamp_values.push_back(base_timestamp + i * 60000000000LL); // Add 1 minute per point
+        }
+
+        arrow::TimestampBuilder builder(arrow::timestamp(arrow::TimeUnit::NANO), arrow::default_memory_pool());
+        (void)builder.AppendValues(timestamp_values);
+        auto timestamp_array = builder.Finish().ValueOrDie();
+        return epoch_frame::factory::index::make_index(timestamp_array, std::nullopt, "timestamp_index");
     }
 };
 
@@ -113,20 +128,25 @@ TEST_CASE("SeriesFactory: toTableRows", "[series]") {
 }
 
 TEST_CASE("SeriesFactory: empty series", "[series]") {
-    epoch_frame::Series empty_series;
+    SeriesFactoryTest fixture;
 
     SECTION("toArray") {
+        epoch_frame::Series empty_series;
         auto array = SeriesFactory::toArray(empty_series);
         REQUIRE(array.values_size() == 0);
     }
 
     SECTION("toLine") {
+        // Create an empty series with proper timestamp index
+        std::vector<double> empty_values;
+        auto empty_series = epoch_frame::make_series(fixture.createTimestampIndex(0), empty_values);
         auto line = SeriesFactory::toLine(empty_series, "empty");
         REQUIRE(line.name() == "empty");
         REQUIRE(line.data_size() == 0);
     }
 
     SECTION("toTableRows") {
+        epoch_frame::Series empty_series;
         auto rows = SeriesFactory::toTableRows(empty_series);
         REQUIRE(rows.empty());
     }
@@ -148,7 +168,7 @@ TEST_CASE("SeriesFactory: large series", "[series]") {
 TEST_CASE("SeriesFactory: toLine with style", "[series]") {
     SeriesFactoryTest fixture;
     std::vector<double> values = {10.0, 20.0, 30.0};
-    auto series = epoch_frame::make_series(fixture.createDefaultIndex(values.size()), values);
+    auto series = epoch_frame::make_series(fixture.createTimestampIndex(values.size()), values);
 
     LineStyle style;
     style.dash_style = epoch_proto::Dash;
@@ -162,6 +182,12 @@ TEST_CASE("SeriesFactory: toLine with style", "[series]") {
     REQUIRE(line.has_line_width());
     REQUIRE(line.line_width() == 3);
     REQUIRE(line.data_size() == 3);
+
+    // Check that timestamps were converted to milliseconds
+    // Base timestamp 1640995200000000000LL nanoseconds = 1640995200000LL milliseconds
+    REQUIRE(line.data(0).x() == 1640995200000LL);
+    REQUIRE(line.data(1).x() == 1640995260000LL); // +1 minute
+    REQUIRE(line.data(2).x() == 1640995320000LL); // +2 minutes
 }
 
 TEST_CASE("Series to proto types", "[series]") {

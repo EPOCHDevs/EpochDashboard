@@ -1,7 +1,9 @@
 #include "epoch_dashboard/tearsheet/series_converter.h"
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
+#include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include <epoch_frame/series.h>
 #include <epoch_frame/index.h>
+#include <arrow/api.h>
 
 namespace epoch_tearsheet {
 
@@ -30,9 +32,18 @@ epoch_proto::Line SeriesFactory::toLine(const epoch_frame::Series& series,
     }
 
     auto index = series.index();
+    auto timestamp_array = index->array().to_timestamp_view();
+
+    // Get the timestamp type to determine the time unit
+    auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
+    auto time_unit = timestamp_type->unit();
+
     for (uint64_t i = 0; i < series.size(); ++i) {
         auto* point = line.add_data();
-        point->set_x(static_cast<int64_t>(index->at(i).as_double()));
+
+        // Convert timestamp to milliseconds using the proper time unit
+        int64_t timestamp_value = timestamp_array->Value(i);
+        point->set_x(DataFrameFactory::toMilliseconds(timestamp_value, time_unit));
         point->set_y(series.iloc(i).as_double());
     }
 

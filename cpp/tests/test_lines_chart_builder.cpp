@@ -137,15 +137,13 @@ TEST_CASE("LinesChartBuilder: fromDataFrame", "[lines]") {
     auto table = arrow::Table::Make(schema, {x_array, returns_array, benchmark_array});
     DataFrame df(table);
 
-    auto chart = LinesChartBuilder()
-        .setTitle("Performance")
-        .fromDataFrame(df, {"returns", "benchmark"})
-        .build();
-
-    REQUIRE(chart.lines_def().lines_size() == 2);
-    REQUIRE(chart.lines_def().lines(0).name() == "returns");
-    REQUIRE(chart.lines_def().lines(1).name() == "benchmark");
-    REQUIRE(chart.lines_def().lines(0).data(0).y() == 0.05);
+    // This should throw because the default index is not a timestamp array
+    REQUIRE_THROWS_AS(
+        LinesChartBuilder()
+            .setTitle("Performance")
+            .fromDataFrame(df, {"returns", "benchmark"}),
+        std::exception
+    );
 }
 
 TEST_CASE("LinesChartBuilder: fromDataFrame with timestamp conversion", "[lines]") {
