@@ -3,6 +3,7 @@
 #include "epoch_dashboard/tearsheet/line_builder.h"
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
 #include <epoch_frame/dataframe.h>
+#include <epoch_frame/factory/index_factory.h>
 #include <arrow/api.h>
 
 using namespace epoch_tearsheet;
@@ -168,36 +169,43 @@ TEST_CASE("AreaChartBuilder: Method chaining", "[area]") {
 }
 
 TEST_CASE("AreaChartBuilder: fromDataFrame", "[area]") {
-    std::vector<double> x = {1.0, 2.0, 3.0};
     std::vector<double> revenue = {100.0, 150.0, 200.0};
     std::vector<double> cost = {50.0, 70.0, 90.0};
     std::vector<double> profit = {50.0, 80.0, 110.0};
 
-    arrow::DoubleBuilder x_builder, revenue_builder, cost_builder, profit_builder;
-    REQUIRE(x_builder.AppendValues(x).ok());
+    // Create timestamp index (like lines chart)
+    std::vector<int64_t> timestamp_values;
+    int64_t base_timestamp = 1640995200000000000LL; // 2022-01-01 00:00:00 in nanoseconds
+    for (size_t i = 0; i < revenue.size(); ++i) {
+        timestamp_values.push_back(base_timestamp + i * 60000000000LL); // Add 1 minute per point
+    }
+
+    arrow::TimestampBuilder timestamp_builder(arrow::timestamp(arrow::TimeUnit::NANO), arrow::default_memory_pool());
+    arrow::DoubleBuilder revenue_builder, cost_builder, profit_builder;
+    REQUIRE(timestamp_builder.AppendValues(timestamp_values).ok());
     REQUIRE(revenue_builder.AppendValues(revenue).ok());
     REQUIRE(cost_builder.AppendValues(cost).ok());
     REQUIRE(profit_builder.AppendValues(profit).ok());
 
-    std::shared_ptr<arrow::Array> x_array, revenue_array, cost_array, profit_array;
-    REQUIRE(x_builder.Finish(&x_array).ok());
+    std::shared_ptr<arrow::Array> timestamp_array, revenue_array, cost_array, profit_array;
+    REQUIRE(timestamp_builder.Finish(&timestamp_array).ok());
     REQUIRE(revenue_builder.Finish(&revenue_array).ok());
     REQUIRE(cost_builder.Finish(&cost_array).ok());
     REQUIRE(profit_builder.Finish(&profit_array).ok());
 
     auto schema = arrow::schema({
-        arrow::field("month", arrow::float64()),
         arrow::field("revenue", arrow::float64()),
         arrow::field("cost", arrow::float64()),
         arrow::field("profit", arrow::float64())
     });
 
-    auto table = arrow::Table::Make(schema, {x_array, revenue_array, cost_array, profit_array});
-    DataFrame df(table);
+    auto table = arrow::Table::Make(schema, {revenue_array, cost_array, profit_array});
+    auto timestamp_index = epoch_frame::factory::index::make_index(timestamp_array, std::nullopt, "timestamp_index");
+    DataFrame df(timestamp_index, table);
 
     auto chart = AreaChartBuilder()
         .setTitle("Financial Areas")
-        .fromDataFrame(df, "month", {"revenue", "cost", "profit"})
+        .fromDataFrame(df, {"revenue", "cost", "profit"})
         .setStacked(true)
         .build();
 
@@ -205,9 +213,18 @@ TEST_CASE("AreaChartBuilder: fromDataFrame", "[area]") {
     REQUIRE(chart.area_def().areas(0).name() == "revenue");
     REQUIRE(chart.area_def().areas(1).name() == "cost");
     REQUIRE(chart.area_def().areas(2).name() == "profit");
-    // Note: The fromDataFrame implementation is simplified and doesn't extract actual data yet
-    // REQUIRE(chart.area_def().areas(0).data(0).y() == 100.0);
     REQUIRE(chart.area_def().stacked() == true);
+
+    // Verify actual data points were created
+    REQUIRE(chart.area_def().areas(0).data_size() == 3);
+    REQUIRE(chart.area_def().areas(0).data(0).y() == 100.0);
+    REQUIRE(chart.area_def().areas(0).data(1).y() == 150.0);
+    REQUIRE(chart.area_def().areas(0).data(2).y() == 200.0);
+
+    // Verify timestamps were converted to milliseconds
+    REQUIRE(chart.area_def().areas(0).data(0).x() == 1640995200000LL);
+    REQUIRE(chart.area_def().areas(0).data(1).x() == 1640995260000LL); // +1 minute
+    REQUIRE(chart.area_def().areas(0).data(2).x() == 1640995320000LL); // +2 minutes
 }
 
 TEST_CASE("AreaChartBuilder: Empty areas", "[area]") {

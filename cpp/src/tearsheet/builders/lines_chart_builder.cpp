@@ -1,5 +1,6 @@
 #include "epoch_dashboard/tearsheet/lines_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
+#include "epoch_protos/common.pb.h"
 #include <arrow/api.h>
 #include <epoch_frame/dataframe.h>
 #include <epoch_frame/index.h>
@@ -88,6 +89,19 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
     }
 
     addLines(lines);
+
+    // Set appropriate axis definitions for timestamp-based data
+    setXAxisType(epoch_proto::AxisDateTime);
+    setYAxisType(epoch_proto::AxisLinear);
+
+    // Set default axis labels if not already set
+    if (!getChartDef()->x_axis().has_label()) {
+        setXAxisLabel("Time");
+    }
+    if (!getChartDef()->y_axis().has_label()) {
+        setYAxisLabel("Value");
+    }
+
     return *this;
 }
 

@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/bar_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include "epoch_dashboard/tearsheet/series_converter.h"
+#include "epoch_protos/common.pb.h"
 
 namespace epoch_tearsheet {
 
@@ -66,6 +67,19 @@ BarChartBuilder& BarChartBuilder::fromSeries(const epoch_frame::Series& series) 
             bar_data->add_values(static_cast<double>(scalar.integer_value()));
         }
     }
+
+    // Set appropriate axis definitions for bar charts
+    setXAxisType(epoch_proto::AxisCategory);
+    setYAxisType(epoch_proto::AxisLinear);
+
+    // Set default axis labels if not already set
+    if (!getChartDef()->x_axis().has_label()) {
+        setXAxisLabel("Category");
+    }
+    if (!getChartDef()->y_axis().has_label()) {
+        setYAxisLabel("Value");
+    }
+
     return *this;
 }
 
@@ -82,6 +96,19 @@ BarChartBuilder& BarChartBuilder::fromDataFrame(const epoch_frame::DataFrame& df
             bar_data->add_values(static_cast<double>(scalar.integer_value()));
         }
     }
+
+    // Set appropriate axis definitions for bar charts
+    setXAxisType(epoch_proto::AxisCategory);
+    setYAxisType(epoch_proto::AxisLinear);
+
+    // Set default axis labels if not already set
+    if (!getChartDef()->x_axis().has_label()) {
+        setXAxisLabel("Category");
+    }
+    if (!getChartDef()->y_axis().has_label()) {
+        setYAxisLabel(column);  // Use column name as label
+    }
+
     return *this;
 }
 

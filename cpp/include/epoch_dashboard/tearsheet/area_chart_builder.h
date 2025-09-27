@@ -24,7 +24,7 @@ public:
     AreaChartBuilder& addAreas(const std::vector<epoch_proto::Line>& areas);
     AreaChartBuilder& setStacked(bool stacked);
     AreaChartBuilder& setStackType(epoch_proto::StackType stack_type);
-    AreaChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::string& x_col, const std::vector<std::string>& y_cols);
+    AreaChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::vector<std::string>& y_cols);
 
     epoch_proto::Chart build() const;
 
