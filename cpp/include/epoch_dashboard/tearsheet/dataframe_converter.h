@@ -6,6 +6,7 @@
 #include "epoch_protos/chart_def.pb.h"
 #include "epoch_protos/table_def.pb.h"
 #include "epoch_protos/common.pb.h"
+#include <arrow/api.h>
 
 namespace epoch_frame {
     class DataFrame;
@@ -53,6 +54,8 @@ public:
 
     static epoch_proto::EpochFolioType inferColumnType(const epoch_frame::DataFrame& df,
                                                        const std::string& column_name);
+
+    static int64_t toMilliseconds(int64_t timestamp_value, arrow::TimeUnit::type unit);
 };
 
 } // namespace epoch_tearsheet

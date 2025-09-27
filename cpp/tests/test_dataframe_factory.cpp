@@ -210,7 +210,7 @@ TEST_CASE("LinesChartBuilder: fromDataFrame integration", "[dataframe]") {
 
     auto chart = LinesChartBuilder()
         .setTitle("Price Chart")
-        .fromDataFrame(df, "date", {"price"})
+        .fromDataFrame(df, {"price"})
         .build();
 
     REQUIRE(chart.has_lines_def());

@@ -27,7 +27,7 @@ public:
     LinesChartBuilder& addXPlotBand(const epoch_proto::Band& band);
     LinesChartBuilder& setOverlay(const epoch_proto::Line& overlay);
     LinesChartBuilder& setStacked(bool stacked);
-    LinesChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::string& x_col, const std::vector<std::string>& y_cols);
+    LinesChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::vector<std::string>& y_cols);
 
     epoch_proto::Chart build() const;
 

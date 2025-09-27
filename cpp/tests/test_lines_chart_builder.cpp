@@ -2,7 +2,9 @@
 #include "epoch_dashboard/tearsheet/lines_chart_builder.h"
 #include "epoch_dashboard/tearsheet/line_builder.h"
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
+#include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include <epoch_frame/dataframe.h>
+#include <epoch_frame/index.h>
 #include <arrow/api.h>
 
 using namespace epoch_tearsheet;
@@ -137,11 +139,67 @@ TEST_CASE("LinesChartBuilder: fromDataFrame", "[lines]") {
 
     auto chart = LinesChartBuilder()
         .setTitle("Performance")
-        .fromDataFrame(df, "date", {"returns", "benchmark"})
+        .fromDataFrame(df, {"returns", "benchmark"})
         .build();
 
     REQUIRE(chart.lines_def().lines_size() == 2);
     REQUIRE(chart.lines_def().lines(0).name() == "returns");
     REQUIRE(chart.lines_def().lines(1).name() == "benchmark");
     REQUIRE(chart.lines_def().lines(0).data(0).y() == 0.05);
+}
+
+TEST_CASE("LinesChartBuilder: fromDataFrame with timestamp conversion", "[lines]") {
+    // Test that fromDataFrame properly throws when index is not a timestamp array
+    std::vector<double> returns = {0.05, 0.03, 0.07};
+
+    arrow::DoubleBuilder returns_builder;
+    REQUIRE(returns_builder.AppendValues(returns).ok());
+
+    std::shared_ptr<arrow::Array> returns_array;
+    REQUIRE(returns_builder.Finish(&returns_array).ok());
+
+    auto schema = arrow::schema({
+        arrow::field("returns", arrow::float64())
+    });
+
+    auto table = arrow::Table::Make(schema, {returns_array});
+    DataFrame df(table);
+
+    // This should throw because the default index is not a timestamp array
+    REQUIRE_THROWS_AS(
+        LinesChartBuilder()
+            .setTitle("Performance with Non-Timestamp Index")
+            .fromDataFrame(df, {"returns"}),
+        std::exception
+    );
+}
+
+TEST_CASE("DataFrameFactory: toMilliseconds conversion", "[dataframe]") {
+    // Test the standalone conversion function
+    int64_t test_value = 1640995200000000000LL; // 2022-01-01 00:00:00 in nanoseconds
+
+    SECTION("Nanoseconds to milliseconds") {
+        auto result = DataFrameFactory::toMilliseconds(test_value, arrow::TimeUnit::NANO);
+        REQUIRE(result == 1640995200000LL);
+    }
+
+    SECTION("Microseconds to milliseconds") {
+        auto result = DataFrameFactory::toMilliseconds(1640995200000000LL, arrow::TimeUnit::MICRO);
+        REQUIRE(result == 1640995200000LL);
+    }
+
+    SECTION("Milliseconds to milliseconds") {
+        auto result = DataFrameFactory::toMilliseconds(1640995200000LL, arrow::TimeUnit::MILLI);
+        REQUIRE(result == 1640995200000LL);
+    }
+
+    SECTION("Seconds to milliseconds") {
+        auto result = DataFrameFactory::toMilliseconds(1640995200LL, arrow::TimeUnit::SECOND);
+        REQUIRE(result == 1640995200000LL);
+    }
+
+    SECTION("Default case (unknown unit) defaults to nanoseconds") {
+        auto result = DataFrameFactory::toMilliseconds(test_value, static_cast<arrow::TimeUnit::type>(99));
+        REQUIRE(result == 1640995200000LL);
+    }
 }

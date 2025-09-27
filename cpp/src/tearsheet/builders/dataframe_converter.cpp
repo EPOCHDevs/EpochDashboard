@@ -256,4 +256,20 @@ epoch_proto::EpochFolioType DataFrameFactory::inferColumnType(const epoch_frame:
     }
 }
 
+int64_t DataFrameFactory::toMilliseconds(int64_t timestamp_value, arrow::TimeUnit::type unit) {
+    switch (unit) {
+        case arrow::TimeUnit::NANO:
+            return timestamp_value / 1000000;
+        case arrow::TimeUnit::MICRO:
+            return timestamp_value / 1000;
+        case arrow::TimeUnit::MILLI:
+            return timestamp_value;
+        case arrow::TimeUnit::SECOND:
+            return timestamp_value * 1000;
+        default:
+            // Default to nanoseconds for unknown units
+            return timestamp_value / 1000000;
+    }
+}
+
 } // namespace epoch_tearsheet
