@@ -94,14 +94,6 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
     setXAxisType(epoch_proto::AxisDateTime);
     setYAxisType(epoch_proto::AxisLinear);
 
-    // Set default axis labels if not already set
-    if (!getChartDef()->x_axis().has_label()) {
-        setXAxisLabel("Time");
-    }
-    if (!getChartDef()->y_axis().has_label()) {
-        setYAxisLabel("Value");
-    }
-
     return *this;
 }
 

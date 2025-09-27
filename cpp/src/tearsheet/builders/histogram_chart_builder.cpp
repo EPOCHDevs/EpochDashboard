@@ -32,14 +32,6 @@ HistogramChartBuilder& HistogramChartBuilder::fromSeries(const epoch_frame::Seri
     setXAxisType(epoch_proto::AxisLinear);
     setYAxisType(epoch_proto::AxisLinear);
 
-    // Set default axis labels if not already set
-    if (!getChartDef()->x_axis().has_label()) {
-        setXAxisLabel("Value");
-    }
-    if (!getChartDef()->y_axis().has_label()) {
-        setYAxisLabel("Frequency");
-    }
-
     return *this;
 }
 
