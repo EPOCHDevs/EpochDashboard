@@ -23,12 +23,7 @@ public:
                                    const std::string& name = "",
                                    const LineStyle& style = {});
 
-    static epoch_proto::Point toPoint(const epoch_frame::Series& x_series,
-                                     const epoch_frame::Series& y_series,
-                                     uint64_t index);
-
-    static std::vector<epoch_proto::Point> toPoints(const epoch_frame::Series& x_series,
-                                                    const epoch_frame::Series& y_series);
+    static std::vector<epoch_proto::Point> toPoints(const epoch_frame::Series& y_series);
 
     static epoch_proto::TableRow toTableRow(const epoch_frame::Series& series, uint64_t index);
 

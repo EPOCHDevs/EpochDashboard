@@ -18,6 +18,18 @@ epoch_proto::Array SeriesFactory::toArray(const epoch_frame::Series& series) {
     return array;
 }
 
+    epoch_proto::Point toPoint(const std::shared_ptr<arrow::TimestampArray>& indexArr,
+arrow::TimeUnit::type const& time_unit,
+const std::shared_ptr<arrow::DoubleArray>& arr,
+                                          uint64_t index) {
+    epoch_proto::Point point;
+
+    int64_t timestamp_value = indexArr->Value(index);
+    point.set_x(DataFrameFactory::toMilliseconds(timestamp_value, time_unit));
+    point.set_y(arr->Value(index));
+    return point;
+}
+
 epoch_proto::Line SeriesFactory::toLine(const epoch_frame::Series& series,
                                         const std::string& name,
                                         const LineStyle& style) {
@@ -32,41 +44,35 @@ epoch_proto::Line SeriesFactory::toLine(const epoch_frame::Series& series,
     }
 
     auto index = series.index();
-    auto timestamp_array = index->array().to_timestamp_view();
+    const auto timestamp_array = index->array().to_timestamp_view();
 
     // Get the timestamp type to determine the time unit
-    auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
-    auto time_unit = timestamp_type->unit();
+    const auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
+    const auto time_unit = timestamp_type->unit();
+
+    const auto arr = series.contiguous_array().to_view<double>();
 
     for (uint64_t i = 0; i < series.size(); ++i) {
-        auto* point = line.add_data();
-
-        // Convert timestamp to milliseconds using the proper time unit
-        int64_t timestamp_value = timestamp_array->Value(i);
-        point->set_x(DataFrameFactory::toMilliseconds(timestamp_value, time_unit));
-        point->set_y(series.iloc(i).as_double());
+        *line.add_data() = toPoint(timestamp_array, time_unit, arr, i);
     }
 
     return line;
 }
 
-epoch_proto::Point SeriesFactory::toPoint(const epoch_frame::Series& x_series,
-                                          const epoch_frame::Series& y_series,
-                                          uint64_t index) {
-    epoch_proto::Point point;
-    point.set_x(static_cast<int64_t>(x_series.iloc(index).as_double()));
-    point.set_y(y_series.iloc(index).as_double());
-    return point;
-}
-
-std::vector<epoch_proto::Point> SeriesFactory::toPoints(const epoch_frame::Series& x_series,
-                                                         const epoch_frame::Series& y_series) {
+std::vector<epoch_proto::Point> SeriesFactory::toPoints(const epoch_frame::Series& y_series) {
     std::vector<epoch_proto::Point> points;
-    uint64_t size = std::min(x_series.size(), y_series.size());
+    uint64_t size = y_series.size();
     points.reserve(size);
 
+    auto index = y_series.index();
+    auto timestamp_array = index->array().to_timestamp_view();
+
+    auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
+    auto time_unit = timestamp_type->unit();
+
+    auto arr = y_series.contiguous_array().to_view<double>();
     for (uint64_t i = 0; i < size; ++i) {
-        points.push_back(toPoint(x_series, y_series, i));
+        points.push_back(toPoint( timestamp_array, time_unit, arr, i));
     }
 
     return points;

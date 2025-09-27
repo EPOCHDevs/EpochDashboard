@@ -54,49 +54,51 @@ TEST_CASE("SeriesFactory: toArray", "[series]") {
 }
 
 
-TEST_CASE("SeriesFactory: toPoint", "[series]") {
+TEST_CASE("SeriesFactory: debug timestamp array creation", "[series]") {
     SeriesFactoryTest fixture;
-    std::vector<double> x_vals = {1.0, 2.0, 3.0};
     std::vector<double> y_vals = {10.0, 20.0, 30.0};
 
-    auto x_series = epoch_frame::make_series(fixture.createDefaultIndex(x_vals.size()), x_vals);
-    auto y_series = epoch_frame::make_series(fixture.createDefaultIndex(y_vals.size()), y_vals);
+    auto y_series = epoch_frame::make_series(fixture.createTimestampIndex(y_vals.size()), y_vals);
 
-    auto point = SeriesFactory::toPoint(x_series, y_series, 1);
+    // Test that we can create a line from this series (this works)
+    auto line = SeriesFactory::toLine(y_series, "test_line");
+    REQUIRE(line.data_size() == 3);
 
-    REQUIRE(point.x() == 2);
+    // Now test that toPoints also works
+    auto points = SeriesFactory::toPoints(y_series);
+    auto point = points[1];
+
+    // Timestamp should be converted to milliseconds: base + 1 minute = 1640995200000 + 60000 = 1640995260000
+    REQUIRE(point.x() == 1640995260000LL);
     REQUIRE_THAT(point.y(), WithinAbs(20.0, 0.001));
 }
 
-TEST_CASE("SeriesFactory: toPoints", "[series]") {
+TEST_CASE("SeriesFactory: toPoints with timestamp index", "[series]") {
     SeriesFactoryTest fixture;
-    std::vector<double> x_vals = {1.0, 2.0, 3.0, 4.0};
     std::vector<double> y_vals = {5.0, 10.0, 15.0, 20.0};
 
-    auto x_series = epoch_frame::make_series(fixture.createDefaultIndex(x_vals.size()), x_vals);
-    auto y_series = epoch_frame::make_series(fixture.createDefaultIndex(y_vals.size()), y_vals);
+    auto y_series = epoch_frame::make_series(fixture.createTimestampIndex(y_vals.size()), y_vals);
 
-    auto points = SeriesFactory::toPoints(x_series, y_series);
+    auto points = SeriesFactory::toPoints(y_series);
 
     REQUIRE(points.size() == 4);
 
+    // Check timestamps are converted to milliseconds
+    int64_t base_timestamp_ms = 1640995200000LL; // Base timestamp in milliseconds
     for (size_t i = 0; i < 4; ++i) {
-        REQUIRE(points[i].x() == static_cast<int64_t>(x_vals[i]));
+        REQUIRE(points[i].x() == base_timestamp_ms + (i * 60000)); // +1 minute per point in ms
         REQUIRE_THAT(points[i].y(), WithinAbs(y_vals[i], 0.001));
     }
 }
 
-TEST_CASE("SeriesFactory: toPoints with mismatched sizes", "[series]") {
+TEST_CASE("SeriesFactory: toPoints fails with non-timestamp index", "[series]") {
     SeriesFactoryTest fixture;
-    std::vector<double> x_vals = {1.0, 2.0, 3.0};
-    std::vector<double> y_vals = {5.0, 10.0, 15.0, 20.0, 25.0};
+    std::vector<double> y_vals = {5.0, 10.0, 15.0};
 
-    auto x_series = epoch_frame::make_series(fixture.createDefaultIndex(x_vals.size()), x_vals);
     auto y_series = epoch_frame::make_series(fixture.createDefaultIndex(y_vals.size()), y_vals);
 
-    auto points = SeriesFactory::toPoints(x_series, y_series);
-
-    REQUIRE(points.size() == 3);
+    // This should throw an exception since toPoints expects a timestamp index
+    REQUIRE_THROWS(SeriesFactory::toPoints(y_series));
 }
 
 TEST_CASE("SeriesFactory: toTableRow", "[series]") {

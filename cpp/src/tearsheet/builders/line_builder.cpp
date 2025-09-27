@@ -33,7 +33,7 @@ LineBuilder& LineBuilder::addPoints(const std::vector<epoch_proto::Point>& point
 }
 
 LineBuilder& LineBuilder::fromSeries(const epoch_frame::Series& series) {
-    auto points = SeriesFactory::toPoints(series, series);
+    auto points = SeriesFactory::toPoints(series);
     addPoints(points);
     return *this;
 }
