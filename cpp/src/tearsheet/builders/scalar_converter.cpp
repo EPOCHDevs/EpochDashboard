@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
 #include <epoch_frame/scalar.h>
 #include <arrow/type.h>
+#include <stdexcept>
 
 namespace epoch_tearsheet {
 
@@ -15,9 +16,7 @@ epoch_proto::Scalar ScalarFactory::create(const epoch_frame::Scalar& scalar) {
     auto type = scalar.type();
     switch (type->id()) {
         case arrow::Type::BOOL:
-            if (auto bool_scalar = scalar.cast(arrow::boolean()).as_bool()) {
-                result.set_boolean_value(bool_scalar);
-            }
+            result.set_boolean_value(scalar.cast(arrow::boolean()).as_bool());
             break;
         case arrow::Type::INT8:
         case arrow::Type::INT16:
@@ -27,25 +26,38 @@ epoch_proto::Scalar ScalarFactory::create(const epoch_frame::Scalar& scalar) {
         case arrow::Type::UINT16:
         case arrow::Type::UINT32:
         case arrow::Type::UINT64:
-            if (auto int_scalar = scalar.cast(arrow::int64()).as_int64()) {
-                result.set_integer_value(int_scalar);
-            }
+            result.set_integer_value(scalar.cast(arrow::int64()).as_int64());
             break;
         case arrow::Type::FLOAT:
         case arrow::Type::DOUBLE:
-            if (auto double_scalar = scalar.cast(arrow::float64()).as_double()) {
-                result.set_decimal_value(double_scalar);
-            }
+            result.set_decimal_value(scalar.cast(arrow::float64()).as_double());
             break;
         case arrow::Type::STRING:
         case arrow::Type::LARGE_STRING:
             result.set_string_value(scalar.repr());
             break;
-        case arrow::Type::TIMESTAMP:
-            if (auto timestamp_scalar = scalar.cast(arrow::int64()).as_int64()) {
-                result.set_timestamp_ms(timestamp_scalar / 1000000);
+        case arrow::Type::TIMESTAMP: {
+            auto ts_type = std::static_pointer_cast<arrow::TimestampType>(type);
+            auto unit = ts_type->unit();
+            int64_t timestamp_value = scalar.cast(arrow::int64()).as_int64();
+
+            // Convert to milliseconds based on the time unit
+            switch (unit) {
+                case arrow::TimeUnit::SECOND:
+                    result.set_timestamp_ms(timestamp_value * 1000);
+                    break;
+                case arrow::TimeUnit::MILLI:
+                    result.set_timestamp_ms(timestamp_value);
+                    break;
+                case arrow::TimeUnit::MICRO:
+                    result.set_timestamp_ms(timestamp_value / 1000);
+                    break;
+                case arrow::TimeUnit::NANO:
+                    result.set_timestamp_ms(timestamp_value / 1000000);
+                    break;
             }
             break;
+        }
         default:
             result.set_string_value(scalar.repr());
             break;

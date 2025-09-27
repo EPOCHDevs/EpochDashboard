@@ -108,3 +108,44 @@ TEST_CASE("ScalarFactory: epoch_frame::Scalar conversion", "[scalar]") {
         REQUIRE(proto.has_null_value());
     }
 }
+
+TEST_CASE("ScalarFactory: comprehensive tests for bug fixes", "[scalar]") {
+    SECTION("string uses repr()") {
+        Scalar string_scalar(std::string("test string"));
+        auto result = ScalarFactory::create(string_scalar);
+
+        REQUIRE(result.has_string_value());
+        REQUIRE(result.string_value() == "test string");
+    }
+
+    SECTION("large integers") {
+        Scalar large_scalar(INT64_MAX);
+        auto result = ScalarFactory::create(large_scalar);
+
+        REQUIRE(result.has_integer_value());
+        REQUIRE(result.integer_value() == INT64_MAX);
+    }
+
+    SECTION("cast operations work") {
+        // Test different numeric types
+        Scalar int_scalar(42);
+        auto int_result = ScalarFactory::create(int_scalar);
+
+        REQUIRE(int_result.has_integer_value());
+        REQUIRE(int_result.integer_value() == 42);
+
+        Scalar double_scalar(3.14159);
+        auto double_result = ScalarFactory::create(double_scalar);
+
+        REQUIRE(double_result.has_decimal_value());
+        REQUIRE_THAT(double_result.decimal_value(), WithinAbs(3.14159, 0.00001));
+    }
+
+    SECTION("infinity handling") {
+        Scalar inf_scalar(std::numeric_limits<double>::infinity());
+        auto result = ScalarFactory::create(inf_scalar);
+
+        REQUIRE(result.has_decimal_value());
+        REQUIRE(std::isinf(result.decimal_value()));
+    }
+}

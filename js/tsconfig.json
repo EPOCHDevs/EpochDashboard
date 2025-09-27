@@ -22,28 +22,28 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "packages/epoch-dashboard/src/*"
       ],
       "@components/*": [
-        "src/components/*"
+        "packages/epoch-dashboard/src/components/*"
       ],
       "@hooks/*": [
-        "src/hooks/*"
+        "packages/epoch-dashboard/src/hooks/*"
       ],
       "@utils/*": [
-        "src/utils/*"
+        "packages/epoch-dashboard/src/utils/*"
       ],
       "@types/*": [
-        "src/types/*"
+        "packages/epoch-dashboard/src/types/*"
       ],
       "@config/*": [
-        "src/config/*"
+        "packages/epoch-dashboard/src/config/*"
       ],
       "@services/*": [
-        "src/services/*"
+        "packages/epoch-dashboard/src/services/*"
       ],
       "@context/*": [
-        "src/context/*"
+        "packages/epoch-dashboard/src/context/*"
       ]
     },
     "declaration": true,
@@ -55,7 +55,7 @@
     "incremental": true
   },
   "include": [
-    "src"
+    "packages/epoch-dashboard/src"
   ],
   "exclude": [
     "node_modules",
