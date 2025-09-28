@@ -18,7 +18,7 @@ epoch_proto::Array SeriesFactory::toArray(const epoch_frame::Series& series) {
     return array;
 }
 
-    epoch_proto::Point toPoint(const std::shared_ptr<arrow::TimestampArray>& indexArr,
+    epoch_proto::Point toPointFromTimestamp(const std::shared_ptr<arrow::TimestampArray>& indexArr,
 arrow::TimeUnit::type const& time_unit,
 const std::shared_ptr<arrow::DoubleArray>& arr,
                                           uint64_t index) {
@@ -29,6 +29,29 @@ const std::shared_ptr<arrow::DoubleArray>& arr,
     point.set_y(arr->Value(index));
     return point;
 }
+
+epoch_proto::Point toPointFromInt64(const std::shared_ptr<arrow::Int64Array>& indexArr,
+const std::shared_ptr<arrow::DoubleArray>& arr,
+                                          uint64_t index) {
+    epoch_proto::Point point;
+
+    int64_t index_value = indexArr->Value(index);
+    point.set_x(DataFrameFactory::toInt64Index(index_value));
+    point.set_y(arr->Value(index));
+    return point;
+}
+
+epoch_proto::Point toPointFromUint64(const std::shared_ptr<arrow::UInt64Array>& indexArr,
+const std::shared_ptr<arrow::DoubleArray>& arr,
+                                           uint64_t index) {
+    epoch_proto::Point point;
+
+    uint64_t index_value = indexArr->Value(index);
+    point.set_x(DataFrameFactory::toInt64Index(static_cast<int64_t>(index_value)));
+    point.set_y(arr->Value(index));
+    return point;
+}
+
 
 epoch_proto::Line SeriesFactory::toLine(const epoch_frame::Series& series,
                                         const std::string& name,
@@ -44,16 +67,41 @@ epoch_proto::Line SeriesFactory::toLine(const epoch_frame::Series& series,
     }
 
     auto index = series.index();
-    const auto timestamp_array = index->array().to_timestamp_view();
-
-    // Get the timestamp type to determine the time unit
-    const auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
-    const auto time_unit = timestamp_type->unit();
-
     const auto arr = series.contiguous_array().to_view<double>();
 
-    for (uint64_t i = 0; i < series.size(); ++i) {
-        *line.add_data() = toPoint(timestamp_array, time_unit, arr, i);
+    // Check if the index is a timestamp or int64
+    auto index_array = index->array();
+    auto index_type = index_array->type();
+
+
+    if (index_type->id() == arrow::Type::TIMESTAMP) {
+        const auto timestamp_array = index->array().to_timestamp_view();
+        const auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
+        const auto time_unit = timestamp_type->unit();
+
+        for (uint64_t i = 0; i < series.size(); ++i) {
+            *line.add_data() = toPointFromTimestamp(timestamp_array, time_unit, arr, i);
+        }
+    } else if (index_type->id() == arrow::Type::INT64 || index_type->id() == arrow::Type::UINT64) {
+        if (index_type->id() == arrow::Type::INT64) {
+            const auto int64_view = index_array.to_view<int64_t>();
+            for (uint64_t i = 0; i < series.size(); ++i) {
+                epoch_proto::Point point;
+                point.set_x(DataFrameFactory::toInt64Index(int64_view->Value(i)));
+                point.set_y(arr->Value(i));
+                *line.add_data() = point;
+            }
+        } else {
+            const auto uint64_view = index_array.to_view<uint64_t>();
+            for (uint64_t i = 0; i < series.size(); ++i) {
+                epoch_proto::Point point;
+                point.set_x(DataFrameFactory::toInt64Index(static_cast<int64_t>(uint64_view->Value(i))));
+                point.set_y(arr->Value(i));
+                *line.add_data() = point;
+            }
+        }
+    } else {
+        throw std::runtime_error("Index must be either timestamp or numeric (int64/uint64) type for line conversion");
     }
 
     return line;
@@ -65,14 +113,36 @@ std::vector<epoch_proto::Point> SeriesFactory::toPoints(const epoch_frame::Serie
     points.reserve(size);
 
     auto index = y_series.index();
-    auto timestamp_array = index->array().to_timestamp_view();
+    auto index_array = index->array();
+    auto index_type = index_array->type();
 
-    auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
-    auto time_unit = timestamp_type->unit();
+    // Debug: Print the type for debugging
+    // std::cout << "toPoints Index type: " << index_type->ToString() << " (id: " << static_cast<int>(index_type->id()) << ")" << std::endl;
 
     auto arr = y_series.contiguous_array().to_view<double>();
-    for (uint64_t i = 0; i < size; ++i) {
-        points.push_back(toPoint( timestamp_array, time_unit, arr, i));
+
+    if (index_type->id() == arrow::Type::TIMESTAMP) {
+        auto timestamp_array = index->array().to_timestamp_view();
+        auto timestamp_type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
+        auto time_unit = timestamp_type->unit();
+
+        for (uint64_t i = 0; i < size; ++i) {
+            points.push_back(toPointFromTimestamp(timestamp_array, time_unit, arr, i));
+        }
+    } else if (index_type->id() == arrow::Type::INT64 || index_type->id() == arrow::Type::UINT64) {
+        if (index_type->id() == arrow::Type::INT64) {
+            const auto int64_array = std::static_pointer_cast<arrow::Int64Array>(index->array().to_view<int64_t>());
+            for (uint64_t i = 0; i < size; ++i) {
+                points.push_back(toPointFromInt64(int64_array, arr, i));
+            }
+        } else {
+            const auto uint64_array = std::static_pointer_cast<arrow::UInt64Array>(index->array().to_view<size_t>());
+            for (uint64_t i = 0; i < size; ++i) {
+                points.push_back(toPointFromUint64(uint64_array, arr, i));
+            }
+        }
+    } else {
+        throw std::runtime_error("Index must be either timestamp or numeric (int64/uint64) type for point conversion");
     }
 
     return points;

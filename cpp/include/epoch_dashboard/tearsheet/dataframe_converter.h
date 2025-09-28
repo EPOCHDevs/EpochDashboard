@@ -56,6 +56,8 @@ public:
                                                        const std::string& column_name);
 
     static int64_t toMilliseconds(int64_t timestamp_value, arrow::TimeUnit::type unit);
+
+    static int64_t toInt64Index(int64_t index_value);
 };
 
 } // namespace epoch_tearsheet

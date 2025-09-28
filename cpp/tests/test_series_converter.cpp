@@ -36,6 +36,17 @@ public:
         auto timestamp_array = builder.Finish().ValueOrDie();
         return epoch_frame::factory::index::make_index(timestamp_array, std::nullopt, "timestamp_index");
     }
+
+    epoch_frame::IndexPtr createInt64Index(size_t size) {
+        std::vector<int64_t> idx_values;
+        for (size_t i = 0; i < size; ++i) {
+            idx_values.push_back(static_cast<int64_t>(i) + 1000); // Use large positive values to distinguish from uint64
+        }
+        arrow::Int64Builder builder;
+        (void)builder.AppendValues(idx_values);
+        auto idx_array = builder.Finish().ValueOrDie();
+        return epoch_frame::factory::index::make_index(idx_array, std::nullopt, "int64_index");
+    }
 };
 
 TEST_CASE("SeriesFactory: toArray", "[series]") {
@@ -91,14 +102,20 @@ TEST_CASE("SeriesFactory: toPoints with timestamp index", "[series]") {
     }
 }
 
-TEST_CASE("SeriesFactory: toPoints fails with non-timestamp index", "[series]") {
+TEST_CASE("SeriesFactory: toPoints works with numeric index", "[series]") {
     SeriesFactoryTest fixture;
     std::vector<double> y_vals = {5.0, 10.0, 15.0};
 
-    auto y_series = epoch_frame::make_series(fixture.createDefaultIndex(y_vals.size()), y_vals);
+    auto y_series = epoch_frame::make_series(fixture.createInt64Index(y_vals.size()), y_vals);
 
-    // This should throw an exception since toPoints expects a timestamp index
-    REQUIRE_THROWS(SeriesFactory::toPoints(y_series));
+    // This should now work with numeric index (uint64 in practice)
+    auto points = SeriesFactory::toPoints(y_series);
+
+    REQUIRE(points.size() == 3);
+    for (size_t i = 0; i < 3; ++i) {
+        REQUIRE(points[i].x() == static_cast<int64_t>(i) + 1000); // numeric index values should be used as-is
+        REQUIRE_THAT(points[i].y(), WithinAbs(y_vals[i], 0.001));
+    }
 }
 
 TEST_CASE("SeriesFactory: toTableRow", "[series]") {
@@ -190,6 +207,59 @@ TEST_CASE("SeriesFactory: toLine with style", "[series]") {
     REQUIRE(line.data(0).x() == 1640995200000LL);
     REQUIRE(line.data(1).x() == 1640995260000LL); // +1 minute
     REQUIRE(line.data(2).x() == 1640995320000LL); // +2 minutes
+}
+
+TEST_CASE("SeriesFactory: toLine with numeric index", "[series]") {
+    SeriesFactoryTest fixture;
+    std::vector<double> values = {100.0, 200.0, 300.0, 400.0};
+    auto series = epoch_frame::make_series(fixture.createInt64Index(values.size()), values);
+
+    auto line = SeriesFactory::toLine(series, "int64_line");
+
+    REQUIRE(line.name() == "int64_line");
+    REQUIRE(line.data_size() == 4);
+
+    // Check that numeric index values are used as-is
+    for (size_t i = 0; i < 4; ++i) {
+        REQUIRE(line.data(i).x() == static_cast<int64_t>(i) + 1000);
+        REQUIRE_THAT(line.data(i).y(), WithinAbs(values[i], 0.001));
+    }
+}
+
+TEST_CASE("SeriesFactory: toPoints throws for unsupported index types", "[series]") {
+    SeriesFactoryTest fixture;
+    std::vector<double> y_vals = {5.0, 10.0, 15.0};
+
+    // Create a series with a string index (unsupported)
+    std::vector<std::string> string_indices = {"a", "b", "c"};
+    arrow::StringBuilder builder;
+    (void)builder.AppendValues(string_indices);
+    auto string_array = builder.Finish().ValueOrDie();
+    auto string_index = epoch_frame::factory::index::make_index(string_array, std::nullopt, "string_index");
+
+    auto y_series = epoch_frame::make_series(string_index, y_vals);
+
+    // This should throw an exception since string index is not supported
+    REQUIRE_THROWS_WITH(SeriesFactory::toPoints(y_series),
+                       "Index must be either timestamp or numeric (int64/uint64) type for point conversion");
+}
+
+TEST_CASE("SeriesFactory: toLine throws for unsupported index types", "[series]") {
+    SeriesFactoryTest fixture;
+    std::vector<double> y_vals = {5.0, 10.0, 15.0};
+
+    // Create a series with a string index (unsupported)
+    std::vector<std::string> string_indices = {"a", "b", "c"};
+    arrow::StringBuilder builder;
+    (void)builder.AppendValues(string_indices);
+    auto string_array = builder.Finish().ValueOrDie();
+    auto string_index = epoch_frame::factory::index::make_index(string_array, std::nullopt, "string_index");
+
+    auto y_series = epoch_frame::make_series(string_index, y_vals);
+
+    // This should throw an exception since string index is not supported
+    REQUIRE_THROWS_WITH(SeriesFactory::toLine(y_series, "test_line"),
+                       "Index must be either timestamp or numeric (int64/uint64) type for line conversion");
 }
 
 TEST_CASE("Series to proto types", "[series]") {

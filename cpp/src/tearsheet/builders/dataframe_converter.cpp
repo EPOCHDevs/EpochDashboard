@@ -272,4 +272,9 @@ int64_t DataFrameFactory::toMilliseconds(int64_t timestamp_value, arrow::TimeUni
     }
 }
 
+int64_t DataFrameFactory::toInt64Index(int64_t index_value) {
+    // For int64 indexes, return the value as-is
+    return index_value;
+}
+
 } // namespace epoch_tearsheet
