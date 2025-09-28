@@ -1,0 +1,356 @@
+/**
+ * EpochLab Tearsheet Dashboard - Tailwind CSS Classes
+ *
+ * Pre-built utility classes for consistent styling across the dashboard.
+ * These classes can be overridden by users through Tailwind config or CSS custom properties.
+ */
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* CSS Custom Properties for theming */
+:root {
+  /* Primary colors */
+  --dashboard-bg-primary: #131722;
+  --dashboard-bg-secondary: #161a25;
+  --dashboard-bg-tertiary: #1e222d;
+  --dashboard-bg-card: rgba(30, 34, 45, 0.95);
+
+  /* Text colors */
+  --dashboard-text-primary: #d1d4dc;
+  --dashboard-text-secondary: #787b86;
+  --dashboard-text-tertiary: #434651;
+  --dashboard-text-disabled: rgba(120, 123, 134, 0.5);
+
+  /* Territory colors */
+  --dashboard-accent-cyan: #00bcd4;
+  --dashboard-accent-blue: #2196f3;
+  --dashboard-success: #26a69a;
+  --dashboard-warning: #ff9800;
+  --dashboard-alert: #f23645;
+
+  /* Border colors */
+  --dashboard-border-primary: #2a2e39;
+  --dashboard-border-secondary: rgba(42, 46, 57, 0.5);
+
+  /* Chart colors */
+  --dashboard-chart-strategy: #00bcd4;
+  --dashboard-chart-benchmark: #2196f3;
+  --dashboard-chart-long: #26a69a;
+  --dashboard-chart-short: #f23645;
+  --dashboard-chart-cash: #ff9800;
+}
+
+/* Component Layer - Dashboard specific utilities */
+@layer components {
+
+  /* Glass morphism effects */
+  .glass {
+    @apply bg-white/5 backdrop-blur-sm border border-white/10;
+  }
+
+  .glass-border {
+    @apply border border-white/10;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/10 transition-all duration-200;
+  }
+
+  /* Dashboard background utilities */
+  .dashboard-bg-primary {
+    background-color: var(--dashboard-bg-primary);
+  }
+
+  .dashboard-bg-secondary {
+    background-color: var(--dashboard-bg-secondary);
+  }
+
+  .dashboard-bg-card {
+    background-color: var(--dashboard-bg-card);
+  }
+
+  /* Text utilities */
+  .dashboard-text-primary {
+    color: var(--dashboard-text-primary);
+  }
+
+  .dashboard-text-secondary {
+    color: var(--dashboard-text-secondary);
+  }
+
+  .dashboard-text-tertiary {
+    color: var(--dashboard-text-tertiary);
+  }
+
+  /* Territory color utilities */
+  .dashboard-accent-cyan {
+    color: var(--dashboard-accent-cyan);
+  }
+
+  .dashboard-bg-accent-cyan {
+    background-color: var(--dashboard-accent-cyan);
+  }
+
+  .dashboard-border-accent-cyan {
+    border-color: var(--dashboard-accent-cyan);
+  }
+
+  .dashboard-success {
+    color: var(--dashboard-success);
+  }
+
+  .dashboard-warning {
+    color: var(--dashboard-warning);
+  }
+
+  .dashboard-alert {
+    color: var(--dashboard-alert);
+  }
+
+  /* Chart-specific color utilities */
+  .chart-strategy {
+    color: var(--dashboard-chart-strategy);
+  }
+
+  .chart-benchmark {
+    color: var(--dashboard-chart-benchmark);
+  }
+
+  .chart-long {
+    color: var(--dashboard-chart-long);
+  }
+
+  .chart-short {
+    color: var(--dashboard-chart-short);
+  }
+
+  .chart-cash {
+    color: var(--dashboard-chart-cash);
+  }
+
+  /* Button variants */
+  .btn-dashboard-primary {
+    @apply px-4 py-2 bg-territory-cyan/20 border border-territory-cyan/30
+           text-territory-cyan rounded-lg hover:bg-territory-cyan/30
+           transition-all duration-200 font-medium;
+  }
+
+  .btn-dashboard-secondary {
+    @apply px-4 py-2 bg-secondary-darkGray border border-secondary-mildCementGrey
+           text-secondary-ashGrey rounded-lg hover:bg-secondary-mildCementGrey/30
+           hover:text-primary-white transition-all duration-200;
+  }
+
+  .btn-dashboard-tab {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200
+           flex items-center gap-2 whitespace-nowrap;
+  }
+
+  .btn-dashboard-tab-active {
+    @apply bg-territory-cyan/20 text-territory-cyan border border-territory-cyan/30;
+  }
+
+  .btn-dashboard-tab-inactive {
+    @apply glass text-primary-white/60 hover:text-primary-white/80;
+  }
+
+  /* Layout controls */
+  .layout-control {
+    @apply p-2 rounded transition-all duration-200;
+  }
+
+  .layout-control-active {
+    @apply text-primary-white bg-primary-white/20;
+  }
+
+  .layout-control-inactive {
+    @apply text-primary-white/40 hover:text-primary-white/60 hover:bg-primary-white/10;
+  }
+
+  /* Table styling */
+  .dashboard-table {
+    @apply min-w-full;
+  }
+
+  .dashboard-table-header {
+    @apply sticky top-0 bg-secondary-darkGray/95 backdrop-blur;
+  }
+
+  .dashboard-table-header-cell {
+    @apply px-4 py-3 text-left text-xs font-medium text-primary-white/70
+           uppercase tracking-wider cursor-pointer hover:text-primary-white;
+  }
+
+  .dashboard-table-row {
+    @apply border-b border-primary-white/5 hover:bg-primary-white/5 transition-colors;
+  }
+
+  .dashboard-table-cell {
+    @apply px-4 py-3 text-sm text-primary-white whitespace-nowrap;
+  }
+
+  /* Card styling */
+  .dashboard-card {
+    @apply glass rounded-lg p-6 h-full;
+  }
+
+  .dashboard-card-title {
+    @apply text-sm font-medium text-primary-white/70 mb-3;
+  }
+
+  .dashboard-card-value {
+    @apply text-2xl font-bold text-primary-white mb-2;
+  }
+
+  .dashboard-card-subtitle {
+    @apply text-xs text-primary-white/50;
+  }
+
+  /* Scrollbar utilities */
+  .epoch-scrollbar-horizontal {
+    @apply overflow-x-auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .epoch-scrollbar-horizontal::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  .epoch-table-scrollbar {
+    @apply overflow-auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .epoch-table-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .epoch-table-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .epoch-table-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Animation utilities */
+  .dashboard-fade-in {
+    @apply animate-in fade-in duration-200;
+  }
+
+  .dashboard-slide-up {
+    @apply animate-in slide-in-from-bottom-4 duration-300;
+  }
+
+  .dashboard-scale-in {
+    @apply animate-in zoom-in-95 duration-200;
+  }
+
+  /* Grid layouts */
+  .dashboard-grid-responsive {
+    @apply grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .dashboard-grid-2col {
+    @apply grid gap-6 grid-cols-1 lg:grid-cols-2;
+  }
+
+  .dashboard-grid-3col {
+    @apply grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  /* State utilities */
+  .dashboard-loading {
+    @apply animate-pulse;
+  }
+
+  .dashboard-empty-state {
+    @apply flex items-center justify-center h-64 col-span-full;
+  }
+
+  .dashboard-empty-text {
+    @apply text-center text-primary-white/40;
+  }
+
+  /* Upload area styling */
+  .dashboard-upload-area {
+    @apply border-2 border-dashed rounded-lg p-12 text-center transition-all;
+  }
+
+  .dashboard-upload-area-default {
+    @apply border-secondary-mildCementGrey bg-secondary-darkGray
+           hover:border-territory-blue/50;
+  }
+
+  .dashboard-upload-area-active {
+    @apply border-territory-blue bg-territory-blue/10;
+  }
+
+  /* Error and success states */
+  .dashboard-error {
+    @apply p-4 bg-territory-alert/10 border border-territory-alert/30
+           rounded-lg text-territory-alert;
+  }
+
+  .dashboard-success {
+    @apply p-4 bg-territory-success/10 border border-territory-success/30
+           rounded-lg text-territory-success;
+  }
+}
+
+/* Utilities Layer - Additional custom utilities */
+@layer utilities {
+
+  /* Backdrop blur variants */
+  .backdrop-blur-dashboard {
+    backdrop-filter: blur(8px);
+  }
+
+  /* Text shadow for better readability */
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Custom spacing for dashboard */
+  .space-dashboard {
+    gap: 1.5rem;
+  }
+
+  /* Border radius variations */
+  .rounded-dashboard {
+    border-radius: 0.75rem;
+  }
+
+  /* Custom shadows for glass effect */
+  .shadow-dashboard {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .shadow-dashboard-lg {
+    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.3);
+  }
+}
