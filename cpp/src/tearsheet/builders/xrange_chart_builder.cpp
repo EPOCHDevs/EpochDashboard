@@ -6,7 +6,7 @@ XRangeChartBuilder::XRangeChartBuilder() {
     x_range_def_.mutable_chart_def()->set_type(epoch_proto::WidgetXRange);
 }
 
-XRangeChartBuilder& XRangeChartBuilder::addCategory(const std::string& category) {
+XRangeChartBuilder& XRangeChartBuilder::addYCategory(const std::string& category) {
     x_range_def_.add_categories(category);
     return *this;
 }
