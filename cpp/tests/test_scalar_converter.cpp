@@ -294,10 +294,9 @@ TEST_CASE("ScalarFactory: epoch_frame Date and DateTime conversions", "[scalar]"
 
         REQUIRE(proto.has_date_value());
 
-        // Verify conversion: toordinal() gives days since Jan 1, Year 1
-        // Multiply by 1000 to convert days to milliseconds
-        int64_t expected_ordinal = date.toordinal();
-        int64_t expected_ms = expected_ordinal * 1000;
+        // The implementation converts Date to DateTime and gets nanoseconds since epoch
+        // Expected: 2021-01-01 00:00:00 UTC = 1609459200000 milliseconds since epoch
+        int64_t expected_ms = 1609459200000LL;
         REQUIRE(proto.date_value() == expected_ms);
     }
 
@@ -308,12 +307,9 @@ TEST_CASE("ScalarFactory: epoch_frame Date and DateTime conversions", "[scalar]"
 
         REQUIRE(proto.has_date_value());
 
-        // Should be epoch_date.toordinal() * 1000
-        int64_t expected_ms = epoch_date.toordinal() * 1000;
+        // Unix epoch date should be 0 milliseconds since epoch
+        int64_t expected_ms = 0;
         REQUIRE(proto.date_value() == expected_ms);
-
-        // Verify it's a positive value (days since Year 1)
-        REQUIRE(proto.date_value() > 0);
     }
 
     SECTION("fromDate - modern date") {
@@ -323,7 +319,8 @@ TEST_CASE("ScalarFactory: epoch_frame Date and DateTime conversions", "[scalar]"
 
         REQUIRE(proto.has_date_value());
 
-        int64_t expected_ms = modern_date.toordinal() * 1000;
+        // 2024-12-25 00:00:00 UTC = 1735084800000 milliseconds since epoch
+        int64_t expected_ms = 1735084800000LL;
         REQUIRE(proto.date_value() == expected_ms);
     }
 

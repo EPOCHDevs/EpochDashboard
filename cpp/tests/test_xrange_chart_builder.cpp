@@ -23,8 +23,8 @@ TEST_CASE("XRangeChartBuilder: Basic construction", "[xrange]") {
 TEST_CASE("XRangeChartBuilder: Add category", "[xrange]") {
     auto chart = XRangeChartBuilder()
         .setTitle("Categories")
-        .addCategory("Strategy A")
-        .addCategory("Strategy B")
+        .addYCategory("Strategy A")
+        .addYCategory("Strategy B")
         .build();
 
     REQUIRE(chart.x_range_def().categories_size() == 2);
@@ -69,8 +69,8 @@ TEST_CASE("XRangeChartBuilder: Add point proto", "[xrange]") {
 TEST_CASE("XRangeChartBuilder: Multiple ranges", "[xrange]") {
     auto chart = XRangeChartBuilder()
         .setTitle("Trade History")
-        .addCategory("AAPL")
-        .addCategory("GOOGL")
+        .addYCategory("AAPL")
+        .addYCategory("GOOGL")
         .addPoint(1000, 1500, 0, true)
         .addPoint(1200, 1800, 1, false)
         .addPoint(2000, 2500, 0, false)
