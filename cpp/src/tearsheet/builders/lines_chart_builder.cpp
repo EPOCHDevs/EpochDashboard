@@ -9,6 +9,8 @@ namespace epoch_tearsheet {
 
 LinesChartBuilder::LinesChartBuilder() {
     lines_def_.mutable_chart_def()->set_type(epoch_proto::WidgetLines);
+    setYAxisType(epoch_proto::AxisLinear);
+    setXAxisType(epoch_proto::AxisDateTime);
 }
 
 LinesChartBuilder& LinesChartBuilder::addLine(const epoch_proto::Line& line) {
