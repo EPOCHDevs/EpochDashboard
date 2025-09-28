@@ -50,11 +50,9 @@ LinesChartBuilder& LinesChartBuilder::setStacked(bool stacked) {
     return *this;
 }
 
-LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame& df,
-                                                      const std::vector<std::string>& y_cols) {
-    std::vector<epoch_proto::Line> lines;
-    lines.reserve(y_cols.size());
-
+void LinesChartBuilder::processDataFrameWithTimestampIndex(const epoch_frame::DataFrame& df,
+                                                            const std::vector<std::string>& y_cols,
+                                                            std::vector<epoch_proto::Line>& lines) {
     auto arrow_table = df.table();
     auto timestamp_array = df.index()->array().to_timestamp_view();
 
@@ -79,7 +77,6 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
 
                 if (y_scalar->is_valid && !timestamp_array->IsNull(i)) {
                     auto* point = line.add_data();
-                    // Convert timestamp to milliseconds using the proper time unit
                     int64_t timestamp_value = timestamp_array->Value(i);
                     point->set_x(DataFrameFactory::toMilliseconds(timestamp_value, time_unit));
                     point->set_y(std::static_pointer_cast<arrow::DoubleScalar>(y_scalar)->value);
@@ -89,11 +86,68 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
 
         lines.push_back(line);
     }
+}
+
+template<typename IndexType>
+void LinesChartBuilder::processDataFrameWithIntegerIndex(const epoch_frame::DataFrame& df,
+                                                          const std::vector<std::string>& y_cols,
+                                                          std::vector<epoch_proto::Line>& lines) {
+    auto arrow_table = df.table();
+    auto index_array = df.index()->array().template to_view<IndexType>();
+
+    for (const auto& y_col : y_cols) {
+        epoch_proto::Line line;
+        line.set_name(y_col);
+
+        auto y_column = arrow_table->GetColumnByName(y_col);
+        if (!y_column) {
+            continue;
+        }
+
+        for (int64_t i = 0; i < std::min(index_array->length(), y_column->length()); ++i) {
+            auto y_result = y_column->GetScalar(i);
+
+            if (y_result.ok()) {
+                auto y_scalar = y_result.ValueOrDie();
+
+                if (y_scalar->is_valid && !index_array->IsNull(i)) {
+                    auto* point = line.add_data();
+                    point->set_x(static_cast<int64_t>(index_array->Value(i)));
+                    point->set_y(std::static_pointer_cast<arrow::DoubleScalar>(y_scalar)->value);
+                }
+            }
+        }
+
+        lines.push_back(line);
+    }
+}
+
+LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame& df,
+                                                      const std::vector<std::string>& y_cols) {
+    std::vector<epoch_proto::Line> lines;
+    lines.reserve(y_cols.size());
+
+    auto index_type = df.index()->array()->type();
+
+    // Branch based on index type
+    switch (index_type->id()) {
+        case arrow::Type::TIMESTAMP:
+            processDataFrameWithTimestampIndex(df, y_cols, lines);
+            setXAxisType(epoch_proto::AxisDateTime);
+            break;
+        case arrow::Type::INT64:
+            processDataFrameWithIntegerIndex<int64_t>(df, y_cols, lines);
+            setXAxisType(epoch_proto::AxisLinear);
+            break;
+        case arrow::Type::UINT64:
+            processDataFrameWithIntegerIndex<uint64_t>(df, y_cols, lines);
+            setXAxisType(epoch_proto::AxisLinear);
+            break;
+        default:
+            throw std::runtime_error("Unsupported index type for LinesChartBuilder. Supported types: timestamp, int64_t, uint64_t");
+    }
 
     addLines(lines);
-
-    // Set appropriate axis definitions for timestamp-based data
-    setXAxisType(epoch_proto::AxisDateTime);
     setYAxisType(epoch_proto::AxisLinear);
 
     return *this;

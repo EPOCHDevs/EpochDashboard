@@ -13,6 +13,7 @@
   "dependencies": {
     "@epochlab/epoch-dashboard": "*",
     "@epochlab/epoch-protos": "^2.0.8",
+    "@tanstack/react-query": "^5.90.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "next": "^15.5.4",

@@ -33,6 +33,15 @@ public:
 
 private:
     epoch_proto::LinesDef lines_def_;
+
+    void processDataFrameWithTimestampIndex(const epoch_frame::DataFrame& df,
+                                            const std::vector<std::string>& y_cols,
+                                            std::vector<epoch_proto::Line>& lines);
+
+    template<typename IndexType>
+    void processDataFrameWithIntegerIndex(const epoch_frame::DataFrame& df,
+                                          const std::vector<std::string>& y_cols,
+                                          std::vector<epoch_proto::Line>& lines);
 };
 
 } // namespace epoch_tearsheet

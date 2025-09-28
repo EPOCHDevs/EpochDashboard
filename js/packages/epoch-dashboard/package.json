@@ -23,7 +23,10 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "build:watch": "rollup -c rollup.config.js -w",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "mock:server": "npx tsx mock-server/server.ts",
+    "mock:server:watch": "npx tsx watch mock-server/server.ts",
+    "dev:with-mock": "concurrently \"npm run mock:server\" \"npm run build:watch\""
   },
   "keywords": [
     "tearsheet",
@@ -55,28 +58,45 @@
   },
   "dependencies": {
     "@epochlab/epoch-protos": "^2.0.8",
+    "@hookform/resolvers": "^5.2.2",
+    "@radix-ui/themes": "^3.2.1",
+    "@tanstack/react-query": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
+    "@types/lodash": "^4.17.20",
+    "apache-arrow": "^21.0.0",
+    "axios": "^1.12.2",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "highcharts": "^11.4.8",
     "highcharts-react-official": "^3.2.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "ms": "^2.1.3",
-    "protobufjs": "latest"
+    "protobufjs": "latest",
+    "react-hook-form": "^7.63.0",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.23",
     "@types/ms": "^2.1.0",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "rollup": "^4.27.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
     "tslib": "^2.8.1",
+    "tsx": "^4.20.6",
     "typescript": "latest"
   }
 }

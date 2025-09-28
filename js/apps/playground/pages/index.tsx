@@ -66,6 +66,11 @@ export default function HomePage() {
                 📊 Test Your Tearsheet →
               </button>
             </Link>
+            <Link href="/trade-analytics">
+              <button className="bg-territory-warning/20 border border-territory-warning/30 text-territory-warning px-6 py-3 rounded-lg hover:bg-territory-warning/30 transition-all duration-200">
+                📈 Trade Analytics Chart →
+              </button>
+            </Link>
           </div>
           {renderView()}
         </div>

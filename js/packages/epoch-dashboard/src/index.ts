@@ -143,3 +143,23 @@ export {
 
 // Legacy theme export for backward compatibility
 export { defaultTheme } from './config/theme'
+
+// ============================================================================
+// TRADE ANALYTICS COMPONENTS
+// ============================================================================
+
+// Main chart renderer component
+export { default as TradeAnalyticsChartRenderer } from './modules/TradeAnalyticsTab/components/TradeAnalyticsChartRenderer'
+
+// Badge components
+export { default as RenderTradePositionBadge } from './modules/TradeAnalyticsTab/components/RenderTradePositionBadge'
+export { default as RenderTradeResultBadge } from './modules/TradeAnalyticsTab/components/RenderTradeResultBadge'
+
+// Types for Trade Analytics
+export * from './types/TradeAnalyticsTypes'
+export * from './types/AssetsTypes'
+
+// Constants and utilities
+export * from './constants/tradeAnalytics'
+export * from './utils/tailwindHelpers'
+export * from './utils/formatters'
