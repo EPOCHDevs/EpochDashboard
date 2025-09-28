@@ -7,6 +7,8 @@
 
 namespace epoch_frame {
     class Scalar;
+    struct Date;
+    class DateTime;
 }
 
 namespace epoch_tearsheet {
@@ -22,6 +24,8 @@ public:
     static epoch_proto::Scalar fromString(const std::string& value);
     static epoch_proto::Scalar fromTimestamp(std::chrono::milliseconds ms);
     static epoch_proto::Scalar fromTimestamp(std::chrono::seconds s);
+    static epoch_proto::Scalar fromDate(const epoch_frame::Date& date);
+    static epoch_proto::Scalar fromDateTime(const epoch_frame::DateTime& datetime);
     static epoch_proto::Scalar null();
 
     // Additional specialized types

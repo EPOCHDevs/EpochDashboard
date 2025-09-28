@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
 #include <epoch_frame/scalar.h>
 #include <arrow/type.h>
+#include <arrow/type_traits.h>
 #include <stdexcept>
 
 namespace epoch_tearsheet {
@@ -152,6 +153,18 @@ epoch_proto::Scalar ScalarFactory::fromTimestamp(std::chrono::milliseconds ms) {
 epoch_proto::Scalar ScalarFactory::fromTimestamp(std::chrono::seconds s) {
     epoch_proto::Scalar scalar;
     scalar.set_timestamp_ms(std::chrono::duration_cast<std::chrono::milliseconds>(s).count());
+    return scalar;
+}
+
+epoch_proto::Scalar ScalarFactory::fromDate(const epoch_frame::Date& date) {
+    epoch_proto::Scalar scalar;
+    scalar.set_date_value(date.toordinal() * 1e3);
+    return scalar;
+}
+
+epoch_proto::Scalar ScalarFactory::fromDateTime(const epoch_frame::DateTime& datetime) {
+    epoch_proto::Scalar scalar;
+    scalar.set_timestamp_ms(datetime.m_nanoseconds.count() / 1e6);
     return scalar;
 }
 

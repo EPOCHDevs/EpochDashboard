@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "epoch_dashboard/tearsheet/scalar_converter.h"
 #include <epoch_frame/scalar.h>
+#include <epoch_frame/datetime.h>
 #include <arrow/api.h>
 #include <chrono>
 
@@ -282,5 +283,114 @@ TEST_CASE("ScalarFactory: Default fallback conversion", "[scalar]") {
 
         REQUIRE(result.has_string_value());
         REQUIRE(result.string_value() == "fallback test");
+    }
+}
+
+TEST_CASE("ScalarFactory: epoch_frame Date and DateTime conversions", "[scalar]") {
+    SECTION("fromDate - basic date conversion") {
+        // Test a known date: 2021-01-01
+        Date date{std::chrono::year{2021}, std::chrono::month{1}, std::chrono::day{1}};
+        auto proto = ScalarFactory::fromDate(date);
+
+        REQUIRE(proto.has_date_value());
+
+        // Verify conversion: toordinal() gives days since Jan 1, Year 1
+        // Multiply by 1000 to convert days to milliseconds
+        int64_t expected_ordinal = date.toordinal();
+        int64_t expected_ms = expected_ordinal * 1000;
+        REQUIRE(proto.date_value() == expected_ms);
+    }
+
+    SECTION("fromDate - epoch date") {
+        // Test Unix epoch: 1970-01-01
+        Date epoch_date{std::chrono::year{1970}, std::chrono::month{1}, std::chrono::day{1}};
+        auto proto = ScalarFactory::fromDate(epoch_date);
+
+        REQUIRE(proto.has_date_value());
+
+        // Should be epoch_date.toordinal() * 1000
+        int64_t expected_ms = epoch_date.toordinal() * 1000;
+        REQUIRE(proto.date_value() == expected_ms);
+
+        // Verify it's a positive value (days since Year 1)
+        REQUIRE(proto.date_value() > 0);
+    }
+
+    SECTION("fromDate - modern date") {
+        // Test a recent date: 2024-12-25
+        Date modern_date{std::chrono::year{2024}, std::chrono::month{12}, std::chrono::day{25}};
+        auto proto = ScalarFactory::fromDate(modern_date);
+
+        REQUIRE(proto.has_date_value());
+
+        int64_t expected_ms = modern_date.toordinal() * 1000;
+        REQUIRE(proto.date_value() == expected_ms);
+    }
+
+    SECTION("fromDateTime - basic datetime conversion") {
+        // Test a datetime with nanoseconds using int64_t constructor
+        DateTime dt(1609459200000000000LL); // 2021-01-01 00:00:00 UTC in nanoseconds
+        auto proto = ScalarFactory::fromDateTime(dt);
+
+        REQUIRE(proto.has_timestamp_ms());
+
+        // Should convert nanoseconds to milliseconds by dividing by 1e6
+        int64_t expected_ms = dt.m_nanoseconds.count() / 1000000;
+        REQUIRE(proto.timestamp_ms() == expected_ms);
+        REQUIRE(proto.timestamp_ms() == 1609459200000LL);
+    }
+
+    SECTION("fromDateTime - zero nanoseconds") {
+        // Test datetime with zero nanoseconds
+        DateTime dt(0LL);
+        auto proto = ScalarFactory::fromDateTime(dt);
+
+        REQUIRE(proto.has_timestamp_ms());
+        REQUIRE(proto.timestamp_ms() == 0);
+    }
+
+    SECTION("fromDateTime - high precision nanoseconds") {
+        // Test datetime with nanosecond precision
+        DateTime dt(1609459200123456789LL); // includes microseconds and nanoseconds
+        auto proto = ScalarFactory::fromDateTime(dt);
+
+        REQUIRE(proto.has_timestamp_ms());
+
+        // Should truncate to milliseconds: 1609459200123456789 / 1e6 = 1609459200123
+        int64_t expected_ms = 1609459200123LL;
+        REQUIRE(proto.timestamp_ms() == expected_ms);
+    }
+
+    SECTION("fromDateTime - constructed from date components") {
+        // Test datetime constructed from year, month, day, etc.
+        DateTime dt(std::chrono::year{2024}, std::chrono::month{6}, std::chrono::day{15},
+                   std::chrono::hours{14}, std::chrono::minutes{30}, std::chrono::seconds{45});
+        auto proto = ScalarFactory::fromDateTime(dt);
+
+        REQUIRE(proto.has_timestamp_ms());
+
+        // Should use m_nanoseconds divided by 1e6
+        int64_t expected_ms = dt.m_nanoseconds.count() / 1000000;
+        REQUIRE(proto.timestamp_ms() == expected_ms);
+
+        // Verify it's a reasonable timestamp (after 2020)
+        REQUIRE(proto.timestamp_ms() > 1577836800000LL); // 2020-01-01 00:00:00 UTC
+    }
+
+    SECTION("Verify Date vs DateTime field usage") {
+        // Verify that Date uses date_value and DateTime uses timestamp_ms
+        Date date{std::chrono::year{2021}, std::chrono::month{1}, std::chrono::day{1}};
+        DateTime datetime(1609459200000000000LL);
+
+        auto date_proto = ScalarFactory::fromDate(date);
+        auto datetime_proto = ScalarFactory::fromDateTime(datetime);
+
+        // Date should set date_value
+        REQUIRE(date_proto.has_date_value());
+        REQUIRE_FALSE(date_proto.has_timestamp_ms());
+
+        // DateTime should set timestamp_ms
+        REQUIRE(datetime_proto.has_timestamp_ms());
+        REQUIRE_FALSE(datetime_proto.has_date_value());
     }
 }
