@@ -149,3 +149,138 @@ TEST_CASE("ScalarFactory: comprehensive tests for bug fixes", "[scalar]") {
         REQUIRE(std::isinf(result.decimal_value()));
     }
 }
+
+TEST_CASE("ScalarFactory: New specialized factory methods", "[scalar]") {
+    SECTION("fromDateValue") {
+        int64_t milliseconds = 1609459200000; // 2021-01-01 00:00:00 UTC in ms
+        auto proto = ScalarFactory::fromDateValue(milliseconds);
+        REQUIRE(proto.has_date_value());
+        REQUIRE(proto.date_value() == milliseconds);
+    }
+
+    SECTION("fromDayDuration") {
+        int32_t days = 30;
+        auto proto = ScalarFactory::fromDayDuration(days);
+        REQUIRE(proto.has_day_duration());
+        REQUIRE(proto.day_duration() == days);
+    }
+
+    SECTION("fromDurationMs") {
+        int64_t ms = 123456789;
+        auto proto = ScalarFactory::fromDurationMs(ms);
+        REQUIRE(proto.has_duration_ms());
+        REQUIRE(proto.duration_ms() == ms);
+    }
+
+    SECTION("fromMonetaryValue") {
+        double amount = 1234.56;
+        auto proto = ScalarFactory::fromMonetaryValue(amount);
+        REQUIRE(proto.has_monetary_value());
+        REQUIRE_THAT(proto.monetary_value(), WithinAbs(amount, 0.01));
+    }
+
+    SECTION("fromPercentValue") {
+        double percentage = 85.75;
+        auto proto = ScalarFactory::fromPercentValue(percentage);
+        REQUIRE(proto.has_percent_value());
+        REQUIRE_THAT(proto.percent_value(), WithinAbs(percentage, 0.01));
+    }
+
+}
+
+TEST_CASE("ScalarFactory: Arrow date and duration type conversions", "[scalar]") {
+    SECTION("DATE32 conversion") {
+        // Create a DATE32 scalar (days since epoch)
+        int32_t days = 18628; // 2021-01-01
+        auto date32_type = arrow::date32();
+        auto date32_scalar = arrow::MakeScalar(date32_type, days);
+
+        Scalar epoch_scalar(*date32_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_date_value());
+        // Should convert days to milliseconds: days * 24 * 60 * 60 * 1000
+        REQUIRE(result.date_value() == static_cast<int64_t>(days) * 24 * 60 * 60 * 1000);
+    }
+
+    SECTION("DATE64 conversion") {
+        // Create a DATE64 scalar (milliseconds since epoch)
+        int64_t ms = 1609459200000; // 2021-01-01 00:00:00 UTC in ms
+        auto date64_type = arrow::date64();
+        auto date64_scalar = arrow::MakeScalar(date64_type, ms);
+
+        Scalar epoch_scalar(*date64_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_date_value());
+        // Should keep milliseconds as-is
+        REQUIRE(result.date_value() == ms);
+    }
+
+    SECTION("DURATION conversion - seconds") {
+        // Create a DURATION scalar with second unit
+        int64_t duration_seconds = 3600; // 1 hour
+        auto duration_type = arrow::duration(arrow::TimeUnit::SECOND);
+        auto duration_scalar = arrow::MakeScalar(duration_type, duration_seconds);
+
+        Scalar epoch_scalar(*duration_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_duration_ms());
+        // Should convert seconds to milliseconds
+        REQUIRE(result.duration_ms() == duration_seconds * 1000);
+    }
+
+    SECTION("DURATION conversion - milliseconds") {
+        // Create a DURATION scalar with millisecond unit
+        int64_t duration_ms = 123456;
+        auto duration_type = arrow::duration(arrow::TimeUnit::MILLI);
+        auto duration_scalar = arrow::MakeScalar(duration_type, duration_ms);
+
+        Scalar epoch_scalar(*duration_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_duration_ms());
+        REQUIRE(result.duration_ms() == duration_ms);
+    }
+
+    SECTION("DURATION conversion - microseconds") {
+        // Create a DURATION scalar with microsecond unit
+        int64_t duration_us = 123456789; // microseconds
+        auto duration_type = arrow::duration(arrow::TimeUnit::MICRO);
+        auto duration_scalar = arrow::MakeScalar(duration_type, duration_us);
+
+        Scalar epoch_scalar(*duration_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_duration_ms());
+        // Should convert microseconds to milliseconds
+        REQUIRE(result.duration_ms() == duration_us / 1000);
+    }
+
+    SECTION("DURATION conversion - nanoseconds") {
+        // Create a DURATION scalar with nanosecond unit
+        int64_t duration_ns = 123456789000; // nanoseconds
+        auto duration_type = arrow::duration(arrow::TimeUnit::NANO);
+        auto duration_scalar = arrow::MakeScalar(duration_type, duration_ns);
+
+        Scalar epoch_scalar(*duration_scalar);
+        auto result = ScalarFactory::create(epoch_scalar);
+
+        REQUIRE(result.has_duration_ms());
+        // Should convert nanoseconds to milliseconds
+        REQUIRE(result.duration_ms() == duration_ns / 1000000);
+    }
+}
+
+TEST_CASE("ScalarFactory: Default fallback conversion", "[scalar]") {
+    SECTION("Unknown type fallback") {
+        // Test that unknown types fall back to string representation
+        // This tests the default case in the switch statement
+        Scalar string_scalar(std::string("fallback test"));
+        auto result = ScalarFactory::create(string_scalar);
+
+        REQUIRE(result.has_string_value());
+        REQUIRE(result.string_value() == "fallback test");
+    }
+}
