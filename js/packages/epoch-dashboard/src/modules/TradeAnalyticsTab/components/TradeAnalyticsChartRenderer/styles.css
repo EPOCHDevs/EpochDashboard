@@ -1,0 +1,59 @@
+.highcharts-navigator-mask-outside {
+  fill: rgba(255, 255, 255, 0.02);
+}
+
+.highcharts-navigator {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1px;
+}
+
+.highcharts-navigator-mask-inside {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1px;
+}
+
+.highcharts-scrollbar {
+  visibility: hidden;
+}
+
+/* Horizontal separators between panes */
+.highcharts-yaxis:not(:first-child) {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced pane borders and separators */
+.highcharts-yaxis-grid {
+  opacity: 0.8;
+}
+
+/* Smooth transition for pane height changes */
+.highcharts-yaxis {
+  transition:
+    height 0.3s ease-in-out,
+    top 0.3s ease-in-out;
+}
+
+/* Enhanced resize handle styling */
+.highcharts-resize-handle {
+  opacity: 0.6;
+  transition: opacity 0.2s ease-in-out;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 2px;
+}
+
+.highcharts-resize-handle:hover {
+  opacity: 1;
+  stroke: rgba(255, 255, 255, 0.6);
+}
+
+/* Style for pane boundaries */
+.highcharts-yaxis-line {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1px;
+}
+
+/* Better visual separation between collapsed and expanded panes */
+.highcharts-yaxis[data-collapsed="true"] {
+  opacity: 0.5;
+  transition: opacity 0.3s ease-in-out;
+}
