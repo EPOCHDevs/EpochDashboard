@@ -158,7 +158,7 @@ epoch_proto::Scalar ScalarFactory::fromTimestamp(std::chrono::seconds s) {
 
 epoch_proto::Scalar ScalarFactory::fromDate(const epoch_frame::Date& date) {
     epoch_proto::Scalar scalar;
-    scalar.set_date_value(date.toordinal() * 1e3);
+    scalar.set_date_value(epoch_frame::DateTime{date}.m_nanoseconds.count() / 1e6);
     return scalar;
 }
 

@@ -10,6 +10,8 @@ namespace epoch_tearsheet {
 
 AreaChartBuilder::AreaChartBuilder() {
     area_def_.mutable_chart_def()->set_type(epoch_proto::WidgetArea);
+    setYAxisType(epoch_proto::AxisLinear);
+    setXAxisType(epoch_proto::AxisDateTime);
 }
 
 AreaChartBuilder& AreaChartBuilder::addArea(const epoch_proto::Line& area) {
