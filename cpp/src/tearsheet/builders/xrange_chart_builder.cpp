@@ -7,7 +7,7 @@ XRangeChartBuilder::XRangeChartBuilder() {
 }
 
 XRangeChartBuilder& XRangeChartBuilder::addYCategory(const std::string& category) {
-    x_range_def_.add_categories(category);
+    x_range_def_.mutable_chart_def()->mutable_y_axis()->add_categories(category);
     return *this;
 }
 

@@ -27,9 +27,9 @@ TEST_CASE("XRangeChartBuilder: Add category", "[xrange]") {
         .addYCategory("Strategy B")
         .build();
 
-    REQUIRE(chart.x_range_def().categories_size() == 2);
-    REQUIRE(chart.x_range_def().categories(0) == "Strategy A");
-    REQUIRE(chart.x_range_def().categories(1) == "Strategy B");
+    REQUIRE(chart.x_range_def().chart_def().y_axis().categories_size() == 2);
+    REQUIRE(chart.x_range_def().chart_def().y_axis().categories(0) == "Strategy A");
+    REQUIRE(chart.x_range_def().chart_def().y_axis().categories(1) == "Strategy B");
 }
 
 TEST_CASE("XRangeChartBuilder: Add point with parameters", "[xrange]") {
@@ -76,7 +76,7 @@ TEST_CASE("XRangeChartBuilder: Multiple ranges", "[xrange]") {
         .addPoint(2000, 2500, 0, false)
         .build();
 
-    REQUIRE(chart.x_range_def().categories_size() == 2);
+    REQUIRE(chart.x_range_def().chart_def().y_axis().categories_size() == 2);
     REQUIRE(chart.x_range_def().points_size() == 3);
     REQUIRE(chart.x_range_def().points(0).is_long() == true);
     REQUIRE(chart.x_range_def().points(1).is_long() == false);
