@@ -57,8 +57,6 @@ include(${PROJECT_SOURCE_DIR}/cmake/EpochDataSDK.cmake)
 add_library(epoch_dashboard "")
 add_library(epoch::dashboard ALIAS epoch_dashboard)
 
-find_package(glaze REQUIRED)
-find_package(spdlog REQUIRED)
 
 set_target_properties(epoch_dashboard PROPERTIES
         VERSION ${PROJECT_VERSION}
@@ -74,7 +72,6 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_subdirectory(thirdparty)
-target_compile_definitions(epoch_dashboard PUBLIC -DSPDLOG_USE_STD_FORMAT)
 
 target_include_directories(epoch_dashboard
         PUBLIC
@@ -95,8 +92,6 @@ endif()
 find_package(Protobuf REQUIRED)
 target_link_libraries(epoch_dashboard PUBLIC
         epoch::data_sdk
-        glaze::glaze
-        spdlog::spdlog_header_only
         epoch::proto)
 
 if (BUILD_TEST)
