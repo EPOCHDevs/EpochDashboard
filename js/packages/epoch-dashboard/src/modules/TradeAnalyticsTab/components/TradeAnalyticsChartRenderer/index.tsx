@@ -24,6 +24,8 @@ import { tailwindColors, tailwindTypography } from "../../../../utils/tailwindHe
 import { formatDollarAmount } from "../../../../utils/formatters"
 import { useSmartChartData } from "./hooks/useSmartChartData"
 import { DEFAULT_PADDING_CONFIGS } from "./utils/BackendPaddingUtils"
+import { useHighchartsTheme } from "../../../../hooks/useHighchartsTheme"
+import { getChartColors } from "../../../../constants"
 import "./styles.css"
 
 // Initialize Highcharts modules safely for SSR
@@ -55,6 +57,13 @@ interface TradeAnalyticsChartRendererProps extends Highcharts.Options {
   paddingProfile?: "MINIMAL" | "CONSERVATIVE" | "STANDARD" | "AGGRESSIVE" // Padding configuration profile
   wheelZoomMode?: "default" | "cursor" // default: Highcharts built-in; cursor: TradingView-like
   isFullScreen?: boolean
+  timeframe?: string // Optional timeframe override from parent
+  chartRef?: React.RefObject<HighchartsReact.RefObject> // Optional external chart ref
+  onRangeExpansionNeeded?: (range: { from: number; to: number }) => void // Callback when lazy loading is needed
+  expansionRange?: { from: number; to: number } | null // Range to expand/fetch for lazy loading
+  isLazyLoading?: boolean // Flag to prevent duplicate expansion requests
+  apiEndpoint?: string // API endpoint for fetching data
+  userId?: string // User ID for authentication
 }
 
 interface PaneState {
@@ -83,58 +92,112 @@ const TradeAnalyticsChartRenderer = ({
   paddingProfile = "STANDARD",
   wheelZoomMode = "default",
   isFullScreen = false,
+  timeframe,
+  chartRef: externalChartRef,
+  onRangeExpansionNeeded,
+  expansionRange,
+  isLazyLoading = false,
+  apiEndpoint,
+  userId,
 }: TradeAnalyticsChartRendererProps) => {
-  const chartRef = React.useRef<HighchartsReact.RefObject>(null)
+  const internalChartRef = React.useRef<HighchartsReact.RefObject>(null)
+  const chartRef = externalChartRef || internalChartRef
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(0)
   const [width, setWidth] = useState(0)
+  const isLazyLoadingRef = useRef(isLazyLoading) // Use ref to avoid triggering re-renders
+  const previousViewportRangeRef = useRef<number | null>(null) // Track previous viewport size to detect zoom in vs out
 
-  // Update dimensions on resize
+  // Update ref when prop changes
+  useEffect(() => {
+    isLazyLoadingRef.current = isLazyLoading
+  }, [isLazyLoading])
+
+  // Update dimensions on resize - use ResizeObserver for container changes
   useEffect(() => {
     const updateDimensions = () => {
       if (chartContainerRef.current) {
-        setHeight(chartContainerRef.current.clientHeight)
-        setWidth(chartContainerRef.current.clientWidth)
+        const newHeight = chartContainerRef.current.clientHeight
+        const newWidth = chartContainerRef.current.clientWidth
+
+        // Only update if dimensions actually changed to avoid unnecessary rerenders
+        if (newHeight !== height || newWidth !== width) {
+          setHeight(newHeight)
+          setWidth(newWidth)
+        }
       }
     }
 
+    // Initial dimension update
     updateDimensions()
+
+    // Use ResizeObserver to detect container size changes (more reliable than window resize)
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions()
+    })
+
+    if (chartContainerRef.current) {
+      resizeObserver.observe(chartContainerRef.current)
+    }
+
+    // Also listen to window resize as fallback
     window.addEventListener("resize", updateDimensions)
-    return () => window.removeEventListener("resize", updateDimensions)
-  }, [])
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener("resize", updateDimensions)
+    }
+  }, [height, width])
 
   const [visibleSeriesIds, setVisibleSeriesIds] = useState<string[]>([])
   const [paneStates, setPaneStates] = useState<PaneState[]>([])
+
+  // Debug paneStates changes
+  useEffect(() => {
+  }, [paneStates])
   const [isChartRendered, setIsChartRendered] = useState(false)
-  const [selectedTimeframe, setSelectedTimeframe] = useState<string>("")
+  const [internalTimeframe, setInternalTimeframe] = useState<string>("")
   const [chartKey, setChartKey] = useState<string>("")
   const [isTimeframeSwitching, setIsTimeframeSwitching] = useState(false)
   const baselineAppliedRef = useRef<string>("")
 
+  // Get theme-aware Highcharts configuration
+  const highchartsTheme = useHighchartsTheme()
+  const themeColors = useMemo(() => getChartColors(), [])
+
+  // Use the prop timeframe if provided, otherwise use internal state
+  const selectedTimeframe = timeframe || internalTimeframe
+
   // Initialize or reset timeframe from metadata whenever asset changes
   useEffect(() => {
-    if (assetId && tradeAnalyticsMetadata?.asset_info[assetId]) {
-      const defaultTf = tradeAnalyticsMetadata.asset_info[assetId].timeframes[0]
-      if (!selectedTimeframe || !tradeAnalyticsMetadata.chart_info?.[selectedTimeframe]) {
-        setSelectedTimeframe(defaultTf)
+    // Only manage internal timeframe if no prop is provided
+    if (!timeframe && assetId && tradeAnalyticsMetadata?.asset_info?.[assetId]) {
+      const assetInfo = tradeAnalyticsMetadata.asset_info[assetId]
+      const defaultTf = assetInfo.timeframes[0]?.timeframe
+      const currentTfValid = internalTimeframe && tradeAnalyticsMetadata.chart_info?.[internalTimeframe]
+
+      // Only update if we don't have a valid timeframe
+      if (defaultTf && !currentTfValid) {
+        setInternalTimeframe(defaultTf)
       }
     }
-  }, [
-    assetId,
-    tradeAnalyticsMetadata?.asset_info,
-    tradeAnalyticsMetadata?.chart_info,
-    selectedTimeframe,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetId, tradeAnalyticsMetadata, timeframe])
 
   // Ensure timeframe matches the selected asset; update if not present in new asset
   useEffect(() => {
-    if (assetId && tradeAnalyticsMetadata?.asset_info[assetId]) {
+    // Only manage internal timeframe if no prop is provided
+    if (!timeframe && assetId && tradeAnalyticsMetadata?.asset_info?.[assetId] && internalTimeframe) {
       const tfs = tradeAnalyticsMetadata.asset_info[assetId].timeframes
-      if (selectedTimeframe && !tfs.includes(selectedTimeframe)) {
-        setSelectedTimeframe(tfs[0])
+      const isValidForAsset = tfs.some(tf => tf.timeframe === internalTimeframe)
+
+      // Only update if current timeframe is invalid for this asset
+      if (!isValidForAsset && tfs[0]?.timeframe) {
+        setInternalTimeframe(tfs[0].timeframe)
       }
     }
-  }, [assetId, selectedTimeframe, tradeAnalyticsMetadata?.asset_info])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetId, tradeAnalyticsMetadata, timeframe])
 
   // Smart data loading with caching and lazy loading
   const {
@@ -150,6 +213,9 @@ const TradeAnalyticsChartRenderer = ({
     enabled: Boolean(campaignId && assetId && selectedTimeframe),
     paddingConfig: DEFAULT_PADDING_CONFIGS[paddingProfile],
     fetchEntireCandleStickData: fetchEntireCandleStickData,
+    expansionRange: expansionRange,
+    apiEndpoint: apiEndpoint,
+    userId: userId,
   })
 
   const selectedAssetDetails = useMemo(() => {
@@ -159,6 +225,7 @@ const TradeAnalyticsChartRenderer = ({
     return undefined
   }, [assetId, tradeAnalyticsMetadata?.asset_info])
 
+
   const timeframeConfig = useMemo(() => {
     if (selectedTimeframe && tradeAnalyticsMetadata?.chart_info)
       return tradeAnalyticsMetadata.chart_info[selectedTimeframe]
@@ -167,7 +234,7 @@ const TradeAnalyticsChartRenderer = ({
 
   // Initialize pane states from timeframe config
   useEffect(() => {
-    if (timeframeConfig?.yAxis) {
+    if (timeframeConfig?.yAxis && timeframeConfig.yAxis.length > 0) {
       setIsChartRendered(false) // Reset chart rendered state when config changes
 
       // Force chart cleanup when timeframe changes
@@ -213,15 +280,23 @@ const TradeAnalyticsChartRenderer = ({
           }
         }
 
+        const height = axis.height || 70 // Default height if not specified
+        const top = axis.top !== undefined ? axis.top : (index * 35) // Default top if not specified
+
+        // Only keep Price (index 0) and Volume (index 1) panes expanded by default
+        // All other panes (TradeSignal, etc.) should be collapsed by default
+        const shouldCollapse = index > 1
+
         return {
           id: `pane-${index}`,
           name: paneName,
-          collapsed: false,
-          height: axis.height,
-          top: axis.top,
-          originalHeight: axis.height,
+          collapsed: shouldCollapse,
+          height,
+          top,
+          originalHeight: height,
         }
       })
+
       setPaneStates(initialPaneStates)
     }
   }, [timeframeConfig])
@@ -244,16 +319,18 @@ const TradeAnalyticsChartRenderer = ({
   }, [timeframeConfig])
 
   const chartOptions: Highcharts.Options | undefined = useMemo(() => {
-    if (
-      isLoading ||
-      isLoadingTradeAnalyticsChartData ||
-      !timeframeConfig ||
-      !selectedTimeframe ||
-      !tradeAnalyticsChartData ||
-      !paneStates.length
-    ) {
-      return undefined
-    }
+    try {
+      // CRITICAL: Only skip rendering on TRUE initial load (no config/data yet)
+      // NEVER skip if we have data - even if we're fetching more data in background
+      if (
+        !timeframeConfig ||
+        !selectedTimeframe ||
+        !tradeAnalyticsChartData ||
+        !paneStates.length ||
+        !highchartsTheme
+      ) {
+        return undefined
+      }
 
     // Configure yAxes based on pane states with validation
     const yAxes: Highcharts.YAxisOptions[] = paneStates
@@ -266,7 +343,7 @@ const TradeAnalyticsChartRenderer = ({
           align: "left",
           style: {
             ...tailwindTypography.desktopL14Regular.css,
-            color: `${tailwindColors.primary.white}4D`,
+            color: highchartsTheme?.yAxis?.labels?.style?.color || tailwindColors.secondary.cementGrey,
           },
           distance: 10,
           formatter: function tooltipFormatter(this) {
@@ -296,7 +373,7 @@ const TradeAnalyticsChartRenderer = ({
         title: { text: "" },
         lineWidth: 2,
         gridLineWidth: 2,
-        gridLineColor: `${tailwindColors.primary.white}05`,
+        gridLineColor: highchartsTheme?.yAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
         gridLineDashStyle: "Solid",
         opposite: true,
         resize: {
@@ -432,16 +509,6 @@ const TradeAnalyticsChartRenderer = ({
         marginBottom: 40, // Reduced bottom margin
         events: {
           load() {
-            // Ensure chart fills container and disable animations
-            const container = this.container
-            if (container && container.parentElement) {
-              const parentWidth = container.parentElement.clientWidth
-              const parentHeight = container.parentElement.clientHeight
-              if (parentWidth > 0 && parentHeight > 0) {
-                this.setSize(parentWidth, parentHeight, false)
-              }
-            }
-
             // Disable the initial animation completely
             this.series.forEach((series) => {
               try {
@@ -473,12 +540,12 @@ const TradeAnalyticsChartRenderer = ({
         type: "datetime",
         gridLineWidth: 2,
         ordinal: true,
-        gridLineColor: `${tailwindColors.primary.white}05`,
+        gridLineColor: highchartsTheme?.xAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
         gridLineDashStyle: "Solid",
         labels: {
           style: {
             ...tailwindTypography.desktopL14Regular.css,
-            color: `${tailwindColors.primary.white}4D`,
+            color: highchartsTheme?.xAxis?.labels?.style?.color || tailwindColors.secondary.cementGrey,
           },
         },
         crosshair: {
@@ -486,13 +553,13 @@ const TradeAnalyticsChartRenderer = ({
           label: {
             enabled: true,
             format: "{value:%Y-%m-%d %H:%M}",
-            backgroundColor: `${tailwindColors.primary.white}E6`,
-            borderColor: `${tailwindColors.primary.white}`,
+            backgroundColor: `${themeColors.foreground}E6`,
+            borderColor: themeColors.foreground,
             borderWidth: 1,
             borderRadius: 4,
             padding: 6,
             style: {
-              color: "#000000",
+              color: themeColors.background,
               fontWeight: "bold",
               fontSize: "11px",
             },
@@ -500,8 +567,87 @@ const TradeAnalyticsChartRenderer = ({
         },
         plotBands: allSeriesPlotBands?.map((band) => ({
           ...band,
-          color: band.color ? band.color : `${tailwindColors.primary.white}0D`,
+          color: band.color ? band.color : `${themeColors.foreground}0D`,
         })),
+        events: {
+          afterSetExtremes: function (e) {
+            // Guard 1: Only respond to user-initiated zoom actions
+            // e.trigger can be: 'zoom', 'navigator', 'mousewheel', 'rangeSelectorButton', etc.
+            // undefined means programmatic setExtremes calls
+            const userTriggers = ['zoom', 'navigator', 'mousewheel', 'rangeSelectorButton']
+            if (!e.trigger || !userTriggers.includes(e.trigger)) {
+              return
+            }
+
+            // Guard 2: Don't trigger expansion if already loading data
+            if (isLazyLoadingRef.current) {
+              return
+            }
+
+            // Detect when user zooms beyond 90% of available data range
+            const axis = this
+            const dataMin = (axis as any).dataMin
+            const dataMax = (axis as any).dataMax
+
+            if (!dataMin || !dataMax || !onRangeExpansionNeeded) {
+              return
+            }
+
+            const viewMin = e.min
+            const viewMax = e.max
+            const currentViewportRange = viewMax - viewMin
+
+            // Detect zoom direction: zoom IN = smaller viewport, zoom OUT = larger viewport
+            const previousRange = previousViewportRangeRef.current
+
+            // Only process if we have a previous range to compare
+            if (previousRange === null) {
+              // First zoom - just record the range, don't trigger expansion
+              previousViewportRangeRef.current = currentViewportRange
+              return
+            }
+
+            const isZoomingOut = currentViewportRange > previousRange
+            const isZoomingIn = currentViewportRange < previousRange
+            const isPanning = Math.abs(currentViewportRange - previousRange) < 1 // Almost same size = panning
+
+            // Update ref for next comparison
+            previousViewportRangeRef.current = currentViewportRange
+
+            // ONLY trigger expansion when zooming OUT (or panning) and approaching data boundaries
+            // Never trigger on zoom IN - we already have that data cached
+            if (isZoomingIn) {
+              return
+            }
+
+            // Now check if we're zooming out or panning
+            if (isZoomingOut || isPanning) {
+              // Calculate how close we are to the data boundaries (20% threshold for smoother UX)
+              const dataRange = dataMax - dataMin
+              const frontBuffer = dataRange * 0.2
+              const backBuffer = dataRange * 0.2
+
+              const needsExpansion =
+                viewMin < (dataMin + frontBuffer) || // Zoomed near start
+                viewMax > (dataMax - backBuffer)      // Zoomed near end
+
+              if (needsExpansion) {
+                // Calculate expansion range: extend beyond viewport by 50% on each side
+                const viewportRange = viewMax - viewMin
+                const expansionBuffer = viewportRange * 0.5
+
+                // Expand beyond current viewport (not just current data bounds)
+                const expansionFrom = viewMin - expansionBuffer
+                const expansionTo = viewMax + expansionBuffer
+
+                onRangeExpansionNeeded({
+                  from: expansionFrom,
+                  to: expansionTo
+                })
+              }
+            }
+          }
+        }
       },
       yAxis: yAxes,
       tooltip: {
@@ -546,21 +692,21 @@ const TradeAnalyticsChartRenderer = ({
                   ?.map((point, index) => {
                     return `
                       <div
-                        class="flex flex-row items-center justify-start gap-3.75 absolute"
+                        class="flex flex-row items-center justify-start gap-3 absolute px-3 py-2 rounded-lg backdrop-blur-md"
                         style="top:${
                           point.series.type === "candlestick"
                             ? -25
                             : points.length > 1
                               ? point.series.yAxis.pos + index * 20
                               : point.series.yAxis.pos
-                        }px;">
+                        }px; background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.1);">
                         ${Object.entries(point.point?.options ?? {})
                           ?.map(([key, value]) => {
                             return key !== "x"
                               ? `
-                                <div class="flex flex-row items-center justify-start gap-1">
-                                  <span class="typography-dashboardL14Regular ${point.series.type === "candlestick" ? "opacity-100" : "opacity-30"} text-primary-white capitalize">${key === "y" ? point.series.name : key}</span>
-                                  <span class="typography-dashboardL14Regular lining-nums tabular-nums" style="color:${point.color};">${formatDollarAmount(
+                                <div class="flex flex-row items-center justify-start gap-2">
+                                  <span class="text-xs font-medium ${point.series.type === "candlestick" ? "text-foreground" : "text-muted-foreground"} capitalize">${key === "y" ? point.series.name : key}:</span>
+                                  <span class="text-xs font-semibold lining-nums tabular-nums" style="color:${point.color};">${formatDollarAmount(
                                     value as unknown as number,
                                     {
                                       style: "decimal",
@@ -660,6 +806,10 @@ const TradeAnalyticsChartRenderer = ({
         },
       },
     } as Highcharts.Options
+    } catch (error) {
+      console.error("Error creating chart options:", error)
+      return undefined
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isLoading,
@@ -672,6 +822,10 @@ const TradeAnalyticsChartRenderer = ({
     selectedRoundTrips,
     fetchEntireCandleStickData,
     paneStates,
+    onRangeExpansionNeeded, // Include callback in deps so event handler has fresh reference
+    highchartsTheme, // Update chart when theme changes
+    themeColors, // Update chart when theme colors change
+    // Note: isLazyLoading NOT in deps - using ref instead to avoid re-renders
   ])
 
   const handleSeriesVisibility = useCallback(
@@ -741,14 +895,15 @@ const TradeAnalyticsChartRenderer = ({
     }
   }, [paneStates])
 
-  // Ensure chart fills container when dimensions change
+  // Trigger reflow when dimensions change (but don't force size to allow resize handles to work)
   useEffect(() => {
     const chart = chartRef.current?.chart
-    if (chart && height && width) {
+    if (chart) {
       try {
-        chart.setSize(width, height, false) // No animation for instant resize
+        // Just trigger reflow, don't force size - this allows resize handles to work
+        chart.reflow()
       } catch (error) {
-        // Silently skip resize errors
+        // Silently skip reflow errors
       }
     }
   }, [height, width])
@@ -762,9 +917,10 @@ const TradeAnalyticsChartRenderer = ({
   }
 
   return (
-    <div className="flex h-full flex-col items-start">
+    <div className="flex h-full w-full flex-col items-start">
       <div className="relative h-full w-full flex-1" ref={chartContainerRef}>
-        {isLoading || isFetchingTradeAnalyticsChartData || isTimeframeSwitching ? (
+        {/* Show loading skeleton on INITIAL load or when data is being fetched */}
+        {(isLoading || isTimeframeSwitching || isLoadingTradeAnalyticsChartData) && !tradeAnalyticsChartData ? (
           <div className="h-full w-full rounded-3xl bg-gray-200 animate-pulse" />
         ) : typeof chartOptions === "undefined" || !assetId ? (
           <div className="h-full w-full rounded-3xl">
@@ -773,25 +929,29 @@ const TradeAnalyticsChartRenderer = ({
             </div>
           </div>
         ) : (
-          <HighchartsReact
-            key={chartKey || `${selectedTimeframe}-${assetId}`} // Force complete reinitialization on timeframe/asset change
-            highcharts={Highcharts}
-            options={{ ...chartOptions }}
-            ref={chartRef}
-            style={{
-              opacity: 1, // Always visible, no fade animation
-              height: "100%",
-              width: "100%",
-            }}
+          <>
+            {/* Subtle loading indicator for background data fetches */}
+            {isFetchingTradeAnalyticsChartData && tradeAnalyticsChartData && (
+              <div className="absolute top-2 right-2 z-50 flex items-center gap-2 px-3 py-1.5 bg-primary-white/10 backdrop-blur-sm rounded-lg border border-primary-white/20">
+                <div className="w-2 h-2 bg-territory-blue rounded-full animate-pulse" />
+                <span className="text-xs text-primary-white/70">Loading data...</span>
+              </div>
+            )}
+            <HighchartsReact
+              key={chartKey || `${selectedTimeframe}-${assetId}`} // Force complete reinitialization on timeframe/asset change
+              highcharts={Highcharts}
+              options={chartOptions}
+              ref={chartRef}
+              style={{
+                opacity: 1, // Always visible, no fade animation
+                height: "100%",
+                width: "100%",
+              }}
             callback={(chart: Chart) => {
               try {
-                // Force chart to fill container immediately
-                if (chart && chart.container) {
-                  chart.setSize(
-                    width || chart.container.offsetWidth,
-                    height || chart.container.offsetHeight,
-                    false
-                  )
+                // Trigger reflow to ensure proper sizing
+                if (chart) {
+                  chart.reflow()
                 }
 
                 // If there are no selected round trips, apply a baseline window
@@ -824,34 +984,38 @@ const TradeAnalyticsChartRenderer = ({
                 setIsChartRendered(true)
               }
             }}
-          />
+            />
+          </>
         )}
       </div>
-      <div className="flex min-h-11.5 w-full flex-row items-center justify-between gap-4 pt-3.75">
-        <div className="flex flex-1 flex-row items-center justify-start gap-2">
-          {selectedAssetDetails?.timeframes && (
-            <>
-              <p className="typography-desktopL14Regular shrink-0 text-primary-white/50">
-                Time frame:
-              </p>
-              <div className="flex w-full flex-row items-center justify-start gap-1.5 lg:gap-2">
-                {selectedAssetDetails?.timeframes?.map((timeframeKey, index) => (
-                  <button
-                    className={`typography-desktopL14Regular flex h-7.5 w-10 items-center justify-center rounded ${
-                      timeframeKey === selectedTimeframe
-                        ? "pointer-events-none bg-primary-white/10 text-primary-white/50"
-                        : "cursor-pointer bg-transparent text-primary-white/30"
-                    }`}
-                    key={index}
-                    onClick={() => setSelectedTimeframe(timeframeKey)}>
-                    {timeframeKey}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+      {/* Only show bottom timeframe selector if no timeframe prop is provided */}
+      {!timeframe && (
+        <div className="flex min-h-11.5 w-full flex-row items-center justify-between gap-4 pt-3.75">
+          <div className="flex flex-1 flex-row items-center justify-start gap-2">
+            {selectedAssetDetails?.timeframes && (
+              <>
+                <p className="typography-desktopL14Regular shrink-0 text-primary-white/50">
+                  Time frame:
+                </p>
+                <div className="flex w-full flex-row items-center justify-start gap-1.5 lg:gap-2">
+                  {selectedAssetDetails?.timeframes?.map((tfInfo, index) => (
+                    <button
+                      className={`typography-desktopL14Regular flex h-7.5 w-10 items-center justify-center rounded ${
+                        tfInfo.timeframe === selectedTimeframe
+                          ? "pointer-events-none bg-primary-white/10 text-primary-white/50"
+                          : "cursor-pointer bg-transparent text-primary-white/30"
+                      }`}
+                      key={index}
+                      onClick={() => !timeframe && setInternalTimeframe(tfInfo.timeframe)}>
+                      {tfInfo.timeframe}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -14,9 +14,9 @@ export function downloadTearsheet(
   try {
     // Proto only - no JSON!
     const uint8Array = TearSheetClass.encode(tearsheet).finish()
-    // Convert to regular ArrayBuffer for Blob
-    const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
-    const blob = new Blob([buffer], { type: 'application/octet-stream' })
+    // Create a new Uint8Array with regular ArrayBuffer to avoid SharedArrayBuffer issues
+    const regularArray = new Uint8Array(uint8Array)
+    const blob = new Blob([regularArray], { type: 'application/octet-stream' })
     const extension = '.pb'
 
     // Create download link

@@ -23,7 +23,7 @@ export const DEFAULT_PADDING_CONFIGS = {
   STANDARD: {
     frontPadUnits: 100,
     backPadUnits: 100,
-    baselineUnits: 1500,
+    baselineUnits: 500, // Reduced from 1500 for faster initial render
   },
   // Aggressive padding - maximum context
   AGGRESSIVE: {
@@ -53,50 +53,47 @@ export interface TradeAnalyticsApiParams {
   pad_back?: number
 }
 
-// Approximate milliseconds per bar from timeframe strings like "5m", "1h", "1D", "1W"
-function getMsPerBar(timeframe: string): number {
-  const tf = (timeframe || "").toLowerCase().trim()
-  const match = tf.match(/^(\d+)?\s*([a-z]+)/)
+/**
+ * Approximate milliseconds per bar from timeframe strings like "5m", "1h", "1D", "1W"
+ * Supports: 5m, 5min, 1H, 1hour, 1D, 1day, 1W, 1M, 3M, 1Q, 1Y, etc.
+ * @param timeframe - Timeframe string (e.g., "5m", "1H", "1D")
+ * @returns Milliseconds per bar
+ */
+export function getMsPerBar(timeframe: string): number {
+  const tf = (timeframe || "").trim()
+
+  // Extract number and unit: "5m" -> num=5, unit="m"
+  const match = tf.match(/^(\d+)?\s*([a-zA-Z]+)$/)
   if (!match) return 60_000 // default 1 minute
+
   const num = parseInt(match[1] || "1", 10)
   const unit = match[2]
-  switch (unit) {
-    case "m":
-    case "min":
-    case "mins":
-    case "minute":
-    case "minutes":
-      return num * 60_000
-    case "h":
-    case "hr":
-    case "hour":
-    case "hours":
-      return num * 3_600_000
-    case "d":
-    case "day":
-    case "days":
-      return num * 86_400_000
-    case "w":
-    case "wk":
-    case "week":
-    case "weeks":
-      return num * 7 * 86_400_000
-    case "q": // quarter (approximate 91 days)
-    case "quarter":
-      return num * 91 * 86_400_000
-    case "mo":
-    case "mon":
-    case "month":
-    case "months":
-      return num * 30 * 86_400_000
-    case "y":
-    case "yr":
-    case "year":
-    case "years":
-      return num * 365 * 86_400_000
-    default:
-      return 60_000
+  const unitUpper = unit.toUpperCase()
+
+  // Determine multiplier by first character(s)
+  let msPerUnit: number
+
+  if (unit === 'm' || unitUpper.startsWith('MIN')) {
+    // lowercase 'm' or starts with MIN -> minutes
+    msPerUnit = 60_000
+  } else if (unitUpper.startsWith('H')) {
+    msPerUnit = 3_600_000
+  } else if (unitUpper.startsWith('D')) {
+    msPerUnit = 86_400_000
+  } else if (unitUpper.startsWith('W')) {
+    msPerUnit = 7 * 86_400_000
+  } else if (unitUpper.startsWith('MO') || unit === 'M') {
+    // Starts with MO or uppercase 'M' alone -> months
+    msPerUnit = 30 * 86_400_000
+  } else if (unitUpper.startsWith('Q')) {
+    msPerUnit = 91 * 86_400_000
+  } else if (unitUpper.startsWith('Y')) {
+    msPerUnit = 365 * 86_400_000
+  } else {
+    msPerUnit = 60_000 // fallback to minutes
   }
+
+  return num * msPerUnit
 }
 
 /**
@@ -202,7 +199,7 @@ export function createApiParamsCacheKey(params: TradeAnalyticsApiParams): string
  */
 export function formatApiParamsForRequest(params: TradeAnalyticsApiParams): Record<string, string> {
   const queryParams: Record<string, string> = {
-    assetId: params.assetId,
+    asset: params.assetId,  // Backend expects 'asset', not 'assetId'
     timeframe: params.timeframe,
   }
 

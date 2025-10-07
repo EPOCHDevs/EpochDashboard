@@ -1,13 +1,16 @@
 {
   "name": "@epochlab/epoch-dashboard",
-  "version": "1.4.14",
+  "version": "1.5.7",
   "description": "React dashboard component for TearSheet protobuf visualization with Tailwind CSS styling",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src/styles"
+    "!dist/examples",
+    "src/styles",
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {
@@ -54,28 +57,29 @@
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
-    "tailwindcss": "^3.0.0"
+    "next": "^13.0.0 || ^14.0.0 || ^15.0.0",
+    "tailwindcss": "^3.0.0",
+    "@epochlab/epoch-protos": "^2.0.0",
+    "highcharts": "^11.0.0",
+    "highcharts-react-official": "^3.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-table": "^8.0.0",
+    "@radix-ui/themes": "^3.0.0",
+    "react-hook-form": "^7.0.0",
+    "date-fns": "^4.0.0",
+    "axios": "^1.0.0"
   },
   "dependencies": {
-    "@epochlab/epoch-protos": "^2.0.8",
     "@hookform/resolvers": "^5.2.2",
-    "@radix-ui/themes": "^3.2.1",
-    "@tanstack/react-query": "^5.90.2",
-    "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@types/lodash": "^4.17.20",
     "apache-arrow": "^21.0.0",
-    "axios": "^1.12.2",
     "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "highcharts": "^11.4.8",
-    "highcharts-react-official": "^3.2.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "ms": "^2.1.3",
     "protobufjs": "latest",
-    "react-hook-form": "^7.63.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {

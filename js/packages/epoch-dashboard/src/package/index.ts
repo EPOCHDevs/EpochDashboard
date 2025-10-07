@@ -36,7 +36,7 @@ export {
   processDataAsync,
   chunkArray,
   getMemoryUsage
-} from '../utils/performanceUtils.tsx'
+} from '../utils/performanceUtils'
 
 // Table and Card Components
 export { default as TearsheetTable } from '../components/Dashboard/TearsheetTable'

@@ -9,37 +9,37 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-/* CSS Custom Properties for theming */
+/* CSS Custom Properties for theming - Using semantic tokens */
 :root {
-  /* Primary colors */
-  --dashboard-bg-primary: #131722;
-  --dashboard-bg-secondary: #161a25;
-  --dashboard-bg-tertiary: #1e222d;
-  --dashboard-bg-card: rgba(30, 34, 45, 0.95);
+  /* Map to semantic tokens (light mode placeholder) */
+  --dashboard-bg-primary: hsl(var(--background));
+  --dashboard-bg-secondary: hsl(var(--card));
+  --dashboard-bg-tertiary: hsl(var(--popover));
+  --dashboard-bg-card: hsl(var(--card));
 
   /* Text colors */
-  --dashboard-text-primary: #d1d4dc;
-  --dashboard-text-secondary: #787b86;
-  --dashboard-text-tertiary: #434651;
-  --dashboard-text-disabled: rgba(120, 123, 134, 0.5);
+  --dashboard-text-primary: hsl(var(--foreground));
+  --dashboard-text-secondary: hsl(var(--muted-foreground));
+  --dashboard-text-tertiary: hsl(var(--muted-foreground));
+  --dashboard-text-disabled: hsl(var(--muted-foreground) / 0.5);
 
   /* Territory colors */
-  --dashboard-accent-cyan: #00bcd4;
-  --dashboard-accent-blue: #2196f3;
-  --dashboard-success: #26a69a;
-  --dashboard-warning: #ff9800;
-  --dashboard-alert: #f23645;
+  --dashboard-accent-cyan: hsl(var(--accent));
+  --dashboard-accent-blue: hsl(var(--chart-2));
+  --dashboard-success: hsl(var(--success));
+  --dashboard-warning: hsl(var(--warning));
+  --dashboard-alert: hsl(var(--destructive));
 
   /* Border colors */
-  --dashboard-border-primary: #2a2e39;
-  --dashboard-border-secondary: rgba(42, 46, 57, 0.5);
+  --dashboard-border-primary: hsl(var(--border));
+  --dashboard-border-secondary: hsl(var(--border) / 0.5);
 
   /* Chart colors */
-  --dashboard-chart-strategy: #00bcd4;
-  --dashboard-chart-benchmark: #2196f3;
-  --dashboard-chart-long: #26a69a;
-  --dashboard-chart-short: #f23645;
-  --dashboard-chart-cash: #ff9800;
+  --dashboard-chart-strategy: hsl(var(--chart-1));
+  --dashboard-chart-benchmark: hsl(var(--chart-2));
+  --dashboard-chart-long: hsl(var(--chart-3));
+  --dashboard-chart-short: hsl(var(--chart-4));
+  --dashboard-chart-cash: hsl(var(--chart-5));
 }
 
 /* Component Layer - Dashboard specific utilities */

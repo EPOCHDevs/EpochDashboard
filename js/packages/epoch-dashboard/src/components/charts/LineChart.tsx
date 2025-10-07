@@ -31,8 +31,8 @@ const LineChart: React.FC<LineChartProps> = ({
     }
 
     // Convert lines to series
-    const xAxisType = data.chartDef?.xAxis?.type
-    const series = data.lines.map((line, index) =>
+    const xAxisType = data.chartDef?.xAxis?.type || undefined
+    const series = data.lines.map((line: any, index: number) =>
       convertLineToSeries(line, index, xAxisType)
     )
 

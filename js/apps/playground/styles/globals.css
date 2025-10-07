@@ -2,7 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Semantic tokens for next-themes - Light mode (placeholder for future) */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 189 100% 42%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 189 100% 42%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 189 100% 42%;
+    --success: 174 42% 47%;
+    --warning: 36 100% 50%;
+    --chart-1: 189 100% 42%;
+    --chart-2: 207 90% 54%;
+    --chart-3: 174 42% 47%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 36 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Pure dark gray theme - matching EpochWeb */
+    --background: 0 0% 6%;               /* Modern dark gray */
+    --foreground: 0 0% 98%;              /* Soft white */
+    --card: 0 0% 8%;                     /* Card background */
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 10%;               /* Neutral secondary */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;                   /* Muted elements */
+    --muted-foreground: 0 0% 64%;        /* Muted text */
+    --accent: 0 0% 90%;                  /* Light gray for selections */
+    --accent-foreground: 0 0% 6%;        /* Dark text on light accent */
+    --destructive: 344 98% 61%;          /* #F63C6B - red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;                  /* Neutral borders */
+    --input: 0 0% 20%;
+    --ring: 0 0% 40%;
+    --success: 174 42% 47%;              /* Green success */
+    --warning: 36 100% 50%;              /* Orange warning */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
 :root {
+  /* Keep existing color variables for backward compatibility */
   /* Primary Colors - TradingView Style */
   --color-jet-black: #000000;
   --color-white: #FFFFFF;
@@ -170,6 +234,29 @@ body {
 
   .epoch-table-scrollbar::-webkit-scrollbar-corner {
     background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Sidebar scrollbar - minimal and elegant */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .scrollbar-thin {

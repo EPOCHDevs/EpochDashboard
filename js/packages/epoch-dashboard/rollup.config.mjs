@@ -43,9 +43,52 @@ export default [
       })
     ],
     external: [
+      // React ecosystem
       'react',
       'react-dom',
-      'tailwindcss'
+      'react/jsx-runtime',
+
+      // Styling
+      'tailwindcss',
+
+      // Charting
+      'highcharts',
+      'highcharts/modules/xrange',
+      'highcharts/modules/heatmap',
+      'highcharts/modules/more',
+      'highcharts-react-official',
+
+      // UI Libraries
+      '@radix-ui/themes',
+      'lucide-react',
+
+      // Data/State Management
+      '@tanstack/react-query',
+      '@tanstack/react-table',
+      '@tanstack/react-virtual',
+
+      // Forms
+      'react-hook-form',
+      '@hookform/resolvers',
+      'zod',
+
+      // Data Processing
+      'apache-arrow',
+      'date-fns',
+      'date-fns-tz',
+      'lodash',
+
+      // HTTP
+      'axios',
+
+      // Proto
+      '@epochlab/epoch-protos',
+      /^@epochlab\/epoch-protos\//,
+
+      // Utils
+      'clsx',
+      'ms',
+      'protobufjs'
     ]
   },
   {

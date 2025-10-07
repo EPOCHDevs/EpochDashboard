@@ -6,6 +6,7 @@ import {
   Point,
   Line,
   BarData,
+  PieData,
   PieDataDef,
   Scalar,
   AxisType,
@@ -325,7 +326,7 @@ export const convertLineToSeries = (
   xAxisType?: AxisType
 ): any => {
   // Use series name to detect type and get appropriate color
-  const color = line.name ? getSeriesLineColor(line.name) : getChartColor(index)
+  const color = getChartColor(index)
 
   return {
     type: 'line',
@@ -436,7 +437,7 @@ export const convertPieDataToSeries = (
   pieDataDef: PieDataDef,
   _seriesIndex: number
 ): any => {
-  const pieData = (pieDataDef.points || []).map((point, pointIndex) => ({
+  const pieData = (pieDataDef.points || []).map((point: PieData, pointIndex: number) => ({
     name: point.name || `Slice ${pointIndex + 1}`,
     y: point.y || 0,
     color: PIE_COLORS[pointIndex % PIE_COLORS.length]

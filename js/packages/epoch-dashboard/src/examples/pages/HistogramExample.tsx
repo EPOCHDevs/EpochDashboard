@@ -128,15 +128,15 @@ const HistogramExample: React.FC = () => {
                   if (values.length === 0) return null
 
                   // Extract numeric values from Scalar array
-                  const numericValues = values.map(v =>
+                  const numericValues = values.map((v: any) =>
                     Number(v.decimalValue || v.integerValue || v.monetaryValue || 0)
                   )
-                  const sorted = [...numericValues].sort((a, b) => a - b)
-                  const mean = numericValues.reduce((a, b) => a + b, 0) / numericValues.length
+                  const sorted = [...numericValues].sort((a: number, b: number) => a - b)
+                  const mean = numericValues.reduce((a: number, b: number) => a + b, 0) / numericValues.length
                   const median = sorted[Math.floor(numericValues.length / 2)]
                   const min = sorted[0]
                   const max = sorted[sorted.length - 1]
-                  const variance = numericValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numericValues.length
+                  const variance = numericValues.reduce((acc: number, val: number) => acc + Math.pow(val - mean, 2), 0) / numericValues.length
                   const stdDev = Math.sqrt(variance)
 
                   return (

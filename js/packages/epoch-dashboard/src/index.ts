@@ -11,6 +11,14 @@
 
 export { default as TearsheetDashboard } from './components/Dashboard/TearsheetDashboard'
 
+// High-level container that fetches tearsheet data automatically
+export { DashboardContainer } from './components/Dashboard/DashboardContainer'
+export type { DashboardContainerProps } from './components/Dashboard/DashboardContainer'
+
+// Unified container that combines Performance Overview + Trade Analytics
+export { UnifiedDashboardContainer } from './components/Dashboard/UnifiedDashboardContainer'
+export type { UnifiedDashboardContainerProps, DashboardView } from './components/Dashboard/UnifiedDashboardContainer'
+
 // ============================================================================
 // CORE UTILITIES
 // ============================================================================
@@ -148,8 +156,12 @@ export { defaultTheme } from './config/theme'
 // TRADE ANALYTICS COMPONENTS
 // ============================================================================
 
-// Main chart renderer component
+// Main chart renderer component (low-level, requires data to be passed in)
 export { default as TradeAnalyticsChartRenderer } from './modules/TradeAnalyticsTab/components/TradeAnalyticsChartRenderer'
+
+// Container component (high-level, fetches data automatically)
+export { TradeAnalyticsContainer } from './modules/TradeAnalyticsTab'
+export type { TradeAnalyticsContainerProps } from './modules/TradeAnalyticsTab'
 
 // Badge components
 export { default as RenderTradePositionBadge } from './modules/TradeAnalyticsTab/components/RenderTradePositionBadge'

@@ -80,11 +80,18 @@ export interface ChartInfoType {
 
 export type TradeAnalyticsMetadataChartInfoType = Record<string, ChartInfoType>
 
+export interface TimeframeInfo {
+  timeframe: string
+  absolute_start_ms: number
+  absolute_end_ms: number
+  total_bars: number
+}
+
 export interface TradeAnalyticsMetadataAssetInfoType {
   asset: IAsset
   start_date: string // Start date of the data
   end_date: string // End date of the data
-  timeframes: string[]
+  timeframes: TimeframeInfo[]
 }
 
 export interface GetTradeAnalyticsMetadataResponseType {

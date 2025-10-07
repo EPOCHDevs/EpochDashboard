@@ -86,12 +86,12 @@ const PieChartExample: React.FC = () => {
             <h4 className="text-sm font-medium text-secondary-ashGrey mb-2">Pie Data</h4>
             <pre className="bg-black/20 p-4 rounded text-xs text-primary-white overflow-x-auto max-h-64 overflow-y-auto">
               {JSON.stringify(
-                chartConfigs[selectedChart].data.data?.map(pieData => ({
+                chartConfigs[selectedChart].data.data?.map((pieData: any) => ({
                   name: pieData.name,
                   size: pieData.size,
                   innerSize: pieData.innerSize,
                   pointCount: pieData.points?.length || 0,
-                  points: pieData.points?.map(point => ({
+                  points: pieData.points?.map((point: any) => ({
                     name: point.name,
                     value: point.y
                   }))
@@ -108,7 +108,7 @@ const PieChartExample: React.FC = () => {
               <span className="px-2 py-1 bg-primary-white/10 text-xs text-primary-white rounded">
                 Series Count: {chartConfigs[selectedChart].data.data?.length || 0}
               </span>
-              {chartConfigs[selectedChart].data.data?.map((pieData, index) => (
+              {chartConfigs[selectedChart].data.data?.map((pieData: any, index: number) => (
                 <React.Fragment key={index}>
                   <span className="px-2 py-1 bg-primary-white/10 text-xs text-primary-white rounded">
                     {pieData.name}: {pieData.points?.length || 0} slices
@@ -129,11 +129,11 @@ const PieChartExample: React.FC = () => {
           <div>
             <h4 className="text-sm font-medium text-secondary-ashGrey mb-2">Data Summary</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {chartConfigs[selectedChart].data.data?.map((pieData, pieIndex) => (
+              {chartConfigs[selectedChart].data.data?.map((pieData: any, pieIndex: number) => (
                 <div key={pieIndex} className="bg-black/20 p-3 rounded">
                   <h5 className="text-sm font-medium text-primary-white mb-2">{pieData.name}</h5>
                   <div className="space-y-1">
-                    {pieData.points?.map((point, pointIndex) => (
+                    {pieData.points?.map((point: any, pointIndex: number) => (
                       <div key={pointIndex} className="flex justify-between text-xs">
                         <span className="text-secondary-ashGrey">{point.name}:</span>
                         <span className="text-primary-white">{point.y}</span>
@@ -143,7 +143,7 @@ const PieChartExample: React.FC = () => {
                       <div className="flex justify-between text-xs font-medium">
                         <span className="text-secondary-ashGrey">Total:</span>
                         <span className="text-primary-white">
-                          {pieData.points?.reduce((sum, point) => sum + (point.y || 0), 0).toFixed(1) || 0}
+                          {pieData.points?.reduce((sum: number, point: any) => sum + (point.y || 0), 0).toFixed(1) || 0}
                         </span>
                       </div>
                     </div>

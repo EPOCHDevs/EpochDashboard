@@ -1,10 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import clsx from 'clsx'
 import {
   LayoutGrid,
   Columns3,
   Columns2,
+  ChevronDown,
 } from 'lucide-react'
 import TearsheetCategoryContent from './TearsheetCategoryContent'
 import { TearSheet } from '../../types/proto'
@@ -49,6 +51,7 @@ interface TearsheetDashboardProps {
   onCategoryChange?: (category: string) => void
   onLayoutChange?: (layout: string) => void
   debug?: boolean
+  rightControls?: React.ReactNode
 }
 
 const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
@@ -57,7 +60,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   hideLayoutControls = false,
   onCategoryChange,
   onLayoutChange,
-  debug = false
+  debug = false,
+  rightControls,
 }) => {
   // Compute categories from tearsheet
   const categories = useMemo(() => {
@@ -73,6 +77,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   }, [tearsheet])
   // Responsive layout detection
   const [isResponsive, setIsResponsive] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const checkResponsive = () => {
@@ -81,6 +87,17 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
     checkResponsive()
     window.addEventListener('resize', checkResponsive)
     return () => window.removeEventListener('resize', checkResponsive)
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   // State for active category and layout
@@ -132,66 +149,155 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Header with Tabs and Layout Controls */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-2 flex-1 epoch-scrollbar-horizontal">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.value)}
-              className={`
-                px-4 py-2 rounded-lg font-medium transition-all duration-200
-                flex items-center gap-2 whitespace-nowrap
-                ${activeCategory === category.value
-                  ? 'bg-territory-cyan/20 text-territory-cyan border border-territory-cyan/30'
-                  : 'glass text-primary-white/60 hover:text-primary-white/80'
-                }
-              `}
-            >
-              {category.label}
-              <span className="text-xs opacity-60">
-                ({category.data.charts.length + category.data.cards.length + category.data.tables.length})
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* Unified Toolbar - matches Charts toolbar structure */}
+      <div className="sticky top-0 z-10 w-full bg-card border-b border-border">
+        <div className="flex items-center gap-2 px-4 py-2">
+          {/* Category Tabs - Desktop: show first 3, rest in dropdown */}
+          {/* Mobile: show dropdown */}
+          {categories.length > 0 && (
+            <>
+              {/* Show first 2-3 tabs on desktop, or use dropdown on mobile */}
+              {!isResponsive ? (
+                <>
+                  {categories.slice(0, 3).map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryChange(category.value)}
+                      className={clsx(
+                        "px-3 py-1.5 rounded text-sm font-medium transition-all whitespace-nowrap",
+                        activeCategory === category.value
+                          ? "bg-muted text-foreground"
+                          : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
 
-        {/* Layout Controls */}
-        {!isResponsive && !hideLayoutControls && (
-          <div className="flex items-center gap-1 ml-4">
-            {DASHBOARD_LAYOUTS.filter(layout =>
-              layout.value !== 'single' // Hide single column on desktop
-            ).map((layout) => (
-              <button
-                key={layout.id}
-                onClick={() => handleLayoutChange(layout.value)}
-                className={`
-                  p-2 rounded transition-all duration-200
-                  ${selectedLayout === layout.value
-                    ? 'text-primary-white bg-primary-white/20'
-                    : 'text-primary-white/40 hover:text-primary-white/60 hover:bg-primary-white/10'
-                  }
-                `}
-                title={layout.title}
-              >
-                {layout.icon}
-              </button>
-            ))}
-          </div>
-        )}
+                  {/* Dropdown for remaining categories */}
+                  {categories.length > 3 && (
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className={clsx(
+                          "px-3 py-1.5 rounded text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1",
+                          categories.slice(3).some(c => c.value === activeCategory)
+                            ? "bg-muted text-foreground"
+                            : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        )}
+                      >
+                        More
+                        <ChevronDown size={16} className={clsx("transition-transform", showDropdown && "rotate-180")} />
+                      </button>
+
+                      {showDropdown && (
+                        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[150px] z-20">
+                          {categories.slice(3).map((category) => (
+                            <button
+                              key={category.id}
+                              onClick={() => {
+                                handleCategoryChange(category.value)
+                                setShowDropdown(false)
+                              }}
+                              className={clsx(
+                                "w-full text-left px-3 py-2 text-sm transition-colors",
+                                activeCategory === category.value
+                                  ? "bg-muted text-foreground"
+                                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                              )}
+                            >
+                              {category.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Mobile: Single dropdown with all categories */
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="px-3 py-1.5 rounded text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 bg-muted text-foreground min-w-[120px] justify-between"
+                  >
+                    <span className="truncate">
+                      {categories.find(c => c.value === activeCategory)?.label || 'Select'}
+                    </span>
+                    <ChevronDown size={16} className={clsx("transition-transform flex-shrink-0", showDropdown && "rotate-180")} />
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[200px] max-w-[300px] z-20">
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => {
+                            handleCategoryChange(category.value)
+                            setShowDropdown(false)
+                          }}
+                          className={clsx(
+                            "w-full text-left px-3 py-2 text-sm transition-colors",
+                            activeCategory === category.value
+                              ? "bg-muted text-foreground"
+                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          )}
+                        >
+                          {category.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Divider */}
+          {!isResponsive && !hideLayoutControls && categories.length > 0 && (
+            <div className="w-px h-6 bg-border" />
+          )}
+
+          {/* Layout Controls */}
+          {!isResponsive && !hideLayoutControls && (
+            <div className="flex items-center gap-1">
+              {DASHBOARD_LAYOUTS.filter(layout =>
+                layout.value !== 'single' // Hide single column on desktop
+              ).map((layout) => (
+                <button
+                  key={layout.id}
+                  onClick={() => handleLayoutChange(layout.value)}
+                  className={`
+                    p-2 rounded transition-all duration-200
+                    ${selectedLayout === layout.value
+                      ? 'text-foreground bg-foreground/20'
+                      : 'text-foreground/40 hover:text-foreground/60 hover:bg-foreground/10'
+                    }
+                  `}
+                  title={layout.title}
+                >
+                  {layout.icon}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Right Controls (e.g., view switcher) */}
+          {rightControls && (
+            <>
+              <div className="w-px h-6 bg-border" />
+              {rightControls}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden">
-        <div className="
-          h-full
-          glass
-          rounded-lg
-          p-6
-          overflow-y-auto
-          scrollbar-hide
-        ">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="glass rounded-lg p-6">
           {activeCategoryData ? (
             <TearsheetCategoryContent
               categoryData={activeCategoryData}
@@ -201,10 +307,10 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-primary-white/40 text-lg mb-2">
+                <div className="text-foreground/40 text-lg mb-2">
                   No Data Available
                 </div>
-                <div className="text-primary-white/20 text-sm">
+                <div className="text-foreground/20 text-sm">
                   Select a category to view dashboard content
                 </div>
               </div>

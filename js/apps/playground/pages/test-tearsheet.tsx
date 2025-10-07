@@ -125,15 +125,15 @@ export default function TestTearsheetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-bluishDarkGray">
+    <div className="min-h-screen bg-background">
       {!tearsheet ? (
         <div className="flex items-center justify-center min-h-screen p-8">
           <div className="max-w-2xl w-full">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-primary-white mb-4">
+              <h1 className="text-4xl font-bold text-foreground mb-4">
                 Test Tearsheet Dashboard
               </h1>
-              <p className="text-secondary-ashGrey text-lg">
+              <p className="text-muted-foreground text-lg">
                 Upload a tearsheet file to test the dashboard visualization
               </p>
             </div>
@@ -142,8 +142,8 @@ export default function TestTearsheetPage() {
               className={`
                 border-2 border-dashed rounded-lg p-12 text-center transition-all
                 ${isDragging
-                  ? 'border-territory-blue bg-territory-blue/10'
-                  : 'border-secondary-mildCementGrey bg-secondary-darkGray hover:border-territory-blue/50'
+                  ? 'border-accent bg-accent/10'
+                  : 'border-border bg-card hover:border-accent/50'
                 }
               `}
               onDrop={handleDrop}
@@ -160,35 +160,35 @@ export default function TestTearsheetPage() {
               />
 
               <label htmlFor="file-upload" className="cursor-pointer">
-                <Upload className="w-16 h-16 mx-auto mb-4 text-territory-blue" />
-                <p className="text-xl font-medium text-primary-white mb-2">
+                <Upload className="w-16 h-16 mx-auto mb-4 text-accent" />
+                <p className="text-xl font-medium text-foreground mb-2">
                   Drop your tearsheet file here
                 </p>
-                <p className="text-secondary-ashGrey mb-4">
+                <p className="text-muted-foreground mb-4">
                   or click to browse
                 </p>
-                <p className="text-sm text-secondary-mildAshGrey">
+                <p className="text-sm text-muted-foreground/60">
                   Proto only: .pb, .proto, .bin
                 </p>
               </label>
             </div>
 
             {error && (
-              <div className="mt-6 p-4 bg-territory-alert/10 border border-territory-alert/30 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-territory-alert flex-shrink-0 mt-0.5" />
-                <p className="text-territory-alert">{error}</p>
+              <div className="mt-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-destructive">{error}</p>
               </div>
             )}
 
             <div className="mt-8 flex items-center gap-4">
-              <div className="flex-1 h-px bg-secondary-mildCementGrey" />
-              <span className="text-secondary-ashGrey">OR</span>
-              <div className="flex-1 h-px bg-secondary-mildCementGrey" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-muted-foreground">OR</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
 
             <button
               onClick={loadExampleData}
-              className="mt-8 w-full py-3 px-6 bg-territory-blue/20 border border-territory-blue/30 text-territory-blue rounded-lg hover:bg-territory-blue/30 transition-all duration-200 font-medium"
+              className="mt-8 w-full py-3 px-6 bg-accent/20 border border-accent/30 text-accent rounded-lg hover:bg-accent/30 transition-all duration-200 font-medium"
             >
               Load Example Tearsheet
             </button>
@@ -199,14 +199,14 @@ export default function TestTearsheetPage() {
           <div className="max-w-[1920px] mx-auto">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <FileJson className="w-6 h-6 text-territory-blue" />
+                <FileJson className="w-6 h-6 text-accent" />
                 <div>
-                  <h1 className="text-2xl font-bold text-primary-white">
+                  <h1 className="text-2xl font-bold text-foreground">
                     Tearsheet Viewer
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
-                    <CheckCircle className="w-4 h-4 text-territory-success" />
-                    <p className="text-secondary-ashGrey text-sm">
+                    <CheckCircle className="w-4 h-4 text-success" />
+                    <p className="text-muted-foreground text-sm">
                       {fileName}
                     </p>
                   </div>
@@ -218,8 +218,8 @@ export default function TestTearsheetPage() {
                   onClick={toggleDebugMode}
                   className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-all duration-200 ${
                     debugMode
-                      ? 'bg-territory-cyan/20 border-territory-cyan/30 text-territory-cyan'
-                      : 'bg-secondary-darkGray border-secondary-mildCementGrey text-secondary-ashGrey hover:bg-secondary-mildCementGrey/30 hover:text-primary-white'
+                      ? 'bg-accent/20 border-accent/30 text-accent'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <Bug className="w-4 h-4" />
@@ -228,7 +228,7 @@ export default function TestTearsheetPage() {
 
                 <button
                   onClick={clearTearsheet}
-                  className="flex items-center gap-2 px-4 py-2 bg-secondary-darkGray border border-secondary-mildCementGrey text-secondary-ashGrey rounded-lg hover:bg-secondary-mildCementGrey/30 hover:text-primary-white transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-muted-foreground rounded-lg hover:bg-muted hover:text-foreground transition-all duration-200"
                 >
                   <X className="w-4 h-4" />
                   <span>Clear</span>

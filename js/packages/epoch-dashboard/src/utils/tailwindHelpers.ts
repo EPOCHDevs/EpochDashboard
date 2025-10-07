@@ -18,6 +18,8 @@ export const tailwindColors = {
     success: "#16a34a",
     warning: "#ca8a04",
     cyan: "#06b6d4",
+    alert: "#dc2626",
+    blue: "#3b82f6",
   },
 } as const
 

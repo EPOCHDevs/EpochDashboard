@@ -31,8 +31,8 @@ const AreaChart: React.FC<AreaChartProps> = ({
     }
 
     // Convert areas to series
-    const xAxisType = data.chartDef?.xAxis?.type
-    const series = data.areas.map((area, index) =>
+    const xAxisType = data.chartDef?.xAxis?.type || undefined
+    const series = data.areas.map((area: any, index: number) =>
       convertAreaToSeries(area, index, xAxisType)
     )
 

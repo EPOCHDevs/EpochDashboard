@@ -1,7 +1,8 @@
 import { SeriesConfig } from "../../../../types/TradeAnalyticsTypes"
 import { DataType, Table } from "apache-arrow"
 import { SeriesFlagsOptions } from "highcharts"
-import { TRADE_ANALYTICS_PLOT_STYLES } from "../../../../constants/tradeAnalytics"
+import { TRADE_ANALYTICS_PLOT_STYLES, getTradeAnalyticsPlotStyles } from "../../../../constants/tradeAnalytics"
+import { getChartColors } from "../../../../constants"
 
 export const TRADE_SIGNAL_PLOT_KIND_DATA_KEYS = [
   "index",
@@ -41,7 +42,13 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
   }
 
   const seriesOptions: SeriesFlagsOptions[] = []
-  const styles = TRADE_ANALYTICS_PLOT_STYLES.trade_signal
+  const styles = getTradeAnalyticsPlotStyles().flag
+  const themeColors = getChartColors()
+
+  // Define colors for different trade signal types (theme-aware)
+  const longColor = themeColors.long // Green for long positions
+  const shortColor = themeColors.short // Red for short positions
+  const closeColor = themeColors.warning // Amber for exits
 
   // Enter Long
   if (enterLongColumn) {
@@ -73,17 +80,17 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: styles.long.fillColor,
-        color: styles.long.color,
+        fillColor: longColor,
+        color: longColor,
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.long.textColor,
+          color: styles.textColor,
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: styles.long.hoverColor,
+            fillColor: longColor,
             brightness: 0.2,
           },
         },
@@ -128,17 +135,17 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: styles.short.fillColor,
-        color: styles.short.color,
+        fillColor: shortColor,
+        color: shortColor,
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.short.textColor,
+          color: styles.textColor,
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: styles.short.hoverColor,
+            fillColor: shortColor,
             brightness: 0.2,
           },
         },
@@ -183,17 +190,17 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: styles.close.fillColor,
-        color: styles.close.color,
+        fillColor: closeColor,
+        color: closeColor,
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.close.textColor,
+          color: styles.textColor,
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: styles.close.hoverColor,
+            fillColor: closeColor,
             brightness: 0.2,
           },
         },
@@ -237,17 +244,17 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: styles.close.fillColor,
-        color: styles.close.color,
+        fillColor: closeColor,
+        color: closeColor,
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.close.textColor,
+          color: styles.textColor,
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: styles.close.hoverColor,
+            fillColor: closeColor,
             brightness: 0.2,
           },
         },

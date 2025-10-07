@@ -63,7 +63,7 @@ const Card: React.FC<CardProps> = ({ cardDef, className = '' }) => {
 
   return (
     <div
-      className={`flex h-fit flex-col items-start gap-5 rounded-2 border border-primary-white/5 bg-primary-white/2 p-5 ${className}`}
+      className={`flex h-fit flex-col items-start gap-5 rounded-2 border border-border/50 bg-card/50 p-5 ${className}`}
     >
       {groupedCardData.groups.map((group, groupIndex) => (
         <div key={groupIndex} className="flex w-full flex-col gap-5">
@@ -73,17 +73,17 @@ const Card: React.FC<CardProps> = ({ cardDef, className = '' }) => {
                 key={index}
                 className="flex flex-col items-start gap-1.25"
               >
-                <p className="text-xs font-normal text-secondary-ashGrey m-0">
+                <p className="text-xs font-normal text-muted-foreground m-0">
                   {cardData.title}
                 </p>
-                <p className="text-lg font-normal text-primary-white m-0">
+                <p className="text-lg font-normal text-foreground m-0">
                   {formatCardValue(cardData)}
                 </p>
               </div>
             ))}
           </div>
           {groupIndex < groupedCardData.groups.length - 1 && (
-            <div className="h-px w-full bg-primary-white/10" />
+            <div className="h-px w-full bg-border" />
           )}
         </div>
       ))}

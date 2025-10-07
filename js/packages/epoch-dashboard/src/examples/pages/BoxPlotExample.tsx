@@ -115,7 +115,7 @@ const BoxPlotExample: React.FC = () => {
           <div>
             <h4 className="text-sm font-medium text-secondary-ashGrey mb-2">Statistical Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-              {chartConfigs[selectedChart].data.data?.points?.map((point, index) => (
+              {chartConfigs[selectedChart].data.data?.points?.map((point: any, index: number) => (
                 <div key={index} className="bg-black/20 p-3 rounded">
                   <div className="font-medium text-primary-white mb-2">
                     {chartConfigs[selectedChart].data.chartDef?.xAxis?.categories?.[index] || `Series ${index + 1}`}

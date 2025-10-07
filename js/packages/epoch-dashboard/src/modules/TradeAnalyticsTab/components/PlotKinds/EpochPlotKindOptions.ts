@@ -4,7 +4,7 @@ import {
   SeriesConfig,
 } from "../../../../types/TradeAnalyticsTypes"
 import { type DataType, type Table } from "apache-arrow"
-import { TRADE_ANALYTICS_PLOT_KIND_COLOR_PALETTE } from "../../../../constants/tradeAnalytics"
+import { TRADE_ANALYTICS_PLOT_KIND_COLOR_PALETTE, getTradeAnalyticsPlotKindColorPalette } from "../../../../constants/tradeAnalytics"
 import {
   AnnotationsOptions,
   SeriesOptionsType,
@@ -474,7 +474,7 @@ export const extractColumn = ({ columnName, data }: extractColumnOfPlotKindSerie
   return result
 }
 
-// Generate a color based on a hash of the series name for consistent colors
+// Generate a color based on a hash of the series name for consistent colors (theme-aware)
 export const getPlotKindSeriesColor = (seriesName: string): string => {
   let hash = 0
   for (let i = 0; i < seriesName.length; i++) {
@@ -482,8 +482,9 @@ export const getPlotKindSeriesColor = (seriesName: string): string => {
     hash = (hash << 5) - hash + char
     hash = hash & hash // Convert to 32-bit integer
   }
-  const index = Math.abs(hash) % TRADE_ANALYTICS_PLOT_KIND_COLOR_PALETTE.length
-  return TRADE_ANALYTICS_PLOT_KIND_COLOR_PALETTE[index]
+  const palette = getTradeAnalyticsPlotKindColorPalette()
+  const index = Math.abs(hash) % palette.length
+  return palette[index]
 }
 
 /**

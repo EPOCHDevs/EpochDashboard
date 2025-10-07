@@ -86,7 +86,7 @@ const AreaChartExample: React.FC = () => {
             <h4 className="text-sm font-medium text-secondary-ashGrey mb-2">Area Series</h4>
             <pre className="bg-black/20 p-4 rounded text-xs text-primary-white overflow-x-auto max-h-64 overflow-y-auto">
               {JSON.stringify(
-                chartConfigs[selectedChart].data.areas?.map(area => ({
+                chartConfigs[selectedChart].data.areas?.map((area: any) => ({
                   ...area,
                   data: `[${area.data?.length || 0} points]`
                 })),

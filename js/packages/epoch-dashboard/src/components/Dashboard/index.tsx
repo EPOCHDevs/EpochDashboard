@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header with Tabs and Layout Controls */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
         {/* Category Tabs */}
         <div className="flex items-center gap-2 flex-1 overflow-x-auto scrollbar-hide">
           {metadata.categories.map((category) => (
@@ -132,8 +132,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 px-4 py-2 rounded-lg font-medium transition-all duration-200
                 flex items-center gap-2 whitespace-nowrap
                 ${activeCategory === category.value
-                  ? 'bg-primary-white/20 text-primary-white'
-                  : 'bg-primary-white/5 text-primary-white/60 hover:bg-primary-white/10 hover:text-primary-white/80'
+                  ? 'bg-foreground/20 text-foreground'
+                  : 'bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground'
                 }
               `}
             >
@@ -143,7 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <Info size={14} className="opacity-60" />
                   <div className="
                     absolute left-1/2 -translate-x-1/2 bottom-full mb-2
-                    bg-black/90 text-white text-xs px-2 py-1 rounded
+                    bg-popover text-popover-foreground text-xs px-2 py-1 rounded
                     whitespace-nowrap opacity-0 group-hover:opacity-100
                     pointer-events-none transition-opacity z-50
                   ">
@@ -167,8 +167,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className={`
                   p-2 rounded transition-all duration-200
                   ${selectedLayout === layout.value
-                    ? 'text-primary-white bg-primary-white/20'
-                    : 'text-primary-white/40 hover:text-primary-white/60 hover:bg-primary-white/10'
+                    ? 'text-foreground bg-foreground/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
                   }
                 `}
                 title={layout.title}
@@ -184,12 +184,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex-1 overflow-hidden">
         <div className="
           h-full
-          bg-primary-white/2
-          border border-primary-white/10
+          bg-card/50
+          border border-border/50
           rounded-lg
           p-6
           overflow-y-auto
-          scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent
+          scrollbar-thin scrollbar-thumb-foreground/20 scrollbar-track-transparent
         ">
           {activeCategoryData ? (
             <CategoryContent
@@ -199,10 +199,10 @@ const Dashboard: React.FC<DashboardProps> = ({
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-primary-white/40 text-lg mb-2">
+                <div className="text-muted-foreground text-lg mb-2">
                   No Data Available
                 </div>
-                <div className="text-primary-white/20 text-sm">
+                <div className="text-muted-foreground/60 text-sm">
                   Select a category to view dashboard content
                 </div>
               </div>

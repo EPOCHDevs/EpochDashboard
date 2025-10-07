@@ -24,7 +24,7 @@ export function extractCategories(tearsheet: TearSheet): string[] {
 
   // Extract from charts
   if (tearsheet.charts?.charts) {
-    tearsheet.charts.charts.forEach(chart => {
+    tearsheet.charts.charts.forEach((chart: Chart) => {
       // Check each chart type for category
       const category =
         chart.linesDef?.chartDef?.category ||
@@ -44,7 +44,7 @@ export function extractCategories(tearsheet: TearSheet): string[] {
 
   // Extract from cards
   if (tearsheet.cards?.cards) {
-    tearsheet.cards.cards.forEach(card => {
+    tearsheet.cards.cards.forEach((card: CardDef) => {
       if (card.category) {
         categories.add(card.category)
       }
@@ -53,15 +53,40 @@ export function extractCategories(tearsheet: TearSheet): string[] {
 
   // Extract from tables
   if (tearsheet.tables?.tables) {
-    tearsheet.tables.tables.forEach(table => {
+    tearsheet.tables.tables.forEach((table: Table) => {
       if (table.category) {
         categories.add(table.category)
       }
     })
   }
 
-  // Return sorted array of unique categories
-  return Array.from(categories).sort()
+  // Sort categories with custom order [S, R, T, A] based on first letter
+  const categoriesArray = Array.from(categories)
+  const statOrder = ['S', 'R', 'T', 'A']
+
+  return categoriesArray.sort((a, b) => {
+    // Get first letter (uppercase) of each category
+    const firstLetterA = a.charAt(0).toUpperCase()
+    const firstLetterB = b.charAt(0).toUpperCase()
+
+    // Find positions in STAT order
+    const indexA = statOrder.indexOf(firstLetterA)
+    const indexB = statOrder.indexOf(firstLetterB)
+
+    // If both start with STAT letters, sort by STAT order
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB
+    }
+
+    // If only A starts with STAT letter, it comes first
+    if (indexA !== -1) return -1
+
+    // If only B starts with STAT letter, it comes first
+    if (indexB !== -1) return 1
+
+    // Otherwise, alphabetical sort
+    return a.localeCompare(b)
+  })
 }
 
 /**
@@ -93,7 +118,7 @@ export function groupByCategory(tearsheet: TearSheet): Map<string, CategoryData>
 
   // Group charts
   if (tearsheet.charts?.charts) {
-    tearsheet.charts.charts.forEach(chart => {
+    tearsheet.charts.charts.forEach((chart: Chart) => {
       const category = getChartCategory(chart)
       const categoryData = categoryMap.get(category) || categoryMap.get('all')!
       categoryData.charts.push(chart)
@@ -102,7 +127,7 @@ export function groupByCategory(tearsheet: TearSheet): Map<string, CategoryData>
 
   // Group cards
   if (tearsheet.cards?.cards) {
-    tearsheet.cards.cards.forEach(card => {
+    tearsheet.cards.cards.forEach((card: CardDef) => {
       const category = card.category || 'all'
       const categoryData = categoryMap.get(category) || categoryMap.get('all')!
       categoryData.cards.push(card)
@@ -111,7 +136,7 @@ export function groupByCategory(tearsheet: TearSheet): Map<string, CategoryData>
 
   // Group tables
   if (tearsheet.tables?.tables) {
-    tearsheet.tables.tables.forEach(table => {
+    tearsheet.tables.tables.forEach((table: Table) => {
       const category = table.category || 'all'
       const categoryData = categoryMap.get(category) || categoryMap.get('all')!
       categoryData.tables.push(table)
@@ -164,7 +189,7 @@ export function filterByCategory(
 
   // Filter charts
   if (tearsheet.charts?.charts) {
-    result.charts = tearsheet.charts.charts.filter(chart => {
+    result.charts = tearsheet.charts.charts.filter((chart: Chart) => {
       const chartCategory = getChartCategory(chart)
       return chartCategory === category || category === 'all'
     })
@@ -172,14 +197,14 @@ export function filterByCategory(
 
   // Filter cards
   if (tearsheet.cards?.cards) {
-    result.cards = tearsheet.cards.cards.filter(card => {
+    result.cards = tearsheet.cards.cards.filter((card: CardDef) => {
       return card.category === category || category === 'all' || !card.category
     })
   }
 
   // Filter tables
   if (tearsheet.tables?.tables) {
-    result.tables = tearsheet.tables.tables.filter(table => {
+    result.tables = tearsheet.tables.tables.filter((table: Table) => {
       return table.category === category || category === 'all' || !table.category
     })
   }

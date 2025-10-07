@@ -20,10 +20,10 @@ import { Chart } from '../../types/proto'
 // Loading skeletons
 const ChartSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[400px] bg-primary-white/5 rounded-lg">
+    <div className="h-[400px] bg-card/50 rounded-lg">
       <div className="p-4">
-        <div className="h-4 bg-primary-white/10 rounded w-1/3 mb-4" />
-        <div className="h-64 bg-primary-white/10 rounded" />
+        <div className="h-4 bg-foreground/10 rounded w-1/3 mb-4" />
+        <div className="h-64 bg-foreground/10 rounded" />
       </div>
     </div>
   </div>
@@ -31,21 +31,21 @@ const ChartSkeleton = () => (
 
 const CardSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[120px] bg-primary-white/5 rounded-lg p-4">
-      <div className="h-4 bg-primary-white/10 rounded w-2/3 mb-3" />
-      <div className="h-8 bg-primary-white/10 rounded w-1/3 mb-2" />
-      <div className="h-3 bg-primary-white/10 rounded w-1/2" />
+    <div className="h-[120px] bg-card/50 rounded-lg p-4">
+      <div className="h-4 bg-foreground/10 rounded w-2/3 mb-3" />
+      <div className="h-8 bg-foreground/10 rounded w-1/3 mb-2" />
+      <div className="h-3 bg-foreground/10 rounded w-1/2" />
     </div>
   </div>
 )
 
 const TableSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[300px] bg-primary-white/5 rounded-lg p-4">
-      <div className="h-4 bg-primary-white/10 rounded w-1/2 mb-4" />
+    <div className="h-[300px] bg-card/50 rounded-lg p-4">
+      <div className="h-4 bg-foreground/10 rounded w-1/2 mb-4" />
       <div className="space-y-2">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-8 bg-primary-white/10 rounded" />
+          <div key={i} className="h-8 bg-foreground/10 rounded" />
         ))}
       </div>
     </div>
@@ -75,8 +75,8 @@ const ChartComponent = ({ chart }: { chart: Chart }) => {
 
   // Fallback for unsupported chart types
   return (
-    <div className="h-[400px] flex items-center justify-center bg-primary-white/5 rounded-lg">
-      <div className="text-primary-white/40">
+    <div className="h-[400px] flex items-center justify-center bg-card/50 rounded-lg">
+      <div className="text-muted-foreground">
         Unsupported chart type
       </div>
     </div>
@@ -144,10 +144,10 @@ const CategoryContent: React.FC<CategoryContentProps> = ({
       {!category.cards?.length && !category.tables?.length && !category.charts?.length && (
         <div className="col-span-full flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-primary-white/40 text-lg mb-2">
+            <div className="text-muted-foreground text-lg mb-2">
               No Content Available
             </div>
-            <div className="text-primary-white/20 text-sm">
+            <div className="text-muted-foreground/60 text-sm">
               This category doesn't have any data to display
             </div>
           </div>

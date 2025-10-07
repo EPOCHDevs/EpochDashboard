@@ -38,7 +38,7 @@ export default function HomePage() {
       case 'pie':
         return <PieChartExample />
       case 'full':
-        return <div className="text-secondary-ashGrey">Full dashboard coming soon...</div>
+        return <div className="text-muted-foreground">Full dashboard coming soon...</div>
       default:
         return <CardExample />
     }
@@ -52,23 +52,23 @@ export default function HomePage() {
         <div className="max-w-6xl">
           <div className="mb-4 flex flex-wrap gap-4">
             <Link href="/dashboard">
-              <button className="bg-secondary-darkGray border border-secondary-mildCementGrey text-primary-white px-6 py-3 rounded-lg hover:bg-secondary-mildCementGrey/30 transition-all duration-200">
+              <button className="bg-card border border-border text-foreground px-6 py-3 rounded-lg hover:bg-card/70 transition-all duration-200">
                 Old Dashboard →
               </button>
             </Link>
             <Link href="/dashboard/test-strategy">
-              <button className="bg-territory-success/20 border border-territory-success/30 text-territory-success px-6 py-3 rounded-lg hover:bg-territory-success/30 transition-all duration-200">
+              <button className="bg-success/20 border border-success/30 text-success px-6 py-3 rounded-lg hover:bg-success/30 transition-all duration-200">
                 Tearsheet Dashboard →
               </button>
             </Link>
             <Link href="/test-tearsheet">
-              <button className="bg-territory-blue/20 border border-territory-blue/30 text-territory-blue px-6 py-3 rounded-lg hover:bg-territory-blue/30 transition-all duration-200">
+              <button className="bg-accent/20 border border-accent/30 text-accent px-6 py-3 rounded-lg hover:bg-accent/30 transition-all duration-200">
                 📊 Test Your Tearsheet →
               </button>
             </Link>
-            <Link href="/trade-analytics">
-              <button className="bg-territory-warning/20 border border-territory-warning/30 text-territory-warning px-6 py-3 rounded-lg hover:bg-territory-warning/30 transition-all duration-200">
-                📈 Trade Analytics Chart →
+            <Link href="/analytics-form">
+              <button className="bg-warning/20 border border-warning/30 text-warning px-6 py-3 rounded-lg hover:bg-warning/30 transition-all duration-200">
+                Trade Analytics Debug →
               </button>
             </Link>
           </div>

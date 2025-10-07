@@ -360,21 +360,28 @@ export function TradeAnalyticsContent({
   // Trigger reflow when sidebar opens/closes
   useEffect(() => {
     if (chartRef.current?.chart) {
+      // Trigger multiple reflows to ensure proper resizing
       setTimeout(() => {
         chartRef.current?.chart.reflow()
-      }, 350) // Wait for transition to complete (300ms + buffer)
+      }, 50) // Quick initial reflow
+
+      setTimeout(() => {
+        chartRef.current?.chart.reflow()
+      }, 350) // After transition completes (300ms + buffer)
     }
   }, [isEventsSidebarOpen])
 
   // Show error state if no campaign ID is provided
   if (!campaignId) {
     return (
-      <div className={clsx("min-h-screen bg-background p-4 flex items-center justify-center", className)}>
-        <div className="bg-card border border-warning/50 rounded-lg p-8 max-w-md">
-          <h2 className="text-xl font-bold text-warning mb-4">Missing Configuration</h2>
-          <p className="text-muted-foreground mb-6">
-            No Campaign ID provided. Please provide a valid campaign ID.
-          </p>
+      <div className={clsx("relative h-full bg-background", className)}>
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="bg-card border border-warning/50 rounded-lg p-8 max-w-md">
+            <h2 className="text-xl font-bold text-warning mb-4">Missing Configuration</h2>
+            <p className="text-muted-foreground mb-6">
+              No Campaign ID provided. Please provide a valid campaign ID.
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -382,16 +389,18 @@ export function TradeAnalyticsContent({
 
   if (tradeAnalyticsMetadataError) {
     return (
-      <div className={clsx("min-h-screen bg-background p-4 flex items-center justify-center", className)}>
-        <div className="bg-card border border-destructive/50 rounded-lg p-8 max-w-2xl">
-          <h2 className="text-xl font-bold text-destructive mb-4">Error Loading Data</h2>
-          <p className="text-muted-foreground mb-4">
-            {tradeAnalyticsMetadataError || "Unable to load the campaign! please try again later."}
-          </p>
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>Campaign ID: <span className="font-mono text-accent">{campaignId}</span></p>
-            <p>User: <span className="font-mono text-accent ml-2">{userId}</span></p>
-            <p>API: <span className="font-mono text-accent ml-2">{apiEndpoint}</span></p>
+      <div className={clsx("relative h-full bg-background", className)}>
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="bg-card border border-destructive/50 rounded-lg p-8 max-w-2xl">
+            <h2 className="text-xl font-bold text-destructive mb-4">Error Loading Data</h2>
+            <p className="text-muted-foreground mb-4">
+              {tradeAnalyticsMetadataError || "Unable to load the campaign! please try again later."}
+            </p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Campaign ID: <span className="font-mono text-accent">{campaignId}</span></p>
+              <p>User: <span className="font-mono text-accent ml-2">{userId}</span></p>
+              <p>API: <span className="font-mono text-accent ml-2">{apiEndpoint}</span></p>
+            </div>
           </div>
         </div>
       </div>
@@ -399,7 +408,7 @@ export function TradeAnalyticsContent({
   }
 
   return (
-    <div className={clsx("h-screen bg-background flex flex-col overflow-hidden", className)}>
+    <div className={clsx("h-full bg-background flex flex-col", className)}>
       {showHeader && (
         <div className="bg-card border-b border-border px-6 py-2 flex items-center justify-between flex-shrink-0">
           <div>
@@ -427,10 +436,16 @@ export function TradeAnalyticsContent({
       )}
 
       {/* Main Content Area with Sidebar */}
-      <div className="relative flex h-full w-full flex-row items-center justify-start overflow-hidden p-5 bg-background">
+      <div className="relative flex flex-1 w-full flex-row overflow-hidden bg-background">
         {/* Chart Area - Full Width */}
-        <div ref={chartContainerRef} className="flex h-full w-full flex-col items-start overflow-hidden rounded-7.5 bg-card/50 p-5.5">
-          <div className="h-full w-full rounded-5 bg-card/50 p-7.5 text-foreground">
+        <div
+          ref={chartContainerRef}
+          className={clsx(
+            "h-full w-full transition-all duration-300 ease-out",
+            !shouldHideSidebar && isEventsSidebarOpen ? "pl-[349px]" : "pl-0"
+          )}
+        >
+          <div className="h-full w-full text-foreground">
             <TradeAnalyticsChartRenderer
               isLoading={isLoadingTradeAnalyticsMetadata || isLazyLoading}
               tradeAnalyticsMetadata={tradeAnalyticsMetadata}
@@ -458,7 +473,7 @@ export function TradeAnalyticsContent({
               "absolute left-0 top-0 z-50 h-full w-[349px] transition-all duration-300 ease-out",
               isEventsSidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-          <div className="h-full w-[349px] bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-r-2 border-accent/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col">
+            <div className="h-full w-[349px] bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-r-2 border-accent/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col">
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">
               <div className="flex items-center gap-3">
@@ -488,7 +503,7 @@ export function TradeAnalyticsContent({
             </div>
 
             {isLoadingTradeAnalyticsMetadata || isLoadingRoundTripsData ? (
-              <div className="hide-scrollbar flex h-full w-[380px] flex-col items-center justify-start gap-4 overflow-y-auto overflow-x-hidden px-5 py-4">
+              <div className="hide-scrollbar flex h-full w-full flex-col items-center justify-start gap-4 overflow-y-auto overflow-x-hidden px-5 py-4">
                 <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
                 <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
                 <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
@@ -496,7 +511,7 @@ export function TradeAnalyticsContent({
             ) : (
               <div className="flex h-full flex-col flex-1 overflow-hidden">
                 <div
-                  className="sidebar-scrollbar relative w-[380px] flex-1 overflow-y-auto overflow-x-hidden px-5 py-4"
+                  className="sidebar-scrollbar relative w-full flex-1 overflow-y-auto overflow-x-hidden px-5 py-4"
                   ref={parentRef}
                   style={{
                     transform: "none",

@@ -20,10 +20,10 @@ import { Chart, Table } from '../../types/proto'
 // Loading skeletons
 const ChartSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[400px] bg-primary-white/5 rounded-lg">
+    <div className="h-[400px] bg-card/50 rounded-lg">
       <div className="p-4">
-        <div className="h-4 bg-primary-white/10 rounded w-1/3 mb-4" />
-        <div className="h-64 bg-primary-white/10 rounded" />
+        <div className="h-4 bg-foreground/10 rounded w-1/3 mb-4" />
+        <div className="h-64 bg-foreground/10 rounded" />
       </div>
     </div>
   </div>
@@ -31,21 +31,21 @@ const ChartSkeleton = () => (
 
 const CardSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[120px] bg-primary-white/5 rounded-lg p-4">
-      <div className="h-4 bg-primary-white/10 rounded w-2/3 mb-3" />
-      <div className="h-8 bg-primary-white/10 rounded w-1/3 mb-2" />
-      <div className="h-3 bg-primary-white/10 rounded w-1/2" />
+    <div className="h-[120px] bg-card/50 rounded-lg p-4">
+      <div className="h-4 bg-foreground/10 rounded w-2/3 mb-3" />
+      <div className="h-8 bg-foreground/10 rounded w-1/3 mb-2" />
+      <div className="h-3 bg-foreground/10 rounded w-1/2" />
     </div>
   </div>
 )
 
 const TableSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-[300px] bg-primary-white/5 rounded-lg p-4">
-      <div className="h-4 bg-primary-white/10 rounded w-1/2 mb-4" />
+    <div className="h-[300px] bg-card/50 rounded-lg p-4">
+      <div className="h-4 bg-foreground/10 rounded w-1/2 mb-4" />
       <div className="space-y-2">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-8 bg-primary-white/10 rounded" />
+          <div key={i} className="h-8 bg-foreground/10 rounded" />
         ))}
       </div>
     </div>
@@ -98,8 +98,8 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
   }
 
   return (
-    <div className="h-[400px] flex items-center justify-center bg-primary-white/5 rounded-lg">
-      <div className="text-primary-white/40">
+    <div className="h-[400px] flex items-center justify-center bg-card/50 rounded-lg">
+      <div className="text-muted-foreground">
         Unsupported chart type
       </div>
     </div>
@@ -122,6 +122,57 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
 
   // Determine if we should use full width for tables
   const isCompactLayout = layout === 'columns_3' || layout === 'columns_2x2'
+
+  // Helper to get title from chart/table/card
+  const getTitle = (item: Chart | Table | any): string => {
+    if ('chartDef' in item) {
+      // It's a Chart - check all possible chart types
+      return item.linesDef?.chartDef?.title ||
+             item.barDef?.chartDef?.title ||
+             item.areaDef?.chartDef?.title ||
+             item.heatMapDef?.chartDef?.title ||
+             item.histogramDef?.chartDef?.title ||
+             item.boxPlotDef?.chartDef?.title ||
+             item.xRangeDef?.chartDef?.title ||
+             item.pieDef?.chartDef?.title || ''
+    }
+    return item.title || ''
+  }
+
+  // Sort function for STAT category items - sort by title prefix [S, R, T, A]
+  const sortStatItems = <T,>(items: T[]): T[] => {
+    if (categoryData.label !== 'STAT') return items
+
+    const statOrder = ['S', 'R', 'T', 'A']
+    return [...items].sort((a, b) => {
+      const titleA = getTitle(a)
+      const titleB = getTitle(b)
+
+      // Extract first letter
+      const prefixA = titleA.charAt(0).toUpperCase()
+      const prefixB = titleB.charAt(0).toUpperCase()
+
+      const indexA = statOrder.indexOf(prefixA)
+      const indexB = statOrder.indexOf(prefixB)
+
+      // If both have STAT prefixes, sort by order
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB
+      }
+
+      // If only one has STAT prefix, it comes first
+      if (indexA !== -1) return -1
+      if (indexB !== -1) return 1
+
+      // Otherwise, alphabetical
+      return titleA.localeCompare(titleB)
+    })
+  }
+
+  // Sort charts, tables, and cards based on category
+  const sortedCharts = sortStatItems(categoryData.charts)
+  const sortedTables = sortStatItems(categoryData.tables)
+  const sortedCards = sortStatItems(categoryData.cards)
 
   // Helper to determine if chart should span full width
   const isFullWidthChart = (chart: Chart): boolean => {
@@ -149,7 +200,7 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
   return (
     <div className={`grid gap-6 ${gridClass}`}>
       {/* Render Cards */}
-      {categoryData.cards.map((card, index) => {
+      {sortedCards.map((card, index) => {
         if (debug) {
           console.group(`🃏 Card ${index + 1} Debug`)
           console.log('Card definition:', card)
@@ -166,11 +217,11 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
       })}
 
       {/* Render Tables */}
-      {categoryData.tables.map((table, index) => {
+      {sortedTables.map((table, index) => {
         if (debug) {
           console.group(`📋 Table ${index + 1} Debug`)
           console.log('Table definition:', table)
-          console.log('Table rows count:', table.rows?.length || 0)
+          console.log('Table rows count:', table.data?.rows?.length || 0)
           console.log('Table columns count:', table.columns?.length || 0)
           console.groupEnd()
         }
@@ -184,7 +235,7 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
       })}
 
       {/* Render Charts */}
-      {categoryData.charts.map((chart, index) => (
+      {sortedCharts.map((chart, index) => (
         <Suspense key={`chart-${categoryData.id}-${index}`} fallback={<ChartSkeleton />}>
           <div className={
             isFullWidthChart(chart) ? 'col-span-full' : ''
@@ -200,10 +251,10 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
        categoryData.tables.length === 0 && (
         <div className="col-span-full flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-primary-white/40 text-lg mb-2">
+            <div className="text-muted-foreground text-lg mb-2">
               No Content Available
             </div>
-            <div className="text-primary-white/20 text-sm">
+            <div className="text-muted-foreground/60 text-sm">
               This category doesn't have any data to display
             </div>
           </div>

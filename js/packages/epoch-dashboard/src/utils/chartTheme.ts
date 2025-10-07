@@ -5,7 +5,7 @@ export { DASHBOARD_THEME }
 // Get series color based on series type or index
 export function getSeriesColor(seriesType: ChartDataSeriesType | number): string {
   if (typeof seriesType === 'number' && seriesType in ChartDataSeriesType) {
-    return CHART_COLOR_CONFIG[seriesType]?.default || CHART_COLOR_CONFIG[ChartDataSeriesType.DEFAULT].default
+    return CHART_COLOR_CONFIG[seriesType as ChartDataSeriesType]?.default || CHART_COLOR_CONFIG[ChartDataSeriesType.DEFAULT].default
   }
 
   // Fallback to default colors if index is provided
@@ -24,7 +24,7 @@ export function getSeriesColor(seriesType: ChartDataSeriesType | number): string
 // Get line color for series
 export function getSeriesLineColor(seriesType: ChartDataSeriesType | number): string {
   if (typeof seriesType === 'number' && seriesType in ChartDataSeriesType) {
-    return CHART_COLOR_CONFIG[seriesType]?.line || CHART_COLOR_CONFIG[ChartDataSeriesType.DEFAULT].line
+    return CHART_COLOR_CONFIG[seriesType as ChartDataSeriesType]?.line || CHART_COLOR_CONFIG[ChartDataSeriesType.DEFAULT].line
   }
   return getSeriesColor(seriesType)
 }

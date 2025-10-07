@@ -1,251 +1,95 @@
 import React, { useState, useEffect } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 import Link from 'next/link'
-// Import directly from source files in the monorepo
-import TradeAnalyticsChartRenderer from '../../../packages/epoch-dashboard/src/modules/TradeAnalyticsTab/components/TradeAnalyticsChartRenderer'
-import type { GetTradeAnalyticsMetadataResponseType, IRoundTrip } from '../../../packages/epoch-dashboard/src/types/TradeAnalyticsTypes'
+// Import the exportable container component
+import { TradeAnalyticsContainer } from '../../../packages/epoch-dashboard/src/modules/TradeAnalyticsTab/TradeAnalyticsContainer'
+// Import top toolbar component
+import TopToolbar from '../components/TradeAnalytics/TopToolbar'
 
-// Create a query client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
-      retry: 1,
-    },
-  },
-})
-
-// Mock hooks for fetching data from our API
-function useMockMetadata(strategyId: string) {
-  const [data, setData] = useState<GetTradeAnalyticsMetadataResponseType | undefined>()
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3002/api'
-        const response = await fetch(`${apiUrl}/trade-analytics/metadata/${strategyId}`)
-        const metadata = await response.json()
-        setData(metadata)
-      } catch (error) {
-        console.error('Failed to fetch metadata:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [strategyId])
-
-  return { data, isLoading }
-}
-
-function useMockRoundTrips(strategyId: string) {
-  const [data, setData] = useState<IRoundTrip[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3002/api'
-        const response = await fetch(`${apiUrl}/trade-analytics/round-trips/${strategyId}`)
-        const result = await response.json()
-        setData(result.items || [])
-      } catch (error) {
-        console.error('Failed to fetch round trips:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [strategyId])
-
-  return { data, isLoading }
-}
-
+/**
+ * Next.js playground wrapper for TradeAnalyticsContainer
+ * This page extracts query parameters from the URL and passes them as props
+ * The actual component logic is in the exportable TradeAnalyticsContainer
+ * Backend API URL is configured in .env.local
+ */
 export default function TradeAnalyticsPage() {
-  const strategyId = 'strategy-001'
-  const [selectedAsset, setSelectedAsset] = useState('BTC-USD')
-  const [selectedRoundTrips, setSelectedRoundTrips] = useState<IRoundTrip[]>([])
-  const [fetchEntireData, setFetchEntireData] = useState(true)
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
-  // Fetch metadata and round trips
-  const { data: metadata, isLoading: isLoadingMetadata } = useMockMetadata(strategyId)
-  const { data: roundTrips, isLoading: isLoadingRoundTrips } = useMockRoundTrips(strategyId)
+  // Ensure we only render after client-side mount to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  // Handle round trip selection
-  const handleRoundTripSelect = (roundTrip: IRoundTrip) => {
-    setSelectedRoundTrips([roundTrip])
-    setFetchEntireData(false) // Focus on specific trade when selected
+  // Extract parameters from URL
+  const { campaignId, userId } = router.query
+  const campaignIdParam = (campaignId as string) || ''
+  const userIdParam = (userId as string) || ''
+
+  // Show loading during SSR and initial client render
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
   }
 
-  // Clear selection
-  const handleClearSelection = () => {
-    setSelectedRoundTrips([])
-    setFetchEntireData(true)
-  }
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gradient-primary p-4">
-        <div className="mx-auto max-w-[1600px]">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-primary-white">
-              Trade Analytics Candlestick Chart
-            </h1>
-            <Link href="/">
-              <button className="bg-secondary-darkGray border border-secondary-mildCementGrey text-primary-white px-4 py-2 rounded-lg hover:bg-secondary-mildCementGrey/30 transition-all duration-200">
-                ← Back to Playground
-              </button>
-            </Link>
-          </div>
-
-          {/* Controls */}
-          <div className="mb-4 flex items-center gap-4 flex-wrap">
-            <div>
-              <label className="block text-sm font-medium text-secondary-ashGrey mb-1">
-                Select Asset:
-              </label>
-              <select
-                value={selectedAsset}
-                onChange={(e) => setSelectedAsset(e.target.value)}
-                className="block w-48 rounded-md border-secondary-mildCementGrey bg-secondary-darkGray text-primary-white px-3 py-2 focus:border-territory-blue focus:ring-territory-blue"
-              >
-                {metadata &&
-                  Object.keys(metadata.asset_info).map((assetId) => (
-                    <option key={assetId} value={assetId}>
-                      {metadata.asset_info[assetId].asset.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-secondary-ashGrey mb-1">
-                Data Mode:
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFetchEntireData(!fetchEntireData)}
-                  className={`px-4 py-2 rounded-md transition-all ${
-                    fetchEntireData
-                      ? 'bg-territory-success/30 text-territory-success border border-territory-success/50'
-                      : 'bg-secondary-darkGray text-secondary-ashGrey border border-secondary-mildCementGrey'
-                  }`}
-                >
-                  {fetchEntireData ? 'Full Data' : 'Focused View'}
-                </button>
-                {selectedRoundTrips.length > 0 && (
-                  <button
-                    onClick={handleClearSelection}
-                    className="px-4 py-2 rounded-md bg-territory-warning/30 text-territory-warning border border-territory-warning/50"
-                  >
-                    Clear Selection
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="text-sm text-secondary-ashGrey">
-              {selectedRoundTrips.length > 0 && (
-                <span>Selected: {selectedRoundTrips[0].asset} - {selectedRoundTrips[0].status}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Chart Container */}
-          <div className="rounded-lg bg-secondary-darkGray border border-secondary-mildCementGrey p-4 mb-6">
-            <div style={{ height: '600px' }}>
-              <TradeAnalyticsChartRenderer
-                isLoading={isLoadingMetadata}
-                tradeAnalyticsMetadata={metadata}
-                selectedRoundTrips={selectedRoundTrips}
-                campaignId={strategyId}
-                assetId={selectedAsset}
-                fetchEntireCandleStickData={fetchEntireData}
-                paddingProfile="STANDARD"
-              />
-            </div>
-          </div>
-
-          {/* Round Trips Grid */}
-          <div>
-            <h2 className="mb-4 text-xl font-bold text-primary-white">
-              Trading History (Click to focus on trade)
-            </h2>
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {roundTrips.slice(0, 12).map((roundTrip) => (
-                <div
-                  key={roundTrip.index}
-                  onClick={() => handleRoundTripSelect(roundTrip)}
-                  className={`cursor-pointer rounded-lg border p-4 transition-all ${
-                    selectedRoundTrips.some(rt => rt.index === roundTrip.index)
-                      ? 'bg-territory-blue/20 border-territory-blue'
-                      : 'bg-secondary-darkGray border-secondary-mildCementGrey hover:bg-secondary-mildCementGrey/30'
-                  }`}
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-primary-white font-medium">{roundTrip.asset}</span>
-                    <span
-                      className={`rounded px-2 py-1 text-xs font-semibold ${
-                        roundTrip.status === 'WIN'
-                          ? 'bg-territory-success/30 text-territory-success'
-                          : roundTrip.status === 'LOSS'
-                          ? 'bg-territory-failure/30 text-territory-failure'
-                          : roundTrip.status === 'OPEN'
-                          ? 'bg-territory-blue/30 text-territory-blue'
-                          : 'bg-secondary-mildCementGrey text-secondary-ashGrey'
-                      }`}
-                    >
-                      {roundTrip.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-secondary-ashGrey space-y-1">
-                    <div className="flex justify-between">
-                      <span>Side:</span>
-                      <span className={roundTrip.side === 'Long' ? 'text-territory-success' : 'text-territory-failure'}>
-                        {roundTrip.side}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Entry:</span>
-                      <span className="text-primary-white">${roundTrip.avg_entry_price.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Exit:</span>
-                      <span className="text-primary-white">${roundTrip.avg_exit_price.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Return:</span>
-                      <span className={roundTrip.return_percent > 0 ? 'text-territory-success' : 'text-territory-failure'}>
-                        {roundTrip.return_percent.toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Info Box */}
-          <div className="mt-8 rounded-lg bg-territory-blue/10 border border-territory-blue/30 p-4 text-primary-white">
-            <h3 className="mb-2 font-bold">📊 Chart Controls:</h3>
-            <ul className="list-inside list-disc space-y-1 text-sm text-secondary-ashGrey">
-              <li>Use the timeframe buttons in the chart to change candle intervals</li>
-              <li>Click on a trade card to focus the chart on that specific trade</li>
-              <li>Toggle between "Full Data" and "Focused View" modes</li>
-              <li>Scroll to zoom in/out, drag to pan across the chart</li>
-              <li>Use the series toggles to show/hide different indicators</li>
-            </ul>
-            <div className="mt-3 text-xs text-territory-warning">
-              Note: Make sure the mock server is running on port 3002 (npm run mock:server)
-            </div>
-          </div>
+  // Now router is ready, check if we have required params
+  if (!campaignIdParam || !userIdParam) {
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <div className="bg-card border border-destructive/50 rounded-lg p-8 max-w-md">
+          <h2 className="text-xl font-bold text-destructive mb-4">Configuration Required</h2>
+          <p className="text-muted-foreground mb-6">
+            {!campaignIdParam && !userIdParam
+              ? 'No Campaign ID or User ID provided.'
+              : !campaignIdParam
+              ? 'No Campaign ID provided.'
+              : 'No User ID provided.'}
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Use the configuration form to set up your parameters, or add `?campaignId=your-id&userId=your-user` to the URL.
+          </p>
+          <Link href="/analytics-form">
+            <button className="w-full bg-accent text-accent-foreground px-4 py-2 rounded-lg hover:bg-accent/80 transition-all">
+              Go to Configuration
+            </button>
+          </Link>
         </div>
       </div>
-    </QueryClientProvider>
+    )
+  }
+
+  // Render the exportable container with props from URL
+  /**
+   * apiEndpoint explanation:
+   * - Empty string ("") = Use Next.js API proxy routes at /api/v1/dashboard/*
+   *   The proxy routes are in pages/api/v1/dashboard/[campaignId].ts
+   *   They forward requests to BACKEND_API_URL from .env.local (http://localhost:9000)
+   *   This avoids CORS issues and allows the frontend to run on a different port
+   *
+   * - Direct URL ("http://localhost:9000") = Connect directly to backend
+   *   Use this if backend has CORS configured or if running in production
+   *   with proper CORS headers
+   */
+  return (
+    <div className="relative">
+      {/* Back button overlay */}
+      <Link href="/analytics-form">
+        <button className="absolute top-4 right-4 z-50 bg-card border border-border text-foreground px-4 py-1.5 rounded text-sm transition-all hover:bg-muted">
+          ← Back to Configuration
+        </button>
+      </Link>
+
+      {/* Render exportable component */}
+      <TradeAnalyticsContainer
+        campaignId={campaignIdParam}
+        userId={userIdParam}
+        apiEndpoint=""  // Empty = use Next.js proxy (see comment above)
+        TopToolbarComponent={TopToolbar}
+        showHeader={true}
+      />
+    </div>
   )
 }

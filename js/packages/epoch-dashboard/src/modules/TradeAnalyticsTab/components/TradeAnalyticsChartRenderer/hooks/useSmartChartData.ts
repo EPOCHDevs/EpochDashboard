@@ -21,6 +21,9 @@ interface UseSmartChartDataProps {
   enabled?: boolean
   paddingConfig?: PaddingConfig // Padding configuration (defaults to STANDARD)
   fetchEntireCandleStickData?: boolean // Use previous behavior: fetch entire dataset
+  expansionRange?: { from: number; to: number } | null // Range expansion for lazy loading
+  apiEndpoint?: string // API endpoint for fetching data
+  userId?: string // User ID for authentication
 }
 
 interface SmartChartDataResult {
@@ -41,8 +44,23 @@ export const useSmartChartData = ({
   enabled = true,
   paddingConfig = DEFAULT_PADDING_CONFIGS.STANDARD,
   fetchEntireCandleStickData = false,
+  expansionRange,
+  apiEndpoint,
+  userId,
 }: UseSmartChartDataProps): SmartChartDataResult => {
   const [shouldFetchBaseline, setShouldFetchBaseline] = useState(true)
+  const [lastAssetTimeframe, setLastAssetTimeframe] = useState<string>('')
+
+  // Reset shouldFetchBaseline when asset or timeframe changes
+  useEffect(() => {
+    const currentKey = `${assetId}-${timeframe}`
+    if (currentKey !== lastAssetTimeframe && assetId && timeframe) {
+      setShouldFetchBaseline(true)
+      setLastAssetTimeframe(currentKey)
+      // Clear the global cache to ensure fresh data
+      globalDataCacheManager.clearCache()
+    }
+  }, [assetId, timeframe, lastAssetTimeframe])
 
   // Calculate API parameters based on selected round trips
   const dataFetchRequest = useMemo((): DataFetchRequest | null => {
@@ -50,15 +68,30 @@ export const useSmartChartData = ({
 
     const baseParams = { strategyId, assetId, timeframe }
 
-    // If no round trips selected OR fetchEntireCandleStickData flag is set, fetch baseline data
-    if (selectedRoundTrips.length === 0 || fetchEntireCandleStickData) {
-      if (shouldFetchBaseline) {
-        return calculateBaselineApiParams(baseParams)
+    // Priority 1: Handle range expansion for lazy loading
+    if (expansionRange) {
+      return {
+        ...baseParams,
+        from_ms: expansionRange.from,
+        to_ms: expansionRange.to
       }
-      return null
     }
 
-    // Convert round trips to the format expected by the utility function
+    // Priority 2: If fetchEntireCandleStickData is true, always fetch baseline
+    if (fetchEntireCandleStickData) {
+      return calculateBaselineApiParams(baseParams)
+    }
+
+    // Priority 3: If no round trips selected, ALWAYS return baseline params to keep query alive
+    // The cache manager will prevent unnecessary fetches by returning cached data
+    if (selectedRoundTrips.length === 0) {
+      // Always return baseline params - this keeps the query enabled
+      // If we have cached data, queryFn will return it immediately
+      // If not, it will fetch fresh data
+      return calculateBaselineApiParams(baseParams)
+    }
+
+    // Priority 4: Convert round trips to the format expected by the utility function
     const roundTripTimes = selectedRoundTrips.map((rt) => ({
       openTime: new Date(rt.open_datetime).getTime(),
       closeTime: rt.close_datetime ? new Date(rt.close_datetime).getTime() : Date.now(),
@@ -67,10 +100,9 @@ export const useSmartChartData = ({
     // Use multi-round trip calculation for optimal backend padding
     const apiParams = calculateMultiRoundTripApiParams(baseParams, roundTripTimes, paddingConfig)
 
-    // Check if we need to fetch this data (not in cache)
-    const needsFetch = globalDataCacheManager.needsFetch(apiParams)
-
-    return needsFetch ? apiParams : null
+    // Always return the apiParams to trigger fetch
+    // (React Query will handle caching)
+    return apiParams
   }, [
     strategyId,
     assetId,
@@ -80,22 +112,28 @@ export const useSmartChartData = ({
     shouldFetchBaseline,
     paddingConfig,
     fetchEntireCandleStickData,
+    expansionRange,
   ])
 
   // Generate query key for React Query
+  // Include request params hash to trigger refetch when params change
+  // But cache manager still handles merging, so we get best of both worlds
   const queryKey = useMemo(() => {
-    if (!dataFetchRequest) return ["no-fetch"] as const
+    if (!enabled || !strategyId || !assetId || !timeframe) return ["no-fetch"] as const
+
+    // Create a stable key that changes when request parameters change
+    const requestHash = dataFetchRequest
+      ? `${dataFetchRequest.from_ms || 'none'}_${dataFetchRequest.to_ms || 'none'}_${dataFetchRequest.pivot || 'none'}`
+      : 'initial'
+
     return [
       "TRADE_ANALYTICS_CHART_DATA",
-      dataFetchRequest.strategyId,
-      dataFetchRequest.assetId,
-      dataFetchRequest.timeframe,
-      dataFetchRequest.pivot,
-      dataFetchRequest.pad_front,
-      dataFetchRequest.pad_back,
-      "backend-padding",
+      strategyId,
+      assetId,
+      timeframe,
+      requestHash, // This changes when request params change, triggering refetch
     ] as const
-  }, [dataFetchRequest])
+  }, [enabled, strategyId, assetId, timeframe, dataFetchRequest])
 
   // React Query for actual data fetching
   const {
@@ -108,27 +146,113 @@ export const useSmartChartData = ({
     queryFn: async (): Promise<Table<Record<string | number | symbol, DataType>>> => {
       if (!dataFetchRequest) throw new Error("No fetch request")
 
+      // Check if we need to fetch based on range expansion logic
+      // This is only relevant when expansionRange is set
+      if (expansionRange) {
+        const missingRanges = globalDataCacheManager.needsRangeExpansion(
+          { strategyId, assetId, timeframe },
+          { from: expansionRange.from, to: expansionRange.to }
+        )
+
+        if (missingRanges.length === 0) {
+          const cached = globalDataCacheManager.getCachedData({ strategyId, assetId, timeframe })
+          if (cached) {
+            return cached
+          }
+        }
+        // For now, fetch the entire requested range if there are missing ranges
+        // TODO: Implement fetching only missing ranges (requires multiple requests or backend support)
+      }
+
       // Format API parameters for the HTTP request
       const queryParams = formatApiParamsForRequest(dataFetchRequest)
       const queryString = new URLSearchParams(queryParams).toString()
 
-      // Use environment variable for API URL, fallback to localhost mock server
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ||
-                        process.env.REACT_APP_API_BASE_URL ||
-                        'http://localhost:3002/api'
-      const { data } = await axios.get(
-        `${apiBaseUrl}/backend-server/dashboard/trade-analytics-chart-data/${dataFetchRequest.strategyId}?${queryString}`
-      )
+      // Use provided apiEndpoint and userId, or fall back to defaults
+      const finalApiEndpoint = apiEndpoint || 'http://localhost:9000'
+      const finalUserId = userId || 'guest'
 
-      const table = tableFromIPC(new Uint8Array(data.data))
+      // Check if we're in a Next.js environment (has /api routes)
+      const isNextJsEnv = typeof window !== 'undefined' && window.location.pathname.includes('/api')
+
+      let response
+      if (isNextJsEnv || !apiEndpoint) {
+        // Use local proxy endpoint (Next.js API route)
+        response = await axios.get(
+          `/api/backend-server/dashboard/trade-analytics-chart-data/${dataFetchRequest.strategyId}?${queryString}`,
+          {
+            headers: {
+              'X-API-URL': finalApiEndpoint,
+              'X-User-Id': finalUserId,
+            },
+            responseType: 'arraybuffer',
+            validateStatus: () => true // Don't throw on non-2xx status
+          }
+        )
+      } else {
+        // Direct API call (for standalone usage)
+        response = await axios.get(
+          `${finalApiEndpoint}/api/v1/dashboard/analytics/${dataFetchRequest.strategyId}?${queryString}`,
+          {
+            headers: {
+              'X-User-Id': finalUserId,
+            },
+            responseType: 'arraybuffer',
+            validateStatus: () => true // Don't throw on non-2xx status
+          }
+        )
+      }
+
+      // Check if response is an error (HTML/JSON) instead of binary data
+      if (response.status !== 200) {
+        let errorMessage = `HTTP ${response.status}`
+        let errorDetails = ''
+
+        try {
+          // Try to parse as JSON first (our proxy returns JSON errors)
+          const text = new TextDecoder().decode(response.data)
+          if (text.startsWith('{')) {
+            const errorData = JSON.parse(text)
+            errorMessage = errorData.error || `HTTP ${response.status}`
+            errorDetails = errorData.details || ''
+            console.error('📊 Chart data API error:', {
+              status: response.status,
+              error: errorMessage,
+              details: errorDetails,
+              url: errorData.url
+            })
+          } else if (text.startsWith('<!DOCTYPE')) {
+            errorMessage = 'Server returned HTML error page'
+            errorDetails = text.substring(0, 500) // First 500 chars of HTML
+            console.error('📊 Chart data HTML error:', errorMessage)
+          }
+        } catch (e) {
+          console.error('📊 Error parsing response:', e)
+        }
+
+        // Include both error and details in the thrown error
+        const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage
+        throw new Error(fullError)
+      }
+
+      // Parse Arrow data with error handling
+      let table
+      try {
+        table = tableFromIPC(new Uint8Array(response.data))
+      } catch (parseError) {
+        console.error('📊 Failed to parse Arrow data:', parseError)
+        throw new Error(`Failed to parse chart data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
+      }
 
       // Cache the fetched data
       globalDataCacheManager.cacheData(dataFetchRequest, table)
 
       return table
     },
-    enabled: Boolean(dataFetchRequest && enabled && queryKey[0] !== "no-fetch"),
-    staleTime: Infinity,
+    enabled: Boolean(dataFetchRequest && enabled),
+    staleTime: Infinity, // Never mark as stale - we manage freshness via dataFetchRequest changes
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
+    refetchOnWindowFocus: false,
     retry: 2,
   })
 
@@ -140,48 +264,28 @@ export const useSmartChartData = ({
   }, [fetchedData, shouldFetchBaseline, selectedRoundTrips.length])
 
   // Get the appropriate data (from cache or fresh fetch)
+  // CRITICAL: Always return cached data to prevent "No data found" flashing
   const finalData = useMemo((): Table<Record<string | number | symbol, DataType>> | undefined => {
-    // If we just fetched new data, return it
-    if (fetchedData) {
-      return fetchedData
-    }
+    // ALWAYS check cache first - this is our source of truth
+    if (strategyId && assetId && timeframe) {
+      const cachedData = globalDataCacheManager.getCachedData({
+        strategyId,
+        assetId,
+        timeframe
+      })
 
-    // Try to get from cache if we're not currently fetching
-    if (enabled && strategyId && assetId && timeframe && !dataFetchRequest) {
-      const baseParams = { strategyId, assetId, timeframe }
-
-      let cacheRequest: DataFetchRequest
-
-      if (selectedRoundTrips.length === 0 || fetchEntireCandleStickData) {
-        // Try to get baseline data from cache
-        cacheRequest = calculateBaselineApiParams(baseParams)
-      } else {
-        // Try to get round trip data from cache
-        const roundTripTimes = selectedRoundTrips.map((rt) => ({
-          openTime: new Date(rt.open_datetime).getTime(),
-          closeTime: rt.close_datetime ? new Date(rt.close_datetime).getTime() : Date.now(),
-        }))
-        cacheRequest = calculateMultiRoundTripApiParams(baseParams, roundTripTimes, paddingConfig)
-      }
-
-      const cachedData = globalDataCacheManager.getCachedData(cacheRequest)
       if (cachedData) {
         return cachedData
       }
     }
 
+    // Only use fetchedData if cache is completely empty (initial load only)
+    if (fetchedData) {
+      return fetchedData
+    }
+
     return undefined
-  }, [
-    fetchedData,
-    enabled,
-    strategyId,
-    assetId,
-    timeframe,
-    dataFetchRequest,
-    selectedRoundTrips,
-    paddingConfig,
-    fetchEntireCandleStickData,
-  ])
+  }, [fetchedData, strategyId, assetId, timeframe, isFetching])
 
   return {
     data: finalData,
