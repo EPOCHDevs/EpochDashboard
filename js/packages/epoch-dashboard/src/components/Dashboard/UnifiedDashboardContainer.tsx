@@ -114,15 +114,11 @@ function UnifiedDashboardContainerContent({
 
   return (
     <div className={clsx("h-full bg-background flex flex-col", className)}>
-      {/* Main Content Area - Keep both views mounted for instant switching */}
+      {/* Main Content Area - Only mount active view for better performance */}
       <div className="flex-1 overflow-hidden">
-        {/* Dashboard View - Hidden when not active */}
-        <div
-          key="dashboard"
-          className="h-full"
-          style={{ display: activeView === 'dashboard' ? 'block' : 'none' }}
-        >
+        {activeView === 'dashboard' ? (
           <DashboardContent
+            key="dashboard"
             campaignId={campaignId}
             userId={userId}
             apiEndpoint={apiEndpoint}
@@ -131,15 +127,9 @@ function UnifiedDashboardContainerContent({
             rightControls={viewSwitcherControls}
             className="h-full"
           />
-        </div>
-
-        {/* Charts View - Hidden when not active */}
-        <div
-          key="charts"
-          className="h-full w-full"
-          style={{ display: activeView === 'charts' ? 'block' : 'none' }}
-        >
+        ) : (
           <TradeAnalyticsContent
+            key="charts"
             campaignId={campaignId}
             userId={userId}
             apiEndpoint={apiEndpoint}
@@ -147,7 +137,7 @@ function UnifiedDashboardContainerContent({
             showHeader={false}
             className="h-full"
           />
-        </div>
+        )}
       </div>
     </div>
   )

@@ -10,9 +10,10 @@ import { TearSheet, TearSheetClass } from '../../types/proto'
 export const dashboardQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 2 * 60 * 1000, // 2 minutes - reduced for better memory management
+      gcTime: 5 * 60 * 1000, // 5 minutes - reduced to free memory faster
       retry: 1,
+      refetchOnWindowFocus: false, // Prevent unnecessary refetches
     },
   },
 })

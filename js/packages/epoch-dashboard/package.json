@@ -1,6 +1,6 @@
 {
   "name": "@epochlab/epoch-dashboard",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "React dashboard component for TearSheet protobuf visualization with Tailwind CSS styling",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
