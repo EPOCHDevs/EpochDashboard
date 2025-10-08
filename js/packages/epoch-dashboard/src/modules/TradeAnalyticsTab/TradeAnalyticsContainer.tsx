@@ -408,7 +408,7 @@ export function TradeAnalyticsContent({
   }
 
   return (
-    <div className={clsx("h-full bg-background flex flex-col", className)}>
+    <div className={clsx("h-full bg-background flex flex-col overflow-hidden", className)}>
       {showHeader && (
         <div className="bg-card border-b border-border px-6 py-2 flex items-center justify-between flex-shrink-0">
           <div>
@@ -436,44 +436,19 @@ export function TradeAnalyticsContent({
       )}
 
       {/* Main Content Area with Sidebar */}
-      <div className="relative flex flex-1 w-full flex-row overflow-hidden bg-background">
-        {/* Chart Area - Full Width */}
-        <div
-          ref={chartContainerRef}
-          className={clsx(
-            "h-full w-full transition-all duration-300 ease-out",
-            !shouldHideSidebar && isEventsSidebarOpen ? "pl-[349px]" : "pl-0"
-          )}
-        >
-          <div className="h-full w-full text-foreground">
-            <TradeAnalyticsChartRenderer
-              isLoading={isLoadingTradeAnalyticsMetadata || isLazyLoading}
-              tradeAnalyticsMetadata={tradeAnalyticsMetadata}
-              selectedRoundTrips={selectedRoundTripsArray}
-              campaignId={campaignId}
-              assetId={selectedAssetId}
-              fetchEntireCandleStickData={!selectedRoundTripForChart && !expansionRequest}
-              paddingProfile="STANDARD"
-              timeframe={selectedTimeframe}
-              chartRef={chartRef}
-              onRangeExpansionNeeded={handleRangeExpansion}
-              expansionRange={expansionRequest}
-              isLazyLoading={isLazyLoading}
-              apiEndpoint={apiEndpoint}
-              userId={userId}
-            />
-          </div>
-        </div>
-
-        {/* Sidebar Overlay */}
+      <div className="relative flex flex-1 min-h-0 w-full flex-row overflow-hidden bg-background">
+        {/* Sidebar - Fixed width, flex layout */}
         {!shouldHideSidebar && (
           <div
             ref={eventsSectionRef}
             className={clsx(
-              "absolute left-0 top-0 z-50 h-full w-[349px] transition-all duration-300 ease-out",
+              "relative h-full transition-all duration-300 ease-out flex-shrink-0",
+              isEventsSidebarOpen ? "w-[349px]" : "w-0"
+            )}>
+            <div className={clsx(
+              "absolute inset-0 w-[349px] bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-r-2 border-accent/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col transition-transform duration-300 ease-out",
               isEventsSidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-            <div className="h-full w-[349px] bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-r-2 border-accent/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col">
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">
               <div className="flex items-center gap-3">

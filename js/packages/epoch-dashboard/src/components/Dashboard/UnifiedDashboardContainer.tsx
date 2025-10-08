@@ -113,9 +113,9 @@ function UnifiedDashboardContainerContent({
     : undefined
 
   return (
-    <div className={clsx("h-full bg-background flex flex-col", className)}>
+    <div className={clsx("h-full bg-background flex flex-col overflow-hidden", className)}>
       {/* Main Content Area - Only mount active view for better performance */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {activeView === 'dashboard' ? (
           <DashboardContent
             key="dashboard"
@@ -125,7 +125,7 @@ function UnifiedDashboardContainerContent({
             showHeader={false}
             hideLayoutControls={hideLayoutControls}
             rightControls={viewSwitcherControls}
-            className="h-full"
+            className="h-full overflow-auto"
           />
         ) : (
           <TradeAnalyticsContent
@@ -135,7 +135,7 @@ function UnifiedDashboardContainerContent({
             apiEndpoint={apiEndpoint}
             TopToolbarComponent={EnhancedTopToolbar}
             showHeader={false}
-            className="h-full"
+            className="h-full overflow-hidden"
           />
         )}
       </div>

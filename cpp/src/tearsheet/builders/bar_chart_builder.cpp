@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/bar_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include "epoch_dashboard/tearsheet/series_converter.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 #include "epoch_protos/common.pb.h"
 
 namespace epoch_tearsheet {
@@ -25,6 +26,10 @@ BarChartBuilder& BarChartBuilder::setData(const epoch_proto::Array& data) {
 }
 
 BarChartBuilder& BarChartBuilder::addBarData(const epoch_proto::BarData& data) {
+    // Validate bar data - for stacked bars, don't allow negative values
+    bool allow_negative = !bar_def_.stacked();
+    ValidationUtils::validateBarData(data, allow_negative);
+
     *bar_def_.add_data() = data;
     return *this;
 }

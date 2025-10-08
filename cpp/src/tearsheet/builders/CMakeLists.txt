@@ -16,4 +16,5 @@ target_sources(epoch_dashboard PRIVATE
         boxplot_chart_builder.cpp
         xrange_chart_builder.cpp
         pie_chart_builder.cpp
+        validation_utils.cpp
 )

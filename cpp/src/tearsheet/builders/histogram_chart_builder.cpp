@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/histogram_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include "epoch_dashboard/tearsheet/series_converter.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 #include "epoch_protos/common.pb.h"
 
 namespace epoch_tearsheet {
@@ -10,6 +11,11 @@ HistogramChartBuilder::HistogramChartBuilder() {
 }
 
 HistogramChartBuilder& HistogramChartBuilder::setData(const epoch_proto::Array& data) {
+    // Validate that data is not empty
+    if (data.values_size() == 0) {
+        throw std::runtime_error("Cannot create histogram from empty data");
+    }
+
     *histogram_def_.mutable_data() = data;
     return *this;
 }
@@ -20,12 +26,22 @@ HistogramChartBuilder& HistogramChartBuilder::addStraightLine(const epoch_proto:
 }
 
 HistogramChartBuilder& HistogramChartBuilder::setBinsCount(uint32_t bins) {
+    // Validate bins count before setting
+    if (histogram_def_.has_data()) {
+        ValidationUtils::validateHistogramBins(bins, histogram_def_.data().values_size());
+    }
+
     histogram_def_.set_bins_count(bins);
     return *this;
 }
 
 HistogramChartBuilder& HistogramChartBuilder::fromSeries(const epoch_frame::Series& series, uint32_t bins) {
-    *histogram_def_.mutable_data() = SeriesFactory::toArray(series);
+    auto data = SeriesFactory::toArray(series);
+
+    // Validate histogram configuration
+    ValidationUtils::validateHistogramBins(bins, data.values_size());
+
+    *histogram_def_.mutable_data() = data;
     histogram_def_.set_bins_count(bins);
 
     // Set appropriate axis definitions for histograms
@@ -38,7 +54,12 @@ HistogramChartBuilder& HistogramChartBuilder::fromSeries(const epoch_frame::Seri
 HistogramChartBuilder& HistogramChartBuilder::fromDataFrame(const epoch_frame::DataFrame& df,
                                                               const std::string& column,
                                                               uint32_t bins) {
-    *histogram_def_.mutable_data() = DataFrameFactory::toArray(df, column);
+    auto data = DataFrameFactory::toArray(df, column);
+
+    // Validate histogram configuration
+    ValidationUtils::validateHistogramBins(bins, data.values_size());
+
+    *histogram_def_.mutable_data() = data;
     histogram_def_.set_bins_count(bins);
 
     // Set appropriate axis definitions for histograms

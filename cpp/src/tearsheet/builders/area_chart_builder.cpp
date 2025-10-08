@@ -1,6 +1,7 @@
 #include "epoch_dashboard/tearsheet/area_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include "epoch_dashboard/tearsheet/line_builder.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 #include "epoch_protos/common.pb.h"
 #include <arrow/api.h>
 #include <epoch_frame/dataframe.h>
@@ -12,17 +13,36 @@ AreaChartBuilder::AreaChartBuilder() {
     area_def_.mutable_chart_def()->set_type(epoch_proto::WidgetArea);
     setYAxisType(epoch_proto::AxisLinear);
     setXAxisType(epoch_proto::AxisDateTime);
+    // Default validation options
+    validation_options_.strict_validation = true;
+    validation_options_.check_finite = true;
 }
 
 AreaChartBuilder& AreaChartBuilder::addArea(const epoch_proto::Line& area) {
-    *area_def_.add_areas() = area;
+    // Validate the area data before adding
+    epoch_proto::Line validated_area = area;
+    ValidationUtils::validateLineData(validated_area, validation_options_);
+    *area_def_.add_areas() = validated_area;
     return *this;
 }
 
 AreaChartBuilder& AreaChartBuilder::addAreas(const std::vector<epoch_proto::Line>& areas) {
     for (const auto& area : areas) {
-        *area_def_.add_areas() = area;
+        // Validate each area before adding
+        epoch_proto::Line validated_area = area;
+        ValidationUtils::validateLineData(validated_area, validation_options_);
+        *area_def_.add_areas() = validated_area;
     }
+
+    // Additional validation for stacked areas
+    if (area_def_.stacked() && areas.size() > 1) {
+        std::vector<epoch_proto::Line> all_areas;
+        for (const auto& area : area_def_.areas()) {
+            all_areas.push_back(area);
+        }
+        ValidationUtils::validateMultipleLines(all_areas, true);
+    }
+
     return *this;
 }
 
@@ -85,7 +105,31 @@ AreaChartBuilder& AreaChartBuilder::fromDataFrame(const epoch_frame::DataFrame& 
     return *this;
 }
 
+AreaChartBuilder& AreaChartBuilder::setValidationOptions(const ValidationUtils::ValidationOptions& options) {
+    validation_options_ = options;
+    return *this;
+}
+
+AreaChartBuilder& AreaChartBuilder::setAutoSort(bool auto_sort) {
+    validation_options_.auto_sort = auto_sort;
+    return *this;
+}
+
+AreaChartBuilder& AreaChartBuilder::setStrictValidation(bool strict) {
+    validation_options_.strict_validation = strict;
+    return *this;
+}
+
 epoch_proto::Chart AreaChartBuilder::build() const {
+    // Final validation for stacked areas
+    if (validation_options_.strict_validation && area_def_.stacked() && area_def_.areas_size() > 1) {
+        std::vector<epoch_proto::Line> all_areas;
+        for (const auto& area : area_def_.areas()) {
+            all_areas.push_back(area);
+        }
+        ValidationUtils::validateMultipleLines(all_areas, true);
+    }
+
     epoch_proto::Chart chart;
     *chart.mutable_area_def() = area_def_;
     return chart;

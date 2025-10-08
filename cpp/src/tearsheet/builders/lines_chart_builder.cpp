@@ -1,5 +1,6 @@
 #include "epoch_dashboard/tearsheet/lines_chart_builder.h"
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 #include "epoch_protos/common.pb.h"
 #include <arrow/api.h>
 #include <epoch_frame/dataframe.h>
@@ -11,17 +12,36 @@ LinesChartBuilder::LinesChartBuilder() {
     lines_def_.mutable_chart_def()->set_type(epoch_proto::WidgetLines);
     setYAxisType(epoch_proto::AxisLinear);
     setXAxisType(epoch_proto::AxisDateTime);
+    // Default validation options
+    validation_options_.strict_validation = true;
+    validation_options_.check_finite = true;
 }
 
 LinesChartBuilder& LinesChartBuilder::addLine(const epoch_proto::Line& line) {
-    *lines_def_.add_lines() = line;
+    // Validate the line data before adding
+    epoch_proto::Line validated_line = line;
+    ValidationUtils::validateLineData(validated_line, validation_options_);
+    *lines_def_.add_lines() = validated_line;
     return *this;
 }
 
 LinesChartBuilder& LinesChartBuilder::addLines(const std::vector<epoch_proto::Line>& lines) {
     for (const auto& line : lines) {
-        *lines_def_.add_lines() = line;
+        // Validate each line before adding
+        epoch_proto::Line validated_line = line;
+        ValidationUtils::validateLineData(validated_line, validation_options_);
+        *lines_def_.add_lines() = validated_line;
     }
+
+    // Additional validation for multiple lines if stacked
+    if (lines_def_.stacked() && lines.size() > 1) {
+        std::vector<epoch_proto::Line> added_lines;
+        for (const auto& line : lines_def_.lines()) {
+            added_lines.push_back(line);
+        }
+        ValidationUtils::validateMultipleLines(added_lines, true);
+    }
+
     return *this;
 }
 
@@ -153,7 +173,36 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
     return *this;
 }
 
+LinesChartBuilder& LinesChartBuilder::setValidationOptions(const ValidationUtils::ValidationOptions& options) {
+    validation_options_ = options;
+    return *this;
+}
+
+LinesChartBuilder& LinesChartBuilder::setAutoSort(bool auto_sort) {
+    validation_options_.auto_sort = auto_sort;
+    return *this;
+}
+
+LinesChartBuilder& LinesChartBuilder::setStrictValidation(bool strict) {
+    validation_options_.strict_validation = strict;
+    return *this;
+}
+
+LinesChartBuilder& LinesChartBuilder::setAllowDuplicates(bool allow) {
+    validation_options_.allow_duplicates = allow;
+    return *this;
+}
+
 epoch_proto::Chart LinesChartBuilder::build() const {
+    // Final validation of all lines before building
+    if (validation_options_.strict_validation && lines_def_.stacked() && lines_def_.lines_size() > 1) {
+        std::vector<epoch_proto::Line> all_lines;
+        for (const auto& line : lines_def_.lines()) {
+            all_lines.push_back(line);
+        }
+        ValidationUtils::validateMultipleLines(all_lines, true);
+    }
+
     epoch_proto::Chart chart;
     *chart.mutable_lines_def() = lines_def_;
     return chart;

@@ -5,6 +5,7 @@
 
 #include "epoch_protos/chart_def.pb.h"
 #include "epoch_dashboard/tearsheet/chart_builder_base.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 
 namespace epoch_tearsheet {
 

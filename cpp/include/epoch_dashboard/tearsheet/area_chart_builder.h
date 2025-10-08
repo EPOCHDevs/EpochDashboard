@@ -5,6 +5,7 @@
 
 #include "epoch_protos/chart_def.pb.h"
 #include "epoch_dashboard/tearsheet/chart_builder_base.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 
 namespace epoch_frame {
     class DataFrame;
@@ -26,10 +27,16 @@ public:
     AreaChartBuilder& setStackType(epoch_proto::StackType stack_type);
     AreaChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::vector<std::string>& y_cols);
 
+    // Validation configuration
+    AreaChartBuilder& setValidationOptions(const ValidationUtils::ValidationOptions& options);
+    AreaChartBuilder& setAutoSort(bool auto_sort);
+    AreaChartBuilder& setStrictValidation(bool strict);
+
     epoch_proto::Chart build() const;
 
 private:
     epoch_proto::AreaDef area_def_;
+    ValidationUtils::ValidationOptions validation_options_;
 };
 
 } // namespace epoch_tearsheet

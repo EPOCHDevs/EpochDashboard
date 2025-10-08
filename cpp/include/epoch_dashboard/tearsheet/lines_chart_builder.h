@@ -5,6 +5,7 @@
 
 #include "epoch_protos/chart_def.pb.h"
 #include "epoch_dashboard/tearsheet/chart_builder_base.h"
+#include "epoch_dashboard/tearsheet/validation_utils.h"
 
 namespace epoch_frame {
     class DataFrame;
@@ -29,10 +30,17 @@ public:
     LinesChartBuilder& setStacked(bool stacked);
     LinesChartBuilder& fromDataFrame(const epoch_frame::DataFrame& df, const std::vector<std::string>& y_cols);
 
+    // Validation configuration
+    LinesChartBuilder& setValidationOptions(const ValidationUtils::ValidationOptions& options);
+    LinesChartBuilder& setAutoSort(bool auto_sort);
+    LinesChartBuilder& setStrictValidation(bool strict);
+    LinesChartBuilder& setAllowDuplicates(bool allow);
+
     epoch_proto::Chart build() const;
 
 private:
     epoch_proto::LinesDef lines_def_;
+    ValidationUtils::ValidationOptions validation_options_;
 
     void processDataFrameWithTimestampIndex(const epoch_frame::DataFrame& df,
                                             const std::vector<std::string>& y_cols,
