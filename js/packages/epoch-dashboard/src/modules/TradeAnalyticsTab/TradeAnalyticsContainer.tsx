@@ -663,11 +663,36 @@ export function TradeAnalyticsContent({
           </div>
         )}
 
+        {/* Chart Area - Flex to fill remaining space */}
+        <div
+          ref={chartContainerRef}
+          className="flex-1 h-full overflow-hidden p-2"
+        >
+          <div className="h-full w-full text-foreground">
+            <TradeAnalyticsChartRenderer
+              isLoading={isLoadingTradeAnalyticsMetadata || isLazyLoading}
+              tradeAnalyticsMetadata={tradeAnalyticsMetadata}
+              selectedRoundTrips={selectedRoundTripsArray}
+              campaignId={campaignId}
+              assetId={selectedAssetId}
+              fetchEntireCandleStickData={!selectedRoundTripForChart && !expansionRequest}
+              paddingProfile="STANDARD"
+              timeframe={selectedTimeframe}
+              chartRef={chartRef}
+              onRangeExpansionNeeded={handleRangeExpansion}
+              expansionRange={expansionRequest}
+              isLazyLoading={isLazyLoading}
+              apiEndpoint={apiEndpoint}
+              userId={userId}
+            />
+          </div>
+        </div>
+
         {/* Floating Toggle Button (when sidebar is closed) */}
         {!shouldHideSidebar && !isEventsSidebarOpen && (
           <button
             onClick={() => setIsEventsSidebarOpen(true)}
-            className="fixed left-5 top-1/2 -translate-y-1/2 z-40 p-3 bg-card/95 backdrop-blur-md border border-border/50 rounded-r-xl shadow-xl hover:shadow-2xl hover:bg-muted/80 transition-all group"
+            className="absolute left-5 top-1/2 -translate-y-1/2 z-40 p-3 bg-card/95 backdrop-blur-md border border-border/50 rounded-r-xl shadow-xl hover:shadow-2xl hover:bg-muted/80 transition-all group"
             title="Open sidebar"
           >
             <svg
