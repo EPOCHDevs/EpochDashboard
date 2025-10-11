@@ -170,34 +170,34 @@ export const convertStraightLinesToHighcharts = (lines: StraightLineDef[] | unde
 
 // Convert Points to Highcharts data format
 // Proto: Point { x: int64 (timestamp ms), y: double }
-// Output: [timestamp, value] - ALWAYS
+// Output: [timestamp, value] - null values are preserved (not converted to 0)
 export const convertPointsToHighcharts = (
   points: Point[] | undefined | null,
   xAxisType?: AxisType
-): [number, number][] => {
+): [number, number | null][] => {
   if (!points) return []
 
   return points.map(point => [
     // x: int64 timestamp in milliseconds (may be Long object from protobufjs)
     typeof point.x === 'number' ? point.x : Number(point.x),
-    // y: double numeric value
-    point.y || 0
+    // y: double numeric value - preserve null/undefined instead of converting to 0
+    point.y !== undefined && point.y !== null ? point.y : null
   ])
 }
 
 // Convert NumericPoints to Highcharts data format
 // Proto: NumericPoint { x: double, y: double }
-// Output: [x_value, y_value] - Both are numeric (not timestamps)
+// Output: [x_value, y_value] - null values are preserved (not converted to 0)
 export const convertNumericPointsToHighcharts = (
   points: NumericPoint[] | undefined | null
-): [number, number][] => {
+): [number | null, number | null][] => {
   if (!points) return []
 
   return points.map(point => [
-    // x: double numeric value
-    point.x || 0,
-    // y: double numeric value
-    point.y || 0
+    // x: double numeric value - preserve null/undefined instead of converting to 0
+    point.x !== undefined && point.x !== null ? point.x : null,
+    // y: double numeric value - preserve null/undefined instead of converting to 0
+    point.y !== undefined && point.y !== null ? point.y : null
   ])
 }
 

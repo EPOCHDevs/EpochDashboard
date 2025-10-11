@@ -10,6 +10,7 @@ add_executable(epoch_dashboard_test
     test_area_chart_builder.cpp
     test_chart_builder_base.cpp
     test_lines_chart_builder.cpp
+    test_numeric_lines_chart_builder.cpp
     test_bar_chart_builder.cpp
     test_histogram_chart_builder.cpp
     test_heatmap_chart_builder.cpp
