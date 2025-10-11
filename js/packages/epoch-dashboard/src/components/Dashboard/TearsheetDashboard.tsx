@@ -7,8 +7,11 @@ import {
   Columns3,
   Columns2,
   ChevronDown,
+  Rows3,
+  Grid2x2,
 } from 'lucide-react'
 import TearsheetCategoryContent from './TearsheetCategoryContent'
+import UnifiedCategoryView from './UnifiedCategoryView'
 import { TearSheet } from '../../types/proto'
 import { groupByCategory, formatCategoryLabel } from '../../utils/tearsheetHelpers'
 
@@ -44,12 +47,33 @@ export const DASHBOARD_LAYOUTS = [
   }
 ]
 
+// View Mode Types
+export type ViewMode = 'tabs' | 'unified'
+
+// View Mode Options
+export const VIEW_MODES = [
+  {
+    id: 'tabs',
+    title: 'Tab View',
+    icon: <Grid2x2 size={20} />,
+    value: 'tabs' as ViewMode
+  },
+  {
+    id: 'unified',
+    title: 'Unified View',
+    icon: <Rows3 size={20} />,
+    value: 'unified' as ViewMode
+  }
+]
+
 interface TearsheetDashboardProps {
   tearsheet: TearSheet
   className?: string
   hideLayoutControls?: boolean
   onCategoryChange?: (category: string) => void
   onLayoutChange?: (layout: string) => void
+  onViewModeChange?: (viewMode: ViewMode) => void
+  defaultViewMode?: ViewMode
   debug?: boolean
   rightControls?: React.ReactNode
 }
@@ -60,6 +84,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   hideLayoutControls = false,
   onCategoryChange,
   onLayoutChange,
+  onViewModeChange,
+  defaultViewMode = 'tabs',
   debug = false,
   rightControls,
 }) => {
@@ -100,7 +126,7 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // State for active category and layout
+  // State for active category, layout, and view mode
   const [activeCategory, setActiveCategory] = useState<string>(
     categories[0]?.value || ''
   )
@@ -108,6 +134,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   const [selectedLayout, setSelectedLayout] = useState<string>(
     isResponsive ? 'single' : 'columns_2'
   )
+
+  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode)
 
   // Update layout based on responsive state
   useEffect(() => {
@@ -124,6 +152,12 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   const handleLayoutChange = (layout: string) => {
     setSelectedLayout(layout)
     onLayoutChange?.(layout)
+  }
+
+  // Handle view mode change
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    onViewModeChange?.(mode)
   }
 
   // Get active category data
@@ -154,7 +188,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
         <div className="flex items-center gap-2 px-4 py-2">
           {/* Category Tabs - Desktop: show first 3, rest in dropdown */}
           {/* Mobile: show dropdown */}
-          {categories.length > 0 && (
+          {/* Only show category tabs in tab view mode */}
+          {viewMode === 'tabs' && categories.length > 0 && (
             <>
               {/* Show first 2-3 tabs on desktop, or use dropdown on mobile */}
               {!isResponsive ? (
@@ -254,12 +289,39 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
           )}
 
           {/* Divider */}
-          {!isResponsive && !hideLayoutControls && categories.length > 0 && (
+          {!isResponsive && viewMode === 'tabs' && categories.length > 0 && (
             <div className="w-px h-6 bg-border" />
           )}
 
-          {/* Layout Controls */}
-          {!isResponsive && !hideLayoutControls && (
+          {/* View Mode Controls */}
+          {!isResponsive && (
+            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+              {VIEW_MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => handleViewModeChange(mode.value)}
+                  className={clsx(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2",
+                    viewMode === mode.value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  )}
+                  title={mode.title}
+                >
+                  {mode.icon}
+                  <span>{mode.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Divider */}
+          {!isResponsive && !hideLayoutControls && viewMode === 'tabs' && categories.length > 0 && (
+            <div className="w-px h-6 bg-border" />
+          )}
+
+          {/* Layout Controls - Only show in tab view mode */}
+          {!isResponsive && !hideLayoutControls && viewMode === 'tabs' && (
             <div className="flex items-center gap-1">
               {DASHBOARD_LAYOUTS.filter(layout =>
                 layout.value !== 'single' // Hide single column on desktop
@@ -297,26 +359,36 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="glass rounded-lg p-6">
-          {activeCategoryData ? (
-            <TearsheetCategoryContent
-              categoryData={activeCategoryData}
-              layout={selectedLayout}
-              debug={debug}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="text-foreground/40 text-lg mb-2">
-                  No Data Available
-                </div>
-                <div className="text-foreground/20 text-sm">
-                  Select a category to view dashboard content
+        {viewMode === 'tabs' ? (
+          // Tab View - Show single category
+          <div className="glass rounded-lg p-6">
+            {activeCategoryData ? (
+              <TearsheetCategoryContent
+                categoryData={activeCategoryData}
+                layout={selectedLayout}
+                debug={debug}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="text-foreground/40 text-lg mb-2">
+                    No Data Available
+                  </div>
+                  <div className="text-foreground/20 text-sm">
+                    Select a category to view dashboard content
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          // Unified View - Show all categories
+          <UnifiedCategoryView
+            categories={categories}
+            layout={selectedLayout}
+            debug={debug}
+          />
+        )}
       </div>
     </div>
   )

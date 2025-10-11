@@ -39,7 +39,7 @@ endif()
 
 # Set variables for compatibility
 set(EPOCHPROTOS_FOUND TRUE)
-set(EPOCHPROTOS_VERSION "2.0.8")
+set(EPOCHPROTOS_VERSION "2.0.9")
 set(EPOCHPROTOS_INCLUDE_DIRS "/usr/local/include")
 set(EPOCHPROTOS_LIBRARIES epoch_protos_cpp)
 

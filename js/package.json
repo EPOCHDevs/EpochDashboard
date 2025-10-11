@@ -57,5 +57,8 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "latest",
     "vitest": "latest"
+  },
+  "dependencies": {
+    "@epochlab/epoch-protos": "file:../../EpochProtos/typescript_package/epochlab-epoch-protos-2.0.9.tgz"
   }
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { QueryClient, QueryClientProvider, InfiniteData } from '@tanstack/react-query'
 import clsx from 'clsx'
 import TradeAnalyticsChartRenderer from './components/TradeAnalyticsChartRenderer'
+import DefaultTopToolbar from './components/DefaultTopToolbar'
 import type { GetTradeAnalyticsMetadataResponseType, IRoundTrip } from '../../types/TradeAnalyticsTypes'
 import { getMsPerBar } from './components/TradeAnalyticsChartRenderer/utils/BackendPaddingUtils'
 import { globalDataCacheManager } from './components/TradeAnalyticsChartRenderer/utils/DataCacheManager'
@@ -24,16 +25,9 @@ export interface TradeAnalyticsContainerProps {
   userId?: string
   apiEndpoint: string
   // Optional UI customization
-  TopToolbarComponent?: React.ComponentType<{
-    metadata?: GetTradeAnalyticsMetadataResponseType
-    selectedAssetId: string
-    selectedTimeframe: string
-    onAssetChange: (assetId: string) => void
-    onTimeframeChange: (timeframe: string) => void
-    rightControls?: React.ReactNode
-  }>
   showHeader?: boolean
   className?: string
+  rightControls?: React.ReactNode
 }
 
 // Hook for fetching metadata (exported for use in UnifiedDashboardContainer)
@@ -167,14 +161,14 @@ export function TradeAnalyticsContent({
   campaignId,
   userId = 'guest',
   apiEndpoint,
-  TopToolbarComponent,
   showHeader = true,
   className,
+  rightControls,
 }: TradeAnalyticsContainerProps) {
   // State for interface
   const [selectedAssetId, setSelectedAssetId] = useState('')
   const [selectedTimeframe, setSelectedTimeframe] = useState('5m')
-  const [isEventsSidebarOpen, setIsEventsSidebarOpen] = useState(true)
+  const [isEventsSidebarOpen, setIsEventsSidebarOpen] = useState(false)
   const [selectedTradeIds, setSelectedTradeIds] = useState<number[]>([])
   const [expandedCardIds, setExpandedCardIds] = useState<number[]>([])
   const [selectedRoundTripForChart, setSelectedRoundTripForChart] = useState<IRoundTrip | null>(null)
@@ -238,11 +232,6 @@ export function TradeAnalyticsContent({
   const handleRangeExpansion = useCallback((range: { from: number; to: number }) => {
     setExpansionRequest(range)
     setIsLazyLoading(true)
-
-    setTimeout(() => {
-      setExpansionRequest(null)
-      setIsLazyLoading(false)
-    }, 1000)
   }, [])
 
   // Fetch metadata
@@ -371,6 +360,32 @@ export function TradeAnalyticsContent({
     }
   }, [isEventsSidebarOpen])
 
+  // Clear isLazyLoading when expansion request changes
+  // We set isLazyLoading=true when requesting, and clear it after a short delay
+  // to allow the next expansion request to be processed
+  useEffect(() => {
+    if (isLazyLoading) {
+      // Clear the loading flag after a short delay to allow request to process
+      const timeoutId = setTimeout(() => {
+        setIsLazyLoading(false)
+      }, 2000) // 2 second delay to ensure fetch has started
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isLazyLoading])
+
+  // Clear expansion request after it's been processed
+  useEffect(() => {
+    if (expansionRequest) {
+      // Clear the expansion request after a delay to prevent re-triggering
+      const timeoutId = setTimeout(() => {
+        setExpansionRequest(null)
+      }, 3000) // 3 seconds
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [expansionRequest])
+
   // Show error state if no campaign ID is provided
   if (!campaignId) {
     return (
@@ -425,68 +440,96 @@ export function TradeAnalyticsContent({
       )}
 
       {/* Top Toolbar - Asset & Timeframe Selectors */}
-      {TopToolbarComponent && (
-        <TopToolbarComponent
-          metadata={tradeAnalyticsMetadata}
-          selectedAssetId={selectedAssetId}
-          selectedTimeframe={selectedTimeframe}
-          onAssetChange={handleAssetChange}
-          onTimeframeChange={setSelectedTimeframe}
-        />
-      )}
+      <DefaultTopToolbar
+        metadata={tradeAnalyticsMetadata}
+        selectedAssetId={selectedAssetId}
+        selectedTimeframe={selectedTimeframe}
+        onAssetChange={handleAssetChange}
+        onTimeframeChange={setSelectedTimeframe}
+        rightControls={rightControls}
+      />
 
       {/* Main Content Area with Sidebar */}
-      <div className="relative flex flex-1 min-h-0 w-full flex-row overflow-hidden bg-background">
-        {/* Sidebar - Fixed width, flex layout */}
+      <div className="flex flex-1 w-full flex-row overflow-hidden bg-background">
+        {/* Sidebar - Always visible, changes width when collapsed */}
         {!shouldHideSidebar && (
           <div
             ref={eventsSectionRef}
             className={clsx(
-              "relative h-full transition-all duration-300 ease-out flex-shrink-0",
-              isEventsSidebarOpen ? "w-[349px]" : "w-0"
-            )}>
-            <div className={clsx(
-              "absolute inset-0 w-[349px] bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-r-2 border-accent/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col transition-transform duration-300 ease-out",
-              isEventsSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            )}>
-            {/* Sidebar Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-accent/80 rounded-full" />
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Trades</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {flattenedRoundTrips.length} {flattenedRoundTrips.length === 1 ? 'trade' : 'trades'}
-                  </p>
-                </div>
-              </div>
-              <button
-                ref={triggerRef}
-                onClick={() => setIsEventsSidebarOpen((prev) => !prev)}
-                className="p-2 rounded-lg hover:bg-muted/30 transition-all group"
-                title="Collapse sidebar"
-              >
-                <svg
-                  className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              "h-full flex-shrink-0 transition-[width] duration-200 ease-in-out will-change-[width]",
+              isEventsSidebarOpen ? "w-[349px]" : "w-14"
+            )}
+          >
+            <div className="h-full w-full bg-card border-r-2 border-border shadow-xl flex flex-col">
+            {/* Collapsed Toolbar View */}
+            {!isEventsSidebarOpen ? (
+              <div className="flex flex-col items-center py-4 gap-4">
+                <button
+                  onClick={() => setIsEventsSidebarOpen(true)}
+                  className="relative p-2.5 rounded-lg hover:bg-muted/30 transition-all group"
+                  title={`${flattenedRoundTrips.length} trades`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            </div>
+                  <svg
+                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  {/* Trade count badge */}
+                  {flattenedRoundTrips.length > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold rounded-full px-1">
+                      {flattenedRoundTrips.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Expanded Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-accent/80 rounded-full" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Trades</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {flattenedRoundTrips.length} {flattenedRoundTrips.length === 1 ? 'trade' : 'trades'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    ref={triggerRef}
+                    onClick={() => setIsEventsSidebarOpen(false)}
+                    className="p-2 rounded-lg hover:bg-muted/30 transition-all group"
+                    title="Collapse sidebar"
+                  >
+                    <svg
+                      className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
 
-            {isLoadingTradeAnalyticsMetadata || isLoadingRoundTripsData ? (
-              <div className="hide-scrollbar flex h-full w-full flex-col items-center justify-start gap-4 overflow-y-auto overflow-x-hidden px-5 py-4">
-                <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
-                <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
-                <div className="h-32 w-full animate-pulse rounded-2xl bg-muted/50" />
+            {/* Content Section - Shows for both collapsed and expanded states */}
+            {isEventsSidebarOpen && (isLoadingTradeAnalyticsMetadata || isLoadingRoundTripsData ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-accent" />
+                  <p className="text-xs text-muted-foreground">Loading trades...</p>
+                </div>
               </div>
             ) : (
               <div className="flex h-full flex-col flex-1 overflow-hidden">
                 <div
-                  className="sidebar-scrollbar relative w-full flex-1 overflow-y-auto overflow-x-hidden px-5 py-4"
+                  className="hide-scrollbar relative w-full flex-1 overflow-y-auto overflow-x-hidden px-5 py-4"
                   ref={parentRef}
                   style={{
                     transform: "none",
@@ -522,10 +565,10 @@ export function TradeAnalyticsContent({
                           <button
                             key={roundTrip.index}
                             className={clsx(
-                              "relative flex flex-col gap-4 overflow-hidden rounded-2xl transition-all duration-200 ease-out w-full px-5 py-4 text-left group border",
+                              "relative flex flex-col gap-4 overflow-hidden rounded-lg transition-all duration-200 ease-out w-full px-4 py-3 text-left group border",
                               isSelected
-                                ? "bg-accent/20 border-accent/50 shadow-lg shadow-accent/10 ring-2 ring-accent/40 scale-[1.02]"
-                                : "bg-background/60 border-border/30 hover:bg-accent/15 hover:border-accent/30 hover:shadow-xl shadow-md hover:-translate-y-1 hover:scale-[1.01]"
+                                ? "bg-accent/20 border-accent shadow-lg ring-1 ring-accent"
+                                : "bg-background border-border hover:bg-muted hover:border-accent/50 hover:shadow-lg"
                             )}
                             onClick={() => {
                               setSelectedTradeIds([roundTrip.index])
@@ -597,10 +640,7 @@ export function TradeAnalyticsContent({
                             </div>
 
                             {/* Expanded Details */}
-                            <div className={clsx(
-                              "grid gap-3 overflow-hidden transition-all duration-300",
-                              isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                            )}>
+                            {isExpanded && (
                               <div className="overflow-hidden">
                                 <div className="pt-3 border-t border-border/50">
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -639,7 +679,7 @@ export function TradeAnalyticsContent({
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            )}
                           </button>
                         )
                       })
@@ -658,17 +698,17 @@ export function TradeAnalyticsContent({
                   </div>
                 </div>
               </div>
-            )}
+            ))}
           </div>
           </div>
         )}
 
-        {/* Chart Area - Flex to fill remaining space */}
+        {/* Chart Area - Flexible Width */}
         <div
           ref={chartContainerRef}
-          className="flex-1 h-full overflow-hidden p-2"
+          className="flex-1 h-full overflow-hidden transition-all duration-300 ease-out"
         >
-          <div className="h-full w-full text-foreground">
+          <div className="h-full w-full text-foreground p-2">
             <TradeAnalyticsChartRenderer
               isLoading={isLoadingTradeAnalyticsMetadata || isLazyLoading}
               tradeAnalyticsMetadata={tradeAnalyticsMetadata}
@@ -688,23 +728,6 @@ export function TradeAnalyticsContent({
           </div>
         </div>
 
-        {/* Floating Toggle Button (when sidebar is closed) */}
-        {!shouldHideSidebar && !isEventsSidebarOpen && (
-          <button
-            onClick={() => setIsEventsSidebarOpen(true)}
-            className="absolute left-5 top-1/2 -translate-y-1/2 z-40 p-3 bg-card/95 backdrop-blur-md border border-border/50 rounded-r-xl shadow-xl hover:shadow-2xl hover:bg-muted/80 transition-all group"
-            title="Open sidebar"
-          >
-            <svg
-              className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
       </div>
     </div>
   )

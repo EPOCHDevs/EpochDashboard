@@ -18,6 +18,7 @@ add_executable(epoch_dashboard_test
     test_pie_chart_builder.cpp
     test_card_builder.cpp
     test_line_builder.cpp
+    test_numeric_line_builder.cpp
     test_chart_validation.cpp
 )
 

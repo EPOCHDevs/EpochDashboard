@@ -24,6 +24,7 @@ import { tailwindColors, tailwindTypography } from "../../../../utils/tailwindHe
 import { formatDollarAmount } from "../../../../utils/formatters"
 import { useSmartChartData } from "./hooks/useSmartChartData"
 import { DEFAULT_PADDING_CONFIGS } from "./utils/BackendPaddingUtils"
+import { globalDataCacheManager } from "./utils/DataCacheManager"
 import { useHighchartsTheme } from "../../../../hooks/useHighchartsTheme"
 import { getChartColors } from "../../../../constants"
 import "./styles.css"
@@ -105,13 +106,7 @@ const TradeAnalyticsChartRenderer = ({
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(0)
   const [width, setWidth] = useState(0)
-  const isLazyLoadingRef = useRef(isLazyLoading) // Use ref to avoid triggering re-renders
   const previousViewportRangeRef = useRef<number | null>(null) // Track previous viewport size to detect zoom in vs out
-
-  // Update ref when prop changes
-  useEffect(() => {
-    isLazyLoadingRef.current = isLazyLoading
-  }, [isLazyLoading])
 
   // Update dimensions on resize - use ResizeObserver for container changes
   useEffect(() => {
@@ -204,6 +199,7 @@ const TradeAnalyticsChartRenderer = ({
     data: tradeAnalyticsChartData,
     error: tradeAnalyticsChartDataError,
     isFetching: isFetchingTradeAnalyticsChartData,
+    isActuallyFetching: isActuallyFetchingTradeAnalyticsChartData,
     isLoading: isLoadingTradeAnalyticsChartData,
   } = useSmartChartData({
     strategyId: campaignId,
@@ -579,20 +575,17 @@ const TradeAnalyticsChartRenderer = ({
               return
             }
 
-            // Guard 2: Don't trigger expansion if already loading data
-            if (isLazyLoadingRef.current) {
+            // Guard 2: Don't trigger expansion if already fetching data from network
+            if (isActuallyFetchingTradeAnalyticsChartData) {
               return
             }
 
-            // Detect when user zooms beyond 90% of available data range
+            // Guard 3: Must have expansion callback
+            if (!onRangeExpansionNeeded) {
+              return
+            }
+
             const axis = this
-            const dataMin = (axis as any).dataMin
-            const dataMax = (axis as any).dataMax
-
-            if (!dataMin || !dataMax || !onRangeExpansionNeeded) {
-              return
-            }
-
             const viewMin = e.min
             const viewMax = e.max
             const currentViewportRange = viewMax - viewMin
@@ -620,26 +613,50 @@ const TradeAnalyticsChartRenderer = ({
               return
             }
 
+            // Get cached data bounds from the cache manager (not chart's dataMin/dataMax)
+            // This is crucial - we need to check against what's in cache, not what's displayed
+            const cacheRequest = {
+              strategyId: campaignId,
+              assetId: assetId,
+              timeframe: selectedTimeframe
+            }
+            const loadedRanges = globalDataCacheManager.getLoadedRanges(cacheRequest)
+
+            if (loadedRanges.length === 0) {
+              return
+            }
+
+            // Get the overall cached data bounds (earliest from and latest to)
+            const cachedMin = Math.min(...loadedRanges.map(r => r.from))
+            const cachedMax = Math.max(...loadedRanges.map(r => r.to))
+
             // Now check if we're zooming out or panning
             if (isZoomingOut || isPanning) {
-              // Calculate how close we are to the data boundaries (20% threshold for smoother UX)
-              const dataRange = dataMax - dataMin
-              const frontBuffer = dataRange * 0.2
-              const backBuffer = dataRange * 0.2
+              // Calculate how close we are to the CACHED data boundaries
+              // Use 50% threshold for VERY aggressive prefetching to avoid hitting limits
+              // This triggers fetch much earlier, preventing freeze when user reaches boundary
+              const cachedRange = cachedMax - cachedMin
+              const frontBuffer = cachedRange * 0.5
+              const backBuffer = cachedRange * 0.5
 
-              const needsExpansion =
-                viewMin < (dataMin + frontBuffer) || // Zoomed near start
-                viewMax > (dataMax - backBuffer)      // Zoomed near end
+              const approachingStart = viewMin < (cachedMin + frontBuffer)
+              const approachingEnd = viewMax > (cachedMax - backBuffer)
+              const needsExpansion = approachingStart || approachingEnd
 
               if (needsExpansion) {
-                // Calculate expansion range: extend beyond viewport by 50% on each side
+
+                // Calculate expansion range: extend beyond viewport by 200% on each side
+                // VERY aggressive prefetching to ensure we NEVER hit the limit
+                // This fetches way more data than currently visible to prevent freeze
                 const viewportRange = viewMax - viewMin
-                const expansionBuffer = viewportRange * 0.5
+                const expansionBuffer = viewportRange * 2.0
 
                 // Expand beyond current viewport (not just current data bounds)
                 const expansionFrom = viewMin - expansionBuffer
                 const expansionTo = viewMax + expansionBuffer
 
+                // Trigger data fetch - with ordinal:false, chart will naturally show gaps
+                // No need to manually extend axis - Highcharts handles it automatically
                 onRangeExpansionNeeded({
                   from: expansionFrom,
                   to: expansionTo
@@ -772,15 +789,46 @@ const TradeAnalyticsChartRenderer = ({
         },
         series: {
           animation: false, // Disable all series animations
-          dataGrouping: {
-            enabled: false,
-          },
+          dataGrouping: (() => {
+            // Enable data grouping for all intraday timeframes (ending with Min/m/H/h)
+            // This automatically resamples data as you zoom out for better performance
+            const isIntraday = /^[0-9]+(Min|m|H|h)$/i.test(selectedTimeframe)
+            const isHourly = /^[0-9]+(H|h)$/i.test(selectedTimeframe)
+            const isMinute = /^[0-9]+(Min|m)$/i.test(selectedTimeframe)
+
+            // Different grouping units based on timeframe
+            let units: any[] = []
+            if (isMinute) {
+              // For minute charts: allow grouping into minutes, hours, days, weeks, months
+              units = [
+                ['minute', [1, 2, 5, 10, 15, 30]],
+                ['hour', [1, 2, 3, 4, 6, 8, 12]],
+                ['day', [1]],
+                ['week', [1]],
+                ['month', [1]],
+              ]
+            } else if (isHourly) {
+              // For hourly charts: skip minutes, start with hours
+              units = [
+                ['hour', [1, 2, 3, 4, 6, 8, 12]],
+                ['day', [1]],
+                ['week', [1]],
+                ['month', [1, 3, 6]],
+              ]
+            }
+
+            return {
+              enabled: isIntraday,
+              forced: isIntraday,
+              units: units,
+            }
+          })(),
           states: {
             inactive: {
               enabled: false,
             },
           },
-          turboThreshold: 0, // Disable turbo mode to prevent animation artifacts
+          turboThreshold: 5000, // Optimal threshold for candlestick performance with lazy loading
         },
       },
       series: validSeries, // Use validated series instead of allSeries
@@ -825,7 +873,7 @@ const TradeAnalyticsChartRenderer = ({
     onRangeExpansionNeeded, // Include callback in deps so event handler has fresh reference
     highchartsTheme, // Update chart when theme changes
     themeColors, // Update chart when theme colors change
-    // Note: isLazyLoading NOT in deps - using ref instead to avoid re-renders
+    isActuallyFetchingTradeAnalyticsChartData, // Include so event handler can check if fetch is in progress
   ])
 
   const handleSeriesVisibility = useCallback(
@@ -921,7 +969,12 @@ const TradeAnalyticsChartRenderer = ({
       <div className="relative h-full w-full flex-1" ref={chartContainerRef}>
         {/* Show loading skeleton on INITIAL load or when data is being fetched */}
         {(isLoading || isTimeframeSwitching || isLoadingTradeAnalyticsChartData) && !tradeAnalyticsChartData ? (
-          <div className="h-full w-full rounded-3xl bg-gray-200 animate-pulse" />
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-accent border-r-transparent mb-4" />
+              <p className="text-muted-foreground">Loading chart...</p>
+            </div>
+          </div>
         ) : typeof chartOptions === "undefined" || !assetId ? (
           <div className="h-full w-full rounded-3xl">
             <div className="flex h-full items-center justify-center text-gray-500">
@@ -930,11 +983,93 @@ const TradeAnalyticsChartRenderer = ({
           </div>
         ) : (
           <>
-            {/* Subtle loading indicator for background data fetches */}
-            {isFetchingTradeAnalyticsChartData && tradeAnalyticsChartData && (
-              <div className="absolute top-2 right-2 z-50 flex items-center gap-2 px-3 py-1.5 bg-primary-white/10 backdrop-blur-sm rounded-lg border border-primary-white/20">
-                <div className="w-2 h-2 bg-territory-blue rounded-full animate-pulse" />
-                <span className="text-xs text-primary-white/70">Loading data...</span>
+            {/* Skeleton loader - ONLY shown when actually fetching from network */}
+            {isActuallyFetchingTradeAnalyticsChartData && tradeAnalyticsChartData && (
+              <div className="absolute inset-0 z-40 skeleton-chart-loader">
+                {/* Shimmer effect */}
+                <div className="skeleton-shimmer" />
+
+                {/* Chart structure skeleton */}
+                <div className="relative w-full h-full flex flex-col p-4">
+                  {/* Price chart area (70% height) */}
+                  <div className="relative flex-1 flex items-end gap-1 px-8 py-4">
+                    {/* Horizontal grid lines */}
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={`grid-h-${i}`}
+                        className="absolute left-0 right-0 h-px skeleton-grid-line"
+                        style={{
+                          bottom: `${i * 20}%`,
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          animationDelay: `${i * 0.1}s`,
+                        }}
+                      />
+                    ))}
+
+                    {/* Candlestick skeletons */}
+                    {[...Array(20)].map((_, i) => {
+                      // Random heights for realistic candlestick appearance
+                      const height = 20 + Math.random() * 60
+                      const wickTop = Math.random() * 20
+                      const wickBottom = Math.random() * 20
+                      const isGreen = Math.random() > 0.5
+
+                      return (
+                        <div
+                          key={`candle-${i}`}
+                          className="flex-1 flex flex-col items-center justify-end skeleton-candle"
+                          style={{ animationDelay: `${i * 0.05}s` }}
+                        >
+                          {/* Upper wick */}
+                          <div
+                            className="w-0.5 bg-primary-white/20"
+                            style={{ height: `${wickTop}%` }}
+                          />
+                          {/* Candle body */}
+                          <div
+                            className="w-full rounded-sm"
+                            style={{
+                              height: `${height}%`,
+                              background: isGreen
+                                ? 'rgba(34, 197, 94, 0.15)'
+                                : 'rgba(239, 68, 68, 0.15)',
+                              border: `1px solid ${isGreen ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                            }}
+                          />
+                          {/* Lower wick */}
+                          <div
+                            className="w-0.5 bg-primary-white/20"
+                            style={{ height: `${wickBottom}%` }}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Volume bars area (30% height) */}
+                  <div className="relative h-32 flex items-end gap-1 px-8 py-4 border-t border-primary-white/5">
+                    {[...Array(20)].map((_, i) => {
+                      const volumeHeight = 20 + Math.random() * 80
+                      return (
+                        <div
+                          key={`volume-${i}`}
+                          className="flex-1 skeleton-volume-bar rounded-t-sm"
+                          style={{
+                            height: `${volumeHeight}%`,
+                            background: 'rgba(34, 197, 94, 0.1)',
+                            animationDelay: `${i * 0.05 + 0.5}s`,
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+
+                  {/* Loading indicator badge */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 bg-background/80 backdrop-blur-md rounded-lg border border-territory-blue/30">
+                    <div className="w-2 h-2 bg-territory-blue rounded-full animate-pulse" />
+                    <span className="text-xs font-medium text-primary-white/80">Loading data...</span>
+                  </div>
+                </div>
               </div>
             )}
             <HighchartsReact

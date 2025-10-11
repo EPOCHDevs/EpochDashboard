@@ -5,6 +5,8 @@ import {
   StraightLineDef,
   Point,
   Line,
+  NumericPoint,
+  NumericLine,
   BarData,
   PieData,
   PieDataDef,
@@ -183,6 +185,22 @@ export const convertPointsToHighcharts = (
   ])
 }
 
+// Convert NumericPoints to Highcharts data format
+// Proto: NumericPoint { x: double, y: double }
+// Output: [x_value, y_value] - Both are numeric (not timestamps)
+export const convertNumericPointsToHighcharts = (
+  points: NumericPoint[] | undefined | null
+): [number, number][] => {
+  if (!points) return []
+
+  return points.map(point => [
+    // x: double numeric value
+    point.x || 0,
+    // y: double numeric value
+    point.y || 0
+  ])
+}
+
 // Get crosshair configuration
 export const getCrosshairConfig = (axisType: AxisType | undefined, isXAxis: boolean = true): any => {
   return {
@@ -332,6 +350,34 @@ export const convertLineToSeries = (
     type: 'line',
     name: line.name || `Series ${index + 1}`,
     data: convertPointsToHighcharts(line.data, xAxisType),
+    color: color,
+    lineWidth: line.lineWidth || 2,
+    dashStyle: mapDashStyleToHighcharts(line.dashStyle),
+    marker: {
+      enabled: false,
+      radius: 4,
+      states: {
+        hover: {
+          enabled: true,
+          radius: 5
+        }
+      }
+    }
+  }
+}
+
+// Convert NumericLine proto to series
+// Proto: NumericLine { data: NumericPoint[], name: string, dash_style?: DashStyle, line_width?: uint32 }
+export const convertNumericLineToSeries = (
+  line: NumericLine,
+  index: number
+): any => {
+  const color = getChartColor(index)
+
+  return {
+    type: 'line',
+    name: line.name || `Series ${index + 1}`,
+    data: convertNumericPointsToHighcharts(line.data),
     color: color,
     lineWidth: line.lineWidth || 2,
     dashStyle: mapDashStyleToHighcharts(line.dashStyle),

@@ -18,6 +18,9 @@ export const dashboardQueryClient = new QueryClient({
   },
 })
 
+// View Mode Types
+export type ViewMode = 'tabs' | 'unified'
+
 // Props interface for the container
 export interface DashboardContainerProps {
   campaignId: string
@@ -27,6 +30,7 @@ export interface DashboardContainerProps {
   showHeader?: boolean
   className?: string
   hideLayoutControls?: boolean
+  defaultViewMode?: ViewMode
   // Optional controls to render after category tabs
   rightControls?: React.ReactNode
 }
@@ -162,6 +166,7 @@ export function DashboardContent({
   showHeader = true,
   className,
   hideLayoutControls = false,
+  defaultViewMode = 'tabs',
   rightControls,
 }: DashboardContainerProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -263,10 +268,10 @@ export function DashboardContent({
         <TearsheetDashboard
           tearsheet={tearsheet}
           hideLayoutControls={hideLayoutControls}
+          defaultViewMode={defaultViewMode}
           rightControls={rightControls}
           onCategoryChange={(category) => {
             // This is for internal category changes within the tearsheet
-            console.log('Internal category change:', category)
           }}
         />
       </div>

@@ -25,6 +25,9 @@ export type Band = chartModule.epoch_proto.IBand
 export type Point = chartModule.epoch_proto.IPoint
 export type Line = chartModule.epoch_proto.ILine
 export type LinesDef = chartModule.epoch_proto.ILinesDef
+export type NumericPoint = chartModule.epoch_proto.INumericPoint
+export type NumericLine = chartModule.epoch_proto.INumericLine
+export type NumericLinesDef = chartModule.epoch_proto.INumericLinesDef
 export type HeatMapPoint = chartModule.epoch_proto.IHeatMapPoint
 export type HeatMapDef = chartModule.epoch_proto.IHeatMapDef
 

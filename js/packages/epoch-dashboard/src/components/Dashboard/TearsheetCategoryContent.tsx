@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react'
 import {
   LineChart,
+  NumericLineChart,
   BarChart,
   AreaChart,
   HeatMap,
@@ -59,6 +60,7 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
     const chartType = chart.areaDef ? 'Area' :
                      chart.barDef ? 'Bar' :
                      chart.linesDef ? 'Line' :
+                     chart.numericLinesDef ? 'NumericLine' :
                      chart.heatMapDef ? 'HeatMap' :
                      chart.histogramDef ? 'Histogram' :
                      chart.boxPlotDef ? 'BoxPlot' :
@@ -68,8 +70,8 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
     console.group(`📊 ${chartType} Chart Debug`)
     console.log('Chart data:', chart)
     console.log('Chart definition:',
-      chart.areaDef || chart.barDef || chart.linesDef || chart.heatMapDef ||
-      chart.histogramDef || chart.boxPlotDef || chart.xRangeDef || chart.pieDef)
+      chart.areaDef || chart.barDef || chart.linesDef || chart.numericLinesDef ||
+      chart.heatMapDef || chart.histogramDef || chart.boxPlotDef || chart.xRangeDef || chart.pieDef)
     console.groupEnd()
   }
 
@@ -80,6 +82,8 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
     return <BarChart data={chart.barDef} height={400} />
   } else if (chart.linesDef) {
     return <LineChart data={chart.linesDef} height={400} />
+  } else if (chart.numericLinesDef) {
+    return <NumericLineChart data={chart.numericLinesDef} height={400} />
   } else if (chart.heatMapDef) {
     return <HeatMap data={chart.heatMapDef} height={400} />
   } else if (chart.histogramDef) {

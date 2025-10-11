@@ -57,3 +57,96 @@
   opacity: 0.5;
   transition: opacity 0.3s ease-in-out;
 }
+
+/* Loading animation for progress bar */
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Skeleton loader animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0px);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+/* Skeleton chart container */
+.skeleton-chart-loader {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  overflow: hidden;
+}
+
+/* Shimmer effect overlay */
+.skeleton-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+  pointer-events: none;
+}
+
+/* Individual candlestick skeleton */
+.skeleton-candle {
+  animation: pulse-subtle 1.5s ease-in-out infinite;
+}
+
+/* Volume bar skeleton */
+.skeleton-volume-bar {
+  animation: pulse-subtle 1.8s ease-in-out infinite;
+}
+
+/* Grid line skeleton */
+.skeleton-grid-line {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}

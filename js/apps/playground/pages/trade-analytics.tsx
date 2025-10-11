@@ -3,8 +3,6 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 // Import the exportable container component
 import { TradeAnalyticsContainer } from '../../../packages/epoch-dashboard/src/modules/TradeAnalyticsTab/TradeAnalyticsContainer'
-// Import top toolbar component
-import TopToolbar from '../components/TradeAnalytics/TopToolbar'
 
 /**
  * Next.js playground wrapper for TradeAnalyticsContainer
@@ -87,7 +85,6 @@ export default function TradeAnalyticsPage() {
         campaignId={campaignIdParam}
         userId={userIdParam}
         apiEndpoint=""  // Empty = use Next.js proxy (see comment above)
-        TopToolbarComponent={TopToolbar}
         showHeader={true}
       />
     </div>

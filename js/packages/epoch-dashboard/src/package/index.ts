@@ -9,6 +9,7 @@ export { default as TearsheetDashboard } from '../components/Dashboard/Tearsheet
 
 // Advanced Chart Components
 export { default as LineChart } from '../components/charts/LineChart'
+export { default as NumericLineChart } from '../components/charts/NumericLineChart'
 export { default as BarChart } from '../components/charts/BarChart'
 export { default as AreaChart } from '../components/charts/AreaChart'
 export { default as PieChart } from '../components/charts/PieChart'
@@ -69,6 +70,9 @@ export type {
   Table,
   CardDef,
   LinesDef,
+  NumericLinesDef,
+  NumericLine,
+  NumericPoint,
   BarDef,
   AreaDef,
   PieDef,

@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react'
 import {
   LineChart,
+  NumericLineChart,
   BarChart,
   AreaChart,
   HeatMap,
@@ -61,6 +62,8 @@ const ChartComponent = ({ chart }: { chart: Chart }) => {
     return <BarChart data={chart.barDef} height={400} />
   } else if (chart.linesDef) {
     return <LineChart data={chart.linesDef} height={400} />
+  } else if (chart.numericLinesDef) {
+    return <NumericLineChart data={chart.numericLinesDef} height={400} />
   } else if (chart.heatMapDef) {
     return <HeatMap data={chart.heatMapDef} height={400} />
   } else if (chart.histogramDef) {

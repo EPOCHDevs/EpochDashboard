@@ -30,6 +30,7 @@ interface SmartChartDataResult {
   data: Table<Record<string | number | symbol, DataType>> | undefined
   isLoading: boolean
   isFetching: boolean
+  isActuallyFetching: boolean // True only when making a real network request
   error: unknown
 }
 
@@ -50,6 +51,7 @@ export const useSmartChartData = ({
 }: UseSmartChartDataProps): SmartChartDataResult => {
   const [shouldFetchBaseline, setShouldFetchBaseline] = useState(true)
   const [lastAssetTimeframe, setLastAssetTimeframe] = useState<string>('')
+  const [isActuallyFetching, setIsActuallyFetching] = useState(false)
 
   // Reset shouldFetchBaseline when asset or timeframe changes
   useEffect(() => {
@@ -116,24 +118,19 @@ export const useSmartChartData = ({
   ])
 
   // Generate query key for React Query
-  // Include request params hash to trigger refetch when params change
-  // But cache manager still handles merging, so we get best of both worlds
+  // Use ONLY strategyId, assetId, timeframe - no request hash
+  // This prevents React Query from entering fetching state on every zoom
+  // Cache manager handles all range checking and merging internally
   const queryKey = useMemo(() => {
     if (!enabled || !strategyId || !assetId || !timeframe) return ["no-fetch"] as const
-
-    // Create a stable key that changes when request parameters change
-    const requestHash = dataFetchRequest
-      ? `${dataFetchRequest.from_ms || 'none'}_${dataFetchRequest.to_ms || 'none'}_${dataFetchRequest.pivot || 'none'}`
-      : 'initial'
 
     return [
       "TRADE_ANALYTICS_CHART_DATA",
       strategyId,
       assetId,
       timeframe,
-      requestHash, // This changes when request params change, triggering refetch
     ] as const
-  }, [enabled, strategyId, assetId, timeframe, dataFetchRequest])
+  }, [enabled, strategyId, assetId, timeframe])
 
   // React Query for actual data fetching
   const {
@@ -146,6 +143,9 @@ export const useSmartChartData = ({
     queryFn: async (): Promise<Table<Record<string | number | symbol, DataType>>> => {
       if (!dataFetchRequest) throw new Error("No fetch request")
 
+      // ALWAYS check cache first - prevents unnecessary fetches
+      const cachedData = globalDataCacheManager.getCachedData({ strategyId, assetId, timeframe })
+
       // Check if we need to fetch based on range expansion logic
       // This is only relevant when expansionRange is set
       if (expansionRange) {
@@ -154,14 +154,19 @@ export const useSmartChartData = ({
           { from: expansionRange.from, to: expansionRange.to }
         )
 
-        if (missingRanges.length === 0) {
-          const cached = globalDataCacheManager.getCachedData({ strategyId, assetId, timeframe })
-          if (cached) {
-            return cached
-          }
+        if (missingRanges.length === 0 && cachedData) {
+          return cachedData
+        } else {
+          setIsActuallyFetching(true) // Set flag for actual network fetch
         }
         // For now, fetch the entire requested range if there are missing ranges
         // TODO: Implement fetching only missing ranges (requires multiple requests or backend support)
+      } else if (cachedData) {
+        // If we have cached data and no expansion request, return cached data immediately
+        return cachedData
+      } else {
+        // Initial fetch - no cached data yet
+        setIsActuallyFetching(true)
       }
 
       // Format API parameters for the HTTP request
@@ -230,6 +235,9 @@ export const useSmartChartData = ({
           console.error('📊 Error parsing response:', e)
         }
 
+        // Clear fetching flag before throwing error
+        setIsActuallyFetching(false)
+
         // Include both error and details in the thrown error
         const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage
         throw new Error(fullError)
@@ -241,16 +249,21 @@ export const useSmartChartData = ({
         table = tableFromIPC(new Uint8Array(response.data))
       } catch (parseError) {
         console.error('📊 Failed to parse Arrow data:', parseError)
+        // Clear fetching flag before throwing error
+        setIsActuallyFetching(false)
         throw new Error(`Failed to parse chart data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
       }
 
       // Cache the fetched data
       globalDataCacheManager.cacheData(dataFetchRequest, table)
 
+      // Clear the actually fetching flag now that fetch is complete
+      setIsActuallyFetching(false)
+
       return table
     },
     enabled: Boolean(dataFetchRequest && enabled),
-    staleTime: Infinity, // Never mark as stale - we manage freshness via dataFetchRequest changes
+    staleTime: Infinity, // Never mark as stale - we manage freshness via cache
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
     refetchOnWindowFocus: false,
     retry: 2,
@@ -262,6 +275,13 @@ export const useSmartChartData = ({
       setShouldFetchBaseline(false)
     }
   }, [fetchedData, shouldFetchBaseline, selectedRoundTrips.length])
+
+  // Effect to clear isActuallyFetching when there's an error
+  useEffect(() => {
+    if (error) {
+      setIsActuallyFetching(false)
+    }
+  }, [error])
 
   // Get the appropriate data (from cache or fresh fetch)
   // CRITICAL: Always return cached data to prevent "No data found" flashing
@@ -291,6 +311,7 @@ export const useSmartChartData = ({
     data: finalData,
     isLoading,
     isFetching,
+    isActuallyFetching, // True only when making real network request
     error,
   }
 }

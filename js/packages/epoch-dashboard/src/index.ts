@@ -5,11 +5,15 @@
  * Built with Tailwind CSS for maximum customization
  */
 
+// Import global styles
+import './styles/globals.css'
+
 // ============================================================================
 // PRIMARY EXPORT - Main TearsheetDashboard Component
 // ============================================================================
 
-export { default as TearsheetDashboard } from './components/Dashboard/TearsheetDashboard'
+export { default as TearsheetDashboard, DASHBOARD_LAYOUTS, VIEW_MODES } from './components/Dashboard/TearsheetDashboard'
+export type { ViewMode } from './components/Dashboard/TearsheetDashboard'
 
 // High-level container that fetches tearsheet data automatically
 export { DashboardContainer } from './components/Dashboard/DashboardContainer'
@@ -68,6 +72,9 @@ export type {
   Scalar,
   // Chart type definitions
   LinesDef,
+  NumericLinesDef,
+  NumericLine,
+  NumericPoint,
   BarDef,
   AreaDef,
   PieDef,
@@ -110,6 +117,7 @@ export { DashboardLayout } from './types/dashboard'
 
 // Chart components for custom layouts
 export { default as LineChart } from './components/charts/LineChart'
+export { default as NumericLineChart } from './components/charts/NumericLineChart'
 export { default as BarChart } from './components/charts/BarChart'
 export { default as AreaChart } from './components/charts/AreaChart'
 export { default as PieChart } from './components/charts/PieChart'
@@ -125,6 +133,7 @@ export { default as Card } from './components/Card'
 
 // Category content component for custom dashboard layouts
 export { default as TearsheetCategoryContent } from './components/Dashboard/TearsheetCategoryContent'
+export { default as UnifiedCategoryView } from './components/Dashboard/UnifiedCategoryView'
 
 // ============================================================================
 // THEME AND STYLING

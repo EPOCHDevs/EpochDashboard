@@ -3,8 +3,6 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 // Import the unified container
 import { UnifiedDashboardContainer } from '@epochlab/epoch-dashboard'
-// Import top toolbar component
-import TopToolbar from '../components/TradeAnalytics/TopToolbar'
 
 /**
  * Next.js playground wrapper for UnifiedDashboardContainer
@@ -77,13 +75,14 @@ export default function UnifiedDashboardPage() {
    * 3. Set apiEndpoint="https://your-backend.com" to connect directly
    */
   return (
-    <UnifiedDashboardContainer
-      campaignId={campaignIdParam}
-      userId={userIdParam}
-      apiEndpoint=""  // Empty = use Next.js proxy (see comment above)
-      defaultView="dashboard"  // Start with dashboard view
-      TopToolbarComponent={TopToolbar}
-      className="h-screen"  // For playground demo only - in production, it will fill parent container
-    />
+    <div className="fixed inset-0 overflow-hidden bg-background">
+      <UnifiedDashboardContainer
+        campaignId={campaignIdParam}
+        userId={userIdParam}
+        apiEndpoint=""  // Empty = use Next.js proxy (see comment above)
+        defaultView="dashboard"  // Start with dashboard view
+        className="h-full w-full"
+      />
+    </div>
   )
 }

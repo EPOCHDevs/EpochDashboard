@@ -30,6 +30,10 @@ export const generateSessionsPlotElements = ({
     data,
   })
 
+  // Get OHLC data from the main candlestick series to calculate actual high/low
+  const ohlcHigh = data?.getChild('h') || data?.getChild('high')
+  const ohlcLow = data?.getChild('l') || data?.getChild('low')
+
   // Resolve session option passed from backend and color
   const sessionOption = (seriesConfig as unknown as { configOptions?: Record<string, unknown> })
     ?.configOptions?.session as unknown
@@ -37,7 +41,7 @@ export const generateSessionsPlotElements = ({
   const SESSION_COLOR_MAP: Record<string, string> = {
     Sydney: "#F59E0B", // amber
     Tokyo: "#3B82F6", // blue
-    London: "#8B5CF6", // violet
+        London: "#8B5CF6", // violet
     NewYork: "#6366F1", // indigo
     AsianKillZone: "#FBBF24", // lighter amber
     LondonOpenKillZone: "#A78BFA", // light violet
@@ -156,8 +160,26 @@ export const generateSessionsPlotElements = ({
         inBlock = true
         blockStart = Number(currentTimestamp)
       }
-      blockMinLow = Math.min(blockMinLow, Number(sessionLow))
-      blockMaxHigh = Math.max(blockMaxHigh, Number(sessionHigh))
+
+      // Use actual OHLC high/low from candlestick data if available
+      // This ensures we fill vertically from highest to lowest bar in the session range
+      let barHigh = Number(sessionHigh)
+      let barLow = Number(sessionLow)
+
+      if (ohlcHigh && ohlcLow) {
+        const ohlcHighValue = ohlcHigh.get(index)
+        const ohlcLowValue = ohlcLow.get(index)
+
+        if (ohlcHighValue !== null && ohlcHighValue !== undefined) {
+          barHigh = Number(ohlcHighValue)
+        }
+        if (ohlcLowValue !== null && ohlcLowValue !== undefined) {
+          barLow = Number(ohlcLowValue)
+        }
+      }
+
+      blockMinLow = Math.min(blockMinLow, barLow)
+      blockMaxHigh = Math.max(blockMaxHigh, barHigh)
       blockEnd = typeof nextTimestamp === "number" ? nextTimestamp : Number(currentTimestamp)
     } else if (inBlock) {
       flushBlock()

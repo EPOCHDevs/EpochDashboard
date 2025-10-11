@@ -102,6 +102,15 @@ extern LineDefaultTypeInternal _Line_default_instance_;
 class LinesDef;
 struct LinesDefDefaultTypeInternal;
 extern LinesDefDefaultTypeInternal _LinesDef_default_instance_;
+class NumericLine;
+struct NumericLineDefaultTypeInternal;
+extern NumericLineDefaultTypeInternal _NumericLine_default_instance_;
+class NumericLinesDef;
+struct NumericLinesDefDefaultTypeInternal;
+extern NumericLinesDefDefaultTypeInternal _NumericLinesDef_default_instance_;
+class NumericPoint;
+struct NumericPointDefaultTypeInternal;
+extern NumericPointDefaultTypeInternal _NumericPoint_default_instance_;
 class PieData;
 struct PieDataDefaultTypeInternal;
 extern PieDataDefaultTypeInternal _PieData_default_instance_;
@@ -229,7 +238,7 @@ class XRangePoint final : public ::google::protobuf::Message
     return reinterpret_cast<const XRangePoint*>(
         &_XRangePoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 17;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(XRangePoint& a, XRangePoint& b) { a.Swap(&b); }
   inline void Swap(XRangePoint* other) {
     if (other == this) return;
@@ -877,7 +886,7 @@ class PieData final : public ::google::protobuf::Message
     return reinterpret_cast<const PieData*>(
         &_PieData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 19;
+  static constexpr int kIndexInFileMessages = 22;
   friend void swap(PieData& a, PieData& b) { a.Swap(&b); }
   inline void Swap(PieData* other) {
     if (other == this) return;
@@ -1026,6 +1035,208 @@ class PieData final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class NumericPoint final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:epoch_proto.NumericPoint) */ {
+ public:
+  inline NumericPoint() : NumericPoint(nullptr) {}
+  ~NumericPoint() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(NumericPoint* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(NumericPoint));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR NumericPoint(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline NumericPoint(const NumericPoint& from) : NumericPoint(nullptr, from) {}
+  inline NumericPoint(NumericPoint&& from) noexcept
+      : NumericPoint(nullptr, std::move(from)) {}
+  inline NumericPoint& operator=(const NumericPoint& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NumericPoint& operator=(NumericPoint&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NumericPoint& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const NumericPoint* internal_default_instance() {
+    return reinterpret_cast<const NumericPoint*>(
+        &_NumericPoint_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 5;
+  friend void swap(NumericPoint& a, NumericPoint& b) { a.Swap(&b); }
+  inline void Swap(NumericPoint* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NumericPoint* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NumericPoint* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<NumericPoint>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const NumericPoint& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const NumericPoint& from) { NumericPoint::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(NumericPoint* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "epoch_proto.NumericPoint"; }
+
+ protected:
+  explicit NumericPoint(::google::protobuf::Arena* arena);
+  NumericPoint(::google::protobuf::Arena* arena, const NumericPoint& from);
+  NumericPoint(::google::protobuf::Arena* arena, NumericPoint&& from) noexcept
+      : NumericPoint(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+  };
+  // double x = 1;
+  void clear_x() ;
+  double x() const;
+  void set_x(double value);
+
+  private:
+  double _internal_x() const;
+  void _internal_set_x(double value);
+
+  public:
+  // double y = 2;
+  void clear_y() ;
+  double y() const;
+  void set_y(double value);
+
+  private:
+  double _internal_y() const;
+  void _internal_set_y(double value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:epoch_proto.NumericPoint)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      1, 2, 0,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const NumericPoint& from_msg);
+    double x_;
+    double y_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chart_5fdef_2eproto;
+};
+// -------------------------------------------------------------------
+
 class HeatMapPoint final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:epoch_proto.HeatMapPoint) */ {
  public:
@@ -1085,7 +1296,7 @@ class HeatMapPoint final : public ::google::protobuf::Message
     return reinterpret_cast<const HeatMapPoint*>(
         &_HeatMapPoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 7;
+  static constexpr int kIndexInFileMessages = 10;
   friend void swap(HeatMapPoint& a, HeatMapPoint& b) { a.Swap(&b); }
   inline void Swap(HeatMapPoint* other) {
     if (other == this) return;
@@ -1299,7 +1510,7 @@ class BoxPlotOutlier final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotOutlier*>(
         &_BoxPlotOutlier_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 14;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(BoxPlotOutlier& a, BoxPlotOutlier& b) { a.Swap(&b); }
   inline void Swap(BoxPlotOutlier* other) {
     if (other == this) return;
@@ -1501,7 +1712,7 @@ class BoxPlotDataPoint final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDataPoint*>(
         &_BoxPlotDataPoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 13;
+  static constexpr int kIndexInFileMessages = 16;
   friend void swap(BoxPlotDataPoint& a, BoxPlotDataPoint& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDataPoint* other) {
     if (other == this) return;
@@ -1739,7 +1950,7 @@ class BarData final : public ::google::protobuf::Message
     return reinterpret_cast<const BarData*>(
         &_BarData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 10;
+  static constexpr int kIndexInFileMessages = 13;
   friend void swap(BarData& a, BarData& b) { a.Swap(&b); }
   inline void Swap(BarData* other) {
     if (other == this) return;
@@ -2210,7 +2421,7 @@ class PieDataDef final : public ::google::protobuf::Message
     return reinterpret_cast<const PieDataDef*>(
         &_PieDataDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 20;
+  static constexpr int kIndexInFileMessages = 23;
   friend void swap(PieDataDef& a, PieDataDef& b) { a.Swap(&b); }
   inline void Swap(PieDataDef* other) {
     if (other == this) return;
@@ -2404,6 +2615,248 @@ class PieDataDef final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class NumericLine final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:epoch_proto.NumericLine) */ {
+ public:
+  inline NumericLine() : NumericLine(nullptr) {}
+  ~NumericLine() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(NumericLine* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(NumericLine));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR NumericLine(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline NumericLine(const NumericLine& from) : NumericLine(nullptr, from) {}
+  inline NumericLine(NumericLine&& from) noexcept
+      : NumericLine(nullptr, std::move(from)) {}
+  inline NumericLine& operator=(const NumericLine& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NumericLine& operator=(NumericLine&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NumericLine& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const NumericLine* internal_default_instance() {
+    return reinterpret_cast<const NumericLine*>(
+        &_NumericLine_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 7;
+  friend void swap(NumericLine& a, NumericLine& b) { a.Swap(&b); }
+  inline void Swap(NumericLine* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NumericLine* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NumericLine* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<NumericLine>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const NumericLine& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const NumericLine& from) { NumericLine::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(NumericLine* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "epoch_proto.NumericLine"; }
+
+ protected:
+  explicit NumericLine(::google::protobuf::Arena* arena);
+  NumericLine(::google::protobuf::Arena* arena, const NumericLine& from);
+  NumericLine(::google::protobuf::Arena* arena, NumericLine&& from) noexcept
+      : NumericLine(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kDataFieldNumber = 1,
+    kNameFieldNumber = 2,
+    kDashStyleFieldNumber = 3,
+    kLineWidthFieldNumber = 4,
+  };
+  // repeated .epoch_proto.NumericPoint data = 1;
+  int data_size() const;
+  private:
+  int _internal_data_size() const;
+
+  public:
+  void clear_data() ;
+  ::epoch_proto::NumericPoint* mutable_data(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>* mutable_data();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>& _internal_data() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>* _internal_mutable_data();
+  public:
+  const ::epoch_proto::NumericPoint& data(int index) const;
+  ::epoch_proto::NumericPoint* add_data();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>& data() const;
+  // string name = 2;
+  void clear_name() ;
+  const std::string& name() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_name(Arg_&& arg, Args_... args);
+  std::string* mutable_name();
+  PROTOBUF_NODISCARD std::string* release_name();
+  void set_allocated_name(std::string* value);
+
+  private:
+  const std::string& _internal_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(
+      const std::string& value);
+  std::string* _internal_mutable_name();
+
+  public:
+  // optional .epoch_proto.DashStyle dash_style = 3;
+  bool has_dash_style() const;
+  void clear_dash_style() ;
+  ::epoch_proto::DashStyle dash_style() const;
+  void set_dash_style(::epoch_proto::DashStyle value);
+
+  private:
+  ::epoch_proto::DashStyle _internal_dash_style() const;
+  void _internal_set_dash_style(::epoch_proto::DashStyle value);
+
+  public:
+  // optional uint32 line_width = 4;
+  bool has_line_width() const;
+  void clear_line_width() ;
+  ::uint32_t line_width() const;
+  void set_line_width(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_line_width() const;
+  void _internal_set_line_width(::uint32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:epoch_proto.NumericLine)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 4, 1,
+      36, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const NumericLine& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::NumericPoint > data_;
+    ::google::protobuf::internal::ArenaStringPtr name_;
+    int dash_style_;
+    ::uint32_t line_width_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chart_5fdef_2eproto;
+};
+// -------------------------------------------------------------------
+
 class Line final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:epoch_proto.Line) */ {
  public:
@@ -2463,7 +2916,7 @@ class Line final : public ::google::protobuf::Message
     return reinterpret_cast<const Line*>(
         &_Line_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 5;
+  static constexpr int kIndexInFileMessages = 6;
   friend void swap(Line& a, Line& b) { a.Swap(&b); }
   inline void Swap(Line* other) {
     if (other == this) return;
@@ -2984,7 +3437,7 @@ class BoxPlotDataPointDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDataPointDef*>(
         &_BoxPlotDataPointDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 15;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(BoxPlotDataPointDef& a, BoxPlotDataPointDef& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDataPointDef* other) {
     if (other == this) return;
@@ -3413,7 +3866,7 @@ class XRangeDef final : public ::google::protobuf::Message
     return reinterpret_cast<const XRangeDef*>(
         &_XRangeDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 18;
+  static constexpr int kIndexInFileMessages = 21;
   friend void swap(XRangeDef& a, XRangeDef& b) { a.Swap(&b); }
   inline void Swap(XRangeDef* other) {
     if (other == this) return;
@@ -3652,7 +4105,7 @@ class PieDef final : public ::google::protobuf::Message
     return reinterpret_cast<const PieDef*>(
         &_PieDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 21;
+  static constexpr int kIndexInFileMessages = 24;
   friend void swap(PieDef& a, PieDef& b) { a.Swap(&b); }
   inline void Swap(PieDef* other) {
     if (other == this) return;
@@ -3808,6 +4261,307 @@ class PieDef final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class NumericLinesDef final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:epoch_proto.NumericLinesDef) */ {
+ public:
+  inline NumericLinesDef() : NumericLinesDef(nullptr) {}
+  ~NumericLinesDef() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(NumericLinesDef* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(NumericLinesDef));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR NumericLinesDef(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline NumericLinesDef(const NumericLinesDef& from) : NumericLinesDef(nullptr, from) {}
+  inline NumericLinesDef(NumericLinesDef&& from) noexcept
+      : NumericLinesDef(nullptr, std::move(from)) {}
+  inline NumericLinesDef& operator=(const NumericLinesDef& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NumericLinesDef& operator=(NumericLinesDef&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NumericLinesDef& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const NumericLinesDef* internal_default_instance() {
+    return reinterpret_cast<const NumericLinesDef*>(
+        &_NumericLinesDef_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 9;
+  friend void swap(NumericLinesDef& a, NumericLinesDef& b) { a.Swap(&b); }
+  inline void Swap(NumericLinesDef* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NumericLinesDef* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NumericLinesDef* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<NumericLinesDef>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const NumericLinesDef& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const NumericLinesDef& from) { NumericLinesDef::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(NumericLinesDef* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "epoch_proto.NumericLinesDef"; }
+
+ protected:
+  explicit NumericLinesDef(::google::protobuf::Arena* arena);
+  NumericLinesDef(::google::protobuf::Arena* arena, const NumericLinesDef& from);
+  NumericLinesDef(::google::protobuf::Arena* arena, NumericLinesDef&& from) noexcept
+      : NumericLinesDef(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kLinesFieldNumber = 2,
+    kStraightLinesFieldNumber = 3,
+    kYPlotBandsFieldNumber = 4,
+    kXPlotBandsFieldNumber = 5,
+    kChartDefFieldNumber = 1,
+    kOverlayFieldNumber = 6,
+    kStackedFieldNumber = 7,
+  };
+  // repeated .epoch_proto.NumericLine lines = 2;
+  int lines_size() const;
+  private:
+  int _internal_lines_size() const;
+
+  public:
+  void clear_lines() ;
+  ::epoch_proto::NumericLine* mutable_lines(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>* mutable_lines();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>& _internal_lines() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>* _internal_mutable_lines();
+  public:
+  const ::epoch_proto::NumericLine& lines(int index) const;
+  ::epoch_proto::NumericLine* add_lines();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>& lines() const;
+  // repeated .epoch_proto.StraightLineDef straight_lines = 3;
+  int straight_lines_size() const;
+  private:
+  int _internal_straight_lines_size() const;
+
+  public:
+  void clear_straight_lines() ;
+  ::epoch_proto::StraightLineDef* mutable_straight_lines(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>* mutable_straight_lines();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>& _internal_straight_lines() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>* _internal_mutable_straight_lines();
+  public:
+  const ::epoch_proto::StraightLineDef& straight_lines(int index) const;
+  ::epoch_proto::StraightLineDef* add_straight_lines();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>& straight_lines() const;
+  // repeated .epoch_proto.Band y_plot_bands = 4;
+  int y_plot_bands_size() const;
+  private:
+  int _internal_y_plot_bands_size() const;
+
+  public:
+  void clear_y_plot_bands() ;
+  ::epoch_proto::Band* mutable_y_plot_bands(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* mutable_y_plot_bands();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& _internal_y_plot_bands() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* _internal_mutable_y_plot_bands();
+  public:
+  const ::epoch_proto::Band& y_plot_bands(int index) const;
+  ::epoch_proto::Band* add_y_plot_bands();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& y_plot_bands() const;
+  // repeated .epoch_proto.Band x_plot_bands = 5;
+  int x_plot_bands_size() const;
+  private:
+  int _internal_x_plot_bands_size() const;
+
+  public:
+  void clear_x_plot_bands() ;
+  ::epoch_proto::Band* mutable_x_plot_bands(int index);
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* mutable_x_plot_bands();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& _internal_x_plot_bands() const;
+  ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* _internal_mutable_x_plot_bands();
+  public:
+  const ::epoch_proto::Band& x_plot_bands(int index) const;
+  ::epoch_proto::Band* add_x_plot_bands();
+  const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& x_plot_bands() const;
+  // .epoch_proto.ChartDef chart_def = 1;
+  bool has_chart_def() const;
+  void clear_chart_def() ;
+  const ::epoch_proto::ChartDef& chart_def() const;
+  PROTOBUF_NODISCARD ::epoch_proto::ChartDef* release_chart_def();
+  ::epoch_proto::ChartDef* mutable_chart_def();
+  void set_allocated_chart_def(::epoch_proto::ChartDef* value);
+  void unsafe_arena_set_allocated_chart_def(::epoch_proto::ChartDef* value);
+  ::epoch_proto::ChartDef* unsafe_arena_release_chart_def();
+
+  private:
+  const ::epoch_proto::ChartDef& _internal_chart_def() const;
+  ::epoch_proto::ChartDef* _internal_mutable_chart_def();
+
+  public:
+  // optional .epoch_proto.NumericLine overlay = 6;
+  bool has_overlay() const;
+  void clear_overlay() ;
+  const ::epoch_proto::NumericLine& overlay() const;
+  PROTOBUF_NODISCARD ::epoch_proto::NumericLine* release_overlay();
+  ::epoch_proto::NumericLine* mutable_overlay();
+  void set_allocated_overlay(::epoch_proto::NumericLine* value);
+  void unsafe_arena_set_allocated_overlay(::epoch_proto::NumericLine* value);
+  ::epoch_proto::NumericLine* unsafe_arena_release_overlay();
+
+  private:
+  const ::epoch_proto::NumericLine& _internal_overlay() const;
+  ::epoch_proto::NumericLine* _internal_mutable_overlay();
+
+  public:
+  // bool stacked = 7;
+  void clear_stacked() ;
+  bool stacked() const;
+  void set_stacked(bool value);
+
+  private:
+  bool _internal_stacked() const;
+  void _internal_set_stacked(bool value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:epoch_proto.NumericLinesDef)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      3, 7, 6,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const NumericLinesDef& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::NumericLine > lines_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::StraightLineDef > straight_lines_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::Band > y_plot_bands_;
+    ::google::protobuf::RepeatedPtrField< ::epoch_proto::Band > x_plot_bands_;
+    ::epoch_proto::ChartDef* chart_def_;
+    ::epoch_proto::NumericLine* overlay_;
+    bool stacked_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chart_5fdef_2eproto;
+};
+// -------------------------------------------------------------------
+
 class LinesDef final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:epoch_proto.LinesDef) */ {
  public:
@@ -3867,7 +4621,7 @@ class LinesDef final : public ::google::protobuf::Message
     return reinterpret_cast<const LinesDef*>(
         &_LinesDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
+  static constexpr int kIndexInFileMessages = 8;
   friend void swap(LinesDef& a, LinesDef& b) { a.Swap(&b); }
   inline void Swap(LinesDef* other) {
     if (other == this) return;
@@ -4168,7 +4922,7 @@ class HistogramDef final : public ::google::protobuf::Message
     return reinterpret_cast<const HistogramDef*>(
         &_HistogramDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 15;
   friend void swap(HistogramDef& a, HistogramDef& b) { a.Swap(&b); }
   inline void Swap(HistogramDef* other) {
     if (other == this) return;
@@ -4413,7 +5167,7 @@ class HeatMapDef final : public ::google::protobuf::Message
     return reinterpret_cast<const HeatMapDef*>(
         &_HeatMapDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 8;
+  static constexpr int kIndexInFileMessages = 11;
   friend void swap(HeatMapDef& a, HeatMapDef& b) { a.Swap(&b); }
   inline void Swap(HeatMapDef* other) {
     if (other == this) return;
@@ -4628,7 +5382,7 @@ class BoxPlotDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BoxPlotDef*>(
         &_BoxPlotDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(BoxPlotDef& a, BoxPlotDef& b) { a.Swap(&b); }
   inline void Swap(BoxPlotDef* other) {
     if (other == this) return;
@@ -4841,7 +5595,7 @@ class BarDef final : public ::google::protobuf::Message
     return reinterpret_cast<const BarDef*>(
         &_BarDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 11;
+  static constexpr int kIndexInFileMessages = 14;
   friend void swap(BarDef& a, BarDef& b) { a.Swap(&b); }
   inline void Swap(BarDef* other) {
     if (other == this) return;
@@ -5125,7 +5879,7 @@ class AreaDef final : public ::google::protobuf::Message
     return reinterpret_cast<const AreaDef*>(
         &_AreaDef_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 9;
+  static constexpr int kIndexInFileMessages = 12;
   friend void swap(AreaDef& a, AreaDef& b) { a.Swap(&b); }
   inline void Swap(AreaDef* other) {
     if (other == this) return;
@@ -5370,13 +6124,14 @@ class Chart final : public ::google::protobuf::Message
     kXRangeDef = 6,
     kPieDef = 7,
     kAreaDef = 8,
+    kNumericLinesDef = 9,
     CHART_TYPE_NOT_SET = 0,
   };
   static inline const Chart* internal_default_instance() {
     return reinterpret_cast<const Chart*>(
         &_Chart_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 22;
+  static constexpr int kIndexInFileMessages = 25;
   friend void swap(Chart& a, Chart& b) { a.Swap(&b); }
   inline void Swap(Chart* other) {
     if (other == this) return;
@@ -5471,6 +6226,7 @@ class Chart final : public ::google::protobuf::Message
     kXRangeDefFieldNumber = 6,
     kPieDefFieldNumber = 7,
     kAreaDefFieldNumber = 8,
+    kNumericLinesDefFieldNumber = 9,
   };
   // .epoch_proto.LinesDef lines_def = 1;
   bool has_lines_def() const;
@@ -5624,6 +6380,25 @@ class Chart final : public ::google::protobuf::Message
   ::epoch_proto::AreaDef* _internal_mutable_area_def();
 
   public:
+  // .epoch_proto.NumericLinesDef numeric_lines_def = 9;
+  bool has_numeric_lines_def() const;
+  private:
+  bool _internal_has_numeric_lines_def() const;
+
+  public:
+  void clear_numeric_lines_def() ;
+  const ::epoch_proto::NumericLinesDef& numeric_lines_def() const;
+  PROTOBUF_NODISCARD ::epoch_proto::NumericLinesDef* release_numeric_lines_def();
+  ::epoch_proto::NumericLinesDef* mutable_numeric_lines_def();
+  void set_allocated_numeric_lines_def(::epoch_proto::NumericLinesDef* value);
+  void unsafe_arena_set_allocated_numeric_lines_def(::epoch_proto::NumericLinesDef* value);
+  ::epoch_proto::NumericLinesDef* unsafe_arena_release_numeric_lines_def();
+
+  private:
+  const ::epoch_proto::NumericLinesDef& _internal_numeric_lines_def() const;
+  ::epoch_proto::NumericLinesDef* _internal_mutable_numeric_lines_def();
+
+  public:
   void clear_chart_type();
   ChartTypeCase chart_type_case() const;
   // @@protoc_insertion_point(class_scope:epoch_proto.Chart)
@@ -5637,11 +6412,12 @@ class Chart final : public ::google::protobuf::Message
   void set_has_x_range_def();
   void set_has_pie_def();
   void set_has_area_def();
+  void set_has_numeric_lines_def();
   inline bool has_chart_type() const;
   inline void clear_has_chart_type();
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 8, 8,
+      0, 9, 9,
       0, 2>
       _table_;
 
@@ -5670,6 +6446,7 @@ class Chart final : public ::google::protobuf::Message
       ::epoch_proto::XRangeDef* x_range_def_;
       ::epoch_proto::PieDef* pie_def_;
       ::epoch_proto::AreaDef* area_def_;
+      ::epoch_proto::NumericLinesDef* numeric_lines_def_;
     } chart_type_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::uint32_t _oneof_case_[1];
@@ -6550,6 +7327,54 @@ inline void Point::_internal_set_y(double value) {
 
 // -------------------------------------------------------------------
 
+// NumericPoint
+
+// double x = 1;
+inline void NumericPoint::clear_x() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.x_ = 0;
+}
+inline double NumericPoint::x() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericPoint.x)
+  return _internal_x();
+}
+inline void NumericPoint::set_x(double value) {
+  _internal_set_x(value);
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericPoint.x)
+}
+inline double NumericPoint::_internal_x() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.x_;
+}
+inline void NumericPoint::_internal_set_x(double value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.x_ = value;
+}
+
+// double y = 2;
+inline void NumericPoint::clear_y() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.y_ = 0;
+}
+inline double NumericPoint::y() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericPoint.y)
+  return _internal_y();
+}
+inline void NumericPoint::set_y(double value) {
+  _internal_set_y(value);
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericPoint.y)
+}
+inline double NumericPoint::_internal_y() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.y_;
+}
+inline void NumericPoint::_internal_set_y(double value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.y_ = value;
+}
+
+// -------------------------------------------------------------------
+
 // Line
 
 // repeated .epoch_proto.Point data = 1;
@@ -6701,6 +7526,163 @@ inline ::uint32_t Line::_internal_line_width() const {
   return _impl_.line_width_;
 }
 inline void Line::_internal_set_line_width(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.line_width_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// NumericLine
+
+// repeated .epoch_proto.NumericPoint data = 1;
+inline int NumericLine::_internal_data_size() const {
+  return _internal_data().size();
+}
+inline int NumericLine::data_size() const {
+  return _internal_data_size();
+}
+inline void NumericLine::clear_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.Clear();
+}
+inline ::epoch_proto::NumericPoint* NumericLine::mutable_data(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLine.data)
+  return _internal_mutable_data()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>* NumericLine::mutable_data()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.NumericLine.data)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_data();
+}
+inline const ::epoch_proto::NumericPoint& NumericLine::data(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLine.data)
+  return _internal_data().Get(index);
+}
+inline ::epoch_proto::NumericPoint* NumericLine::add_data() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::NumericPoint* _add = _internal_mutable_data()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.NumericLine.data)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>& NumericLine::data() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.NumericLine.data)
+  return _internal_data();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>&
+NumericLine::_internal_data() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.data_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericPoint>*
+NumericLine::_internal_mutable_data() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.data_;
+}
+
+// string name = 2;
+inline void NumericLine::clear_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.ClearToEmpty();
+}
+inline const std::string& NumericLine::name() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLine.name)
+  return _internal_name();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void NumericLine::set_name(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericLine.name)
+}
+inline std::string* NumericLine::mutable_name() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLine.name)
+  return _s;
+}
+inline const std::string& NumericLine::_internal_name() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.name_.Get();
+}
+inline void NumericLine::_internal_set_name(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.Set(value, GetArena());
+}
+inline std::string* NumericLine::_internal_mutable_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.name_.Mutable( GetArena());
+}
+inline std::string* NumericLine::release_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.NumericLine.name)
+  return _impl_.name_.Release();
+}
+inline void NumericLine::set_allocated_name(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.NumericLine.name)
+}
+
+// optional .epoch_proto.DashStyle dash_style = 3;
+inline bool NumericLine::has_dash_style() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline void NumericLine::clear_dash_style() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.dash_style_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline ::epoch_proto::DashStyle NumericLine::dash_style() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLine.dash_style)
+  return _internal_dash_style();
+}
+inline void NumericLine::set_dash_style(::epoch_proto::DashStyle value) {
+  _internal_set_dash_style(value);
+  _impl_._has_bits_[0] |= 0x00000001u;
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericLine.dash_style)
+}
+inline ::epoch_proto::DashStyle NumericLine::_internal_dash_style() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::epoch_proto::DashStyle>(_impl_.dash_style_);
+}
+inline void NumericLine::_internal_set_dash_style(::epoch_proto::DashStyle value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.dash_style_ = value;
+}
+
+// optional uint32 line_width = 4;
+inline bool NumericLine::has_line_width() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline void NumericLine::clear_line_width() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.line_width_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline ::uint32_t NumericLine::line_width() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLine.line_width)
+  return _internal_line_width();
+}
+inline void NumericLine::set_line_width(::uint32_t value) {
+  _internal_set_line_width(value);
+  _impl_._has_bits_[0] |= 0x00000002u;
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericLine.line_width)
+}
+inline ::uint32_t NumericLine::_internal_line_width() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.line_width_;
+}
+inline void NumericLine::_internal_set_line_width(::uint32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.line_width_ = value;
 }
@@ -7115,6 +8097,420 @@ inline bool LinesDef::_internal_stacked() const {
   return _impl_.stacked_;
 }
 inline void LinesDef::_internal_set_stacked(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// NumericLinesDef
+
+// .epoch_proto.ChartDef chart_def = 1;
+inline bool NumericLinesDef::has_chart_def() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.chart_def_ != nullptr);
+  return value;
+}
+inline void NumericLinesDef::clear_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.chart_def_ != nullptr) _impl_.chart_def_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::epoch_proto::ChartDef& NumericLinesDef::_internal_chart_def() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::epoch_proto::ChartDef* p = _impl_.chart_def_;
+  return p != nullptr ? *p : reinterpret_cast<const ::epoch_proto::ChartDef&>(::epoch_proto::_ChartDef_default_instance_);
+}
+inline const ::epoch_proto::ChartDef& NumericLinesDef::chart_def() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.chart_def)
+  return _internal_chart_def();
+}
+inline void NumericLinesDef::unsafe_arena_set_allocated_chart_def(::epoch_proto::ChartDef* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.chart_def_);
+  }
+  _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.NumericLinesDef.chart_def)
+}
+inline ::epoch_proto::ChartDef* NumericLinesDef::release_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::epoch_proto::ChartDef* released = _impl_.chart_def_;
+  _impl_.chart_def_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::epoch_proto::ChartDef* NumericLinesDef::unsafe_arena_release_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.NumericLinesDef.chart_def)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::epoch_proto::ChartDef* temp = _impl_.chart_def_;
+  _impl_.chart_def_ = nullptr;
+  return temp;
+}
+inline ::epoch_proto::ChartDef* NumericLinesDef::_internal_mutable_chart_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.chart_def_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::epoch_proto::ChartDef>(GetArena());
+    _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(p);
+  }
+  return _impl_.chart_def_;
+}
+inline ::epoch_proto::ChartDef* NumericLinesDef::mutable_chart_def() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::epoch_proto::ChartDef* _msg = _internal_mutable_chart_def();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.chart_def)
+  return _msg;
+}
+inline void NumericLinesDef::set_allocated_chart_def(::epoch_proto::ChartDef* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.chart_def_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.chart_def_ = reinterpret_cast<::epoch_proto::ChartDef*>(value);
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.NumericLinesDef.chart_def)
+}
+
+// repeated .epoch_proto.NumericLine lines = 2;
+inline int NumericLinesDef::_internal_lines_size() const {
+  return _internal_lines().size();
+}
+inline int NumericLinesDef::lines_size() const {
+  return _internal_lines_size();
+}
+inline void NumericLinesDef::clear_lines() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.lines_.Clear();
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::mutable_lines(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.lines)
+  return _internal_mutable_lines()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>* NumericLinesDef::mutable_lines()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.NumericLinesDef.lines)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_lines();
+}
+inline const ::epoch_proto::NumericLine& NumericLinesDef::lines(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.lines)
+  return _internal_lines().Get(index);
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::add_lines() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::NumericLine* _add = _internal_mutable_lines()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.NumericLinesDef.lines)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>& NumericLinesDef::lines() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.NumericLinesDef.lines)
+  return _internal_lines();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>&
+NumericLinesDef::_internal_lines() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.lines_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::NumericLine>*
+NumericLinesDef::_internal_mutable_lines() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.lines_;
+}
+
+// repeated .epoch_proto.StraightLineDef straight_lines = 3;
+inline int NumericLinesDef::_internal_straight_lines_size() const {
+  return _internal_straight_lines().size();
+}
+inline int NumericLinesDef::straight_lines_size() const {
+  return _internal_straight_lines_size();
+}
+inline void NumericLinesDef::clear_straight_lines() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.straight_lines_.Clear();
+}
+inline ::epoch_proto::StraightLineDef* NumericLinesDef::mutable_straight_lines(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.straight_lines)
+  return _internal_mutable_straight_lines()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>* NumericLinesDef::mutable_straight_lines()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.NumericLinesDef.straight_lines)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_straight_lines();
+}
+inline const ::epoch_proto::StraightLineDef& NumericLinesDef::straight_lines(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.straight_lines)
+  return _internal_straight_lines().Get(index);
+}
+inline ::epoch_proto::StraightLineDef* NumericLinesDef::add_straight_lines() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::StraightLineDef* _add = _internal_mutable_straight_lines()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.NumericLinesDef.straight_lines)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>& NumericLinesDef::straight_lines() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.NumericLinesDef.straight_lines)
+  return _internal_straight_lines();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>&
+NumericLinesDef::_internal_straight_lines() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.straight_lines_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::StraightLineDef>*
+NumericLinesDef::_internal_mutable_straight_lines() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.straight_lines_;
+}
+
+// repeated .epoch_proto.Band y_plot_bands = 4;
+inline int NumericLinesDef::_internal_y_plot_bands_size() const {
+  return _internal_y_plot_bands().size();
+}
+inline int NumericLinesDef::y_plot_bands_size() const {
+  return _internal_y_plot_bands_size();
+}
+inline void NumericLinesDef::clear_y_plot_bands() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.y_plot_bands_.Clear();
+}
+inline ::epoch_proto::Band* NumericLinesDef::mutable_y_plot_bands(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.y_plot_bands)
+  return _internal_mutable_y_plot_bands()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* NumericLinesDef::mutable_y_plot_bands()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.NumericLinesDef.y_plot_bands)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_y_plot_bands();
+}
+inline const ::epoch_proto::Band& NumericLinesDef::y_plot_bands(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.y_plot_bands)
+  return _internal_y_plot_bands().Get(index);
+}
+inline ::epoch_proto::Band* NumericLinesDef::add_y_plot_bands() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::Band* _add = _internal_mutable_y_plot_bands()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.NumericLinesDef.y_plot_bands)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& NumericLinesDef::y_plot_bands() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.NumericLinesDef.y_plot_bands)
+  return _internal_y_plot_bands();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>&
+NumericLinesDef::_internal_y_plot_bands() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.y_plot_bands_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>*
+NumericLinesDef::_internal_mutable_y_plot_bands() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.y_plot_bands_;
+}
+
+// repeated .epoch_proto.Band x_plot_bands = 5;
+inline int NumericLinesDef::_internal_x_plot_bands_size() const {
+  return _internal_x_plot_bands().size();
+}
+inline int NumericLinesDef::x_plot_bands_size() const {
+  return _internal_x_plot_bands_size();
+}
+inline void NumericLinesDef::clear_x_plot_bands() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.x_plot_bands_.Clear();
+}
+inline ::epoch_proto::Band* NumericLinesDef::mutable_x_plot_bands(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.x_plot_bands)
+  return _internal_mutable_x_plot_bands()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>* NumericLinesDef::mutable_x_plot_bands()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:epoch_proto.NumericLinesDef.x_plot_bands)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_x_plot_bands();
+}
+inline const ::epoch_proto::Band& NumericLinesDef::x_plot_bands(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.x_plot_bands)
+  return _internal_x_plot_bands().Get(index);
+}
+inline ::epoch_proto::Band* NumericLinesDef::add_x_plot_bands() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::epoch_proto::Band* _add = _internal_mutable_x_plot_bands()->Add();
+  // @@protoc_insertion_point(field_add:epoch_proto.NumericLinesDef.x_plot_bands)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>& NumericLinesDef::x_plot_bands() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:epoch_proto.NumericLinesDef.x_plot_bands)
+  return _internal_x_plot_bands();
+}
+inline const ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>&
+NumericLinesDef::_internal_x_plot_bands() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.x_plot_bands_;
+}
+inline ::google::protobuf::RepeatedPtrField<::epoch_proto::Band>*
+NumericLinesDef::_internal_mutable_x_plot_bands() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.x_plot_bands_;
+}
+
+// optional .epoch_proto.NumericLine overlay = 6;
+inline bool NumericLinesDef::has_overlay() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.overlay_ != nullptr);
+  return value;
+}
+inline void NumericLinesDef::clear_overlay() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.overlay_ != nullptr) _impl_.overlay_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const ::epoch_proto::NumericLine& NumericLinesDef::_internal_overlay() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::epoch_proto::NumericLine* p = _impl_.overlay_;
+  return p != nullptr ? *p : reinterpret_cast<const ::epoch_proto::NumericLine&>(::epoch_proto::_NumericLine_default_instance_);
+}
+inline const ::epoch_proto::NumericLine& NumericLinesDef::overlay() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.overlay)
+  return _internal_overlay();
+}
+inline void NumericLinesDef::unsafe_arena_set_allocated_overlay(::epoch_proto::NumericLine* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.overlay_);
+  }
+  _impl_.overlay_ = reinterpret_cast<::epoch_proto::NumericLine*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.NumericLinesDef.overlay)
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::release_overlay() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::epoch_proto::NumericLine* released = _impl_.overlay_;
+  _impl_.overlay_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::unsafe_arena_release_overlay() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:epoch_proto.NumericLinesDef.overlay)
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::epoch_proto::NumericLine* temp = _impl_.overlay_;
+  _impl_.overlay_ = nullptr;
+  return temp;
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::_internal_mutable_overlay() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.overlay_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::epoch_proto::NumericLine>(GetArena());
+    _impl_.overlay_ = reinterpret_cast<::epoch_proto::NumericLine*>(p);
+  }
+  return _impl_.overlay_;
+}
+inline ::epoch_proto::NumericLine* NumericLinesDef::mutable_overlay() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  ::epoch_proto::NumericLine* _msg = _internal_mutable_overlay();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.NumericLinesDef.overlay)
+  return _msg;
+}
+inline void NumericLinesDef::set_allocated_overlay(::epoch_proto::NumericLine* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.overlay_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+
+  _impl_.overlay_ = reinterpret_cast<::epoch_proto::NumericLine*>(value);
+  // @@protoc_insertion_point(field_set_allocated:epoch_proto.NumericLinesDef.overlay)
+}
+
+// bool stacked = 7;
+inline void NumericLinesDef::clear_stacked() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.stacked_ = false;
+}
+inline bool NumericLinesDef::stacked() const {
+  // @@protoc_insertion_point(field_get:epoch_proto.NumericLinesDef.stacked)
+  return _internal_stacked();
+}
+inline void NumericLinesDef::set_stacked(bool value) {
+  _internal_set_stacked(value);
+  // @@protoc_insertion_point(field_set:epoch_proto.NumericLinesDef.stacked)
+}
+inline bool NumericLinesDef::_internal_stacked() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.stacked_;
+}
+inline void NumericLinesDef::_internal_set_stacked(bool value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.stacked_ = value;
 }
@@ -10108,6 +11504,85 @@ inline ::epoch_proto::AreaDef* Chart::_internal_mutable_area_def() {
 inline ::epoch_proto::AreaDef* Chart::mutable_area_def() ABSL_ATTRIBUTE_LIFETIME_BOUND {
   ::epoch_proto::AreaDef* _msg = _internal_mutable_area_def();
   // @@protoc_insertion_point(field_mutable:epoch_proto.Chart.area_def)
+  return _msg;
+}
+
+// .epoch_proto.NumericLinesDef numeric_lines_def = 9;
+inline bool Chart::has_numeric_lines_def() const {
+  return chart_type_case() == kNumericLinesDef;
+}
+inline bool Chart::_internal_has_numeric_lines_def() const {
+  return chart_type_case() == kNumericLinesDef;
+}
+inline void Chart::set_has_numeric_lines_def() {
+  _impl_._oneof_case_[0] = kNumericLinesDef;
+}
+inline void Chart::clear_numeric_lines_def() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (chart_type_case() == kNumericLinesDef) {
+    if (GetArena() == nullptr) {
+      delete _impl_.chart_type_.numeric_lines_def_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.chart_type_.numeric_lines_def_);
+    }
+    clear_has_chart_type();
+  }
+}
+inline ::epoch_proto::NumericLinesDef* Chart::release_numeric_lines_def() {
+  // @@protoc_insertion_point(field_release:epoch_proto.Chart.numeric_lines_def)
+  if (chart_type_case() == kNumericLinesDef) {
+    clear_has_chart_type();
+    auto* temp = _impl_.chart_type_.numeric_lines_def_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.chart_type_.numeric_lines_def_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::epoch_proto::NumericLinesDef& Chart::_internal_numeric_lines_def() const {
+  return chart_type_case() == kNumericLinesDef ? *_impl_.chart_type_.numeric_lines_def_ : reinterpret_cast<::epoch_proto::NumericLinesDef&>(::epoch_proto::_NumericLinesDef_default_instance_);
+}
+inline const ::epoch_proto::NumericLinesDef& Chart::numeric_lines_def() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:epoch_proto.Chart.numeric_lines_def)
+  return _internal_numeric_lines_def();
+}
+inline ::epoch_proto::NumericLinesDef* Chart::unsafe_arena_release_numeric_lines_def() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:epoch_proto.Chart.numeric_lines_def)
+  if (chart_type_case() == kNumericLinesDef) {
+    clear_has_chart_type();
+    auto* temp = _impl_.chart_type_.numeric_lines_def_;
+    _impl_.chart_type_.numeric_lines_def_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Chart::unsafe_arena_set_allocated_numeric_lines_def(::epoch_proto::NumericLinesDef* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_chart_type();
+  if (value) {
+    set_has_numeric_lines_def();
+    _impl_.chart_type_.numeric_lines_def_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:epoch_proto.Chart.numeric_lines_def)
+}
+inline ::epoch_proto::NumericLinesDef* Chart::_internal_mutable_numeric_lines_def() {
+  if (chart_type_case() != kNumericLinesDef) {
+    clear_chart_type();
+    set_has_numeric_lines_def();
+    _impl_.chart_type_.numeric_lines_def_ =
+        ::google::protobuf::Message::DefaultConstruct<::epoch_proto::NumericLinesDef>(GetArena());
+  }
+  return _impl_.chart_type_.numeric_lines_def_;
+}
+inline ::epoch_proto::NumericLinesDef* Chart::mutable_numeric_lines_def() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::epoch_proto::NumericLinesDef* _msg = _internal_mutable_numeric_lines_def();
+  // @@protoc_insertion_point(field_mutable:epoch_proto.Chart.numeric_lines_def)
   return _msg;
 }
 

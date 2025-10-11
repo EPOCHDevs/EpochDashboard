@@ -15,6 +15,7 @@ const unifiedQueryClient = dashboardQueryClient
 
 // View types
 export type DashboardView = 'dashboard' | 'charts'
+export type ViewMode = 'tabs' | 'unified'
 
 // Props interface for the unified container
 export interface UnifiedDashboardContainerProps {
@@ -23,10 +24,9 @@ export interface UnifiedDashboardContainerProps {
   apiEndpoint: string
   // Optional UI customization
   defaultView?: DashboardView
+  defaultViewMode?: ViewMode
   className?: string
   hideLayoutControls?: boolean
-  // Optional TopToolbarComponent for Trade Analytics
-  TopToolbarComponent?: TradeAnalyticsContainerProps['TopToolbarComponent']
 }
 
 // Main unified container component
@@ -35,9 +35,9 @@ function UnifiedDashboardContainerContent({
   userId = 'guest',
   apiEndpoint,
   defaultView = 'dashboard',
+  defaultViewMode = 'tabs',
   className,
   hideLayoutControls = false,
-  TopToolbarComponent,
 }: UnifiedDashboardContainerProps) {
   // Router for URL sync (optional - works without Next.js)
   let router
@@ -81,14 +81,14 @@ function UnifiedDashboardContainerContent({
 
   // Create view switcher controls (just the buttons, no wrapper)
   const viewSwitcherControls = (
-    <>
+    <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
       <button
         onClick={() => handleViewChange('dashboard')}
         className={clsx(
-          "px-3 py-2 rounded text-sm font-medium transition-all duration-200",
+          "px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
           activeView === 'dashboard'
-            ? "text-foreground bg-foreground/20"
-            : "text-foreground/40 hover:text-foreground/60 hover:bg-foreground/10"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
         )}
       >
         Dashboard
@@ -96,21 +96,16 @@ function UnifiedDashboardContainerContent({
       <button
         onClick={() => handleViewChange('charts')}
         className={clsx(
-          "px-3 py-2 rounded text-sm font-medium transition-all duration-200",
+          "px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
           activeView === 'charts'
-            ? "text-foreground bg-foreground/20"
-            : "text-foreground/40 hover:text-foreground/60 hover:bg-foreground/10"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
         )}
       >
         Charts
       </button>
-    </>
+    </div>
   )
-
-  // Create enhanced TopToolbar for Charts that includes view switcher on the right
-  const EnhancedTopToolbar = TopToolbarComponent
-    ? (props: any) => <TopToolbarComponent {...props} rightControls={viewSwitcherControls} />
-    : undefined
 
   return (
     <div className={clsx("h-full bg-background flex flex-col overflow-hidden", className)}>
@@ -124,6 +119,7 @@ function UnifiedDashboardContainerContent({
             apiEndpoint={apiEndpoint}
             showHeader={false}
             hideLayoutControls={hideLayoutControls}
+            defaultViewMode={defaultViewMode}
             rightControls={viewSwitcherControls}
             className="h-full overflow-auto"
           />
@@ -133,8 +129,8 @@ function UnifiedDashboardContainerContent({
             campaignId={campaignId}
             userId={userId}
             apiEndpoint={apiEndpoint}
-            TopToolbarComponent={EnhancedTopToolbar}
             showHeader={false}
+            rightControls={viewSwitcherControls}
             className="h-full overflow-hidden"
           />
         )}

@@ -13,17 +13,19 @@ import {
 } from "highcharts"
 
 // Data mapping keys expected from backend
-// down_fill_fraction, up_fill_fraction represent fraction of gap filled (0..1)
-// down_filled, up_filled are booleans (0/1) indicating fully filled
-// down_gap_size, up_gap_size are numeric sizes of the gap
+// Based on the Gap Analysis Report inputs:
+// - gap_filled: Boolean indicating if gap was filled
+// - gap_retrace: Decimal showing retrace percentage (can be used to determine direction)
+// - gap_size: Decimal size of the gap
+// - psc: Prior Session Close price
+// - psc_timestamp: Integer timestamp of prior session close
 export const GAP_PLOT_KIND_DATA_KEYS = [
   "index",
-  "gap_up",
+  "gap_retrace",      // Using gap_retrace instead of gap_up (positive = gap up, negative = gap down)
   "gap_filled",
-  "fill_fraction",
-  "gap_size",
-  "psc_timestamp",
-  "psc",
+  "gap_size",         // Already correct
+  "psc_timestamp",    // Already correct
+  "psc",             // Already correct
 ]
 
 interface generateGapPlotElementsProps {
@@ -69,23 +71,25 @@ export const generateGapPlotElements = ({
   })
 
   extractedData.forEach((row, i) => {
-    const [ts, gapUpVal, gapFilledVal, fillFraction, , pscTimestamp, psc] = row as [
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
+    const [ts, gapRetrace, gapFilledVal, gapSize, pscTimestamp, psc] = row as [
+      number,      // index/timestamp
+      number,      // gap_retrace (positive = up, negative = down)
+      number,      // gap_filled (boolean 0/1)
+      number,      // gap_size
+      number,      // psc_timestamp
+      number,      // psc (prior session close)
     ]
 
-    // Skip if no gap detected (gap_up is null)
-    if (gapUpVal === null) {
+    // Skip if no gap detected (gap_retrace is null or gap_size is null/zero)
+    if (gapRetrace === null || gapRetrace === undefined || !gapSize) {
       return
     }
 
     const openNow = openCol ? (openCol.get(i) as number) : undefined
-    const isGapUp = Boolean(gapUpVal) // true = gap up, false = gap down
+
+    // Determine gap direction from gap_size (positive = gap up, negative = gap down)
+    // Or from gap_retrace if gap_size is always positive
+    const isGapUp = gapSize > 0 // Assuming gap_size is positive for gap up, negative for gap down
     const isGapFilled = Boolean(gapFilledVal)
 
     // PSC timestamp and value are provided directly
@@ -94,39 +98,48 @@ export const generateGapPlotElements = ({
 
     if (pscTs && pscClose && openNow) {
       const color = isGapUp ? upColor : downColor
-      const fillColor = toRgba(color, opacity)
 
-      // Rectangle using path type like Sessions
-      const rect = {
-        type: "path",
+      // Add horizontal dashed line at prior session close
+      // This is the main visual indicator of the gap
+      const pscLine = {
+        type: "path" as const,
         points: [
           point(pscTs, pscClose),
           point(ts, pscClose),
-          point(ts, openNow),
-          point(pscTs, openNow),
         ],
-        fill: fillColor,
         stroke: color,
         strokeWidth: 1,
+        dashStyle: "Dash" as const,
       }
-      shapes.push(rect)
+      shapes.push(pscLine as any)
 
-      // Add filled label if gap is filled
-      if (isGapFilled || fillFraction >= 1) {
-        labels.push({
-          point: point(ts, (pscClose + openNow) / 2),
-          text: "gap filled",
-          backgroundColor: "transparent",
-          borderColor: "transparent",
-          style: {
-            color: color,
-            fontSize: "9px",
-            fontWeight: "bold",
-            textOutline: "none",
-          },
-          verticalAlign: "middle",
-        })
-      }
+      // Add gap size label positioned ON TOP of the horizontal line (at pscClose price level)
+      const gapSizePercent = ((Math.abs(gapSize) / pscClose) * 100).toFixed(2)
+      const centerX = (pscTs + ts) / 2 // Midpoint between prior close time and current open time
+
+      labels.push({
+        point: point(centerX, pscClose), // Position at the prior session close price level
+        text: isGapFilled
+          ? `${isGapUp ? '↑' : '↓'} ${gapSizePercent}% • FILLED ✓`
+          : `${isGapUp ? '↑' : '↓'} ${gapSizePercent}%`,
+        backgroundColor: toRgba(color, isGapFilled ? 0.95 : 0.9),
+        borderColor: color,
+        borderWidth: 2,
+        borderRadius: 6,
+        padding: isGapFilled ? 8 : 6,
+        style: {
+          color: "#ffffff",
+          fontSize: isGapFilled ? "13px" : "12px",
+          fontWeight: "700",
+          textOutline: "none",
+        },
+        align: "center",
+        verticalAlign: "middle",
+        y: isGapUp ? 15 : -15, // Offset further from line for better visibility
+        crop: false, // Don't crop label when zoomed
+        overflow: "allow" as any, // Allow label to overflow chart bounds
+        useHTML: false,
+      })
     }
   })
 
@@ -150,10 +163,14 @@ export const generateGapPlotElements = ({
       {
         shapes,
         labels,
-        zIndex: 1,
+        zIndex: 10, // Higher z-index to ensure labels appear on top
+        visible: true,
+        crop: false, // Don't crop annotations
         labelOptions: {
           backgroundColor: "transparent",
           borderColor: "transparent",
+          crop: false,
+          overflow: "allow" as any,
           style: {
             textOutline: "none",
           },

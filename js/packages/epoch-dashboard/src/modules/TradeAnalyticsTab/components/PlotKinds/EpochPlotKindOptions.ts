@@ -439,18 +439,35 @@ export const extractPlotKindSeriesData = ({
   }
 
   const result = []
+  const missingColumns = new Set<string>() // Track missing columns to log once
+
   for (let i = 0; i < (data?.numRows ?? 0); i++) {
     const row: unknown[] = []
     getSeriesDataKeys().forEach((key) => {
       const columnRef = seriesConfig.dataMapping[key]
       if (columnRef) {
-        const value = data?.getChild(columnRef)?.get(i)
-        row.push(value)
+        const column = data?.getChild(columnRef)
+        if (column) {
+          const value = column.get(i)
+          row.push(value)
+        } else {
+          // Column mapping exists but data doesn't have this column
+          if (i === 0) { // Only track on first row to avoid spam
+            missingColumns.add(columnRef)
+          }
+          row.push(null) // Push null for missing data
+        }
       } else {
-        console.log(`Backend Error: Column reference not found for key: ${key}`)
+        // No column mapping defined for this key - this is expected for optional fields
+        row.push(null)
       }
     })
     result.push(row)
+  }
+
+  // Log missing columns once at the end if any were found
+  if (missingColumns.size > 0) {
+    // Optional columns missing - this is expected and not an error
   }
 
   return result
