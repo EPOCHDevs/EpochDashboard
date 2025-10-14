@@ -351,24 +351,84 @@ const TradeAnalyticsChartRenderer = ({
           formatter: function tooltipFormatter(this) {
             try {
               const formattedAxis = this.axis
-              const isMin = this.value === formattedAxis.min
+              const value = this.value as number
 
-              // Get the axis position - check if this is not the first/topmost axis
-              // The topmost axis (price) typically has the smallest pos value
+              // Check if value is valid
+              if (value === undefined || value === null || isNaN(value) || typeof value !== 'number') {
+                return ''
+              }
+
+              const isMin = value === formattedAxis.min
+              const isMax = value === formattedAxis.max
+
+              // Get the axis position - check if this is not the first/topmost or bottommost axis
               const axisPosition = formattedAxis.pos || 0
               const chart = formattedAxis.chart
-              const allYAxisPositions = chart.yAxis.map((axis: any) => axis.pos || 0)
-              const minPosition = Math.min(...allYAxisPositions)
-              const isTopAxis = axisPosition === minPosition
+              const allYAxisPositions = chart.yAxis.map((axis: any) => axis.pos || 0).filter((pos: number) => !isNaN(pos))
 
-              // For the topmost axis, show all labels
-              // For other axes, hide min label to prevent overlap
-              if (isMin && !isTopAxis) {
-                return "" // Hide min labels for non-top axes as they overlap
+              if (allYAxisPositions.length > 0) {
+                const minPosition = Math.min(...allYAxisPositions)
+                const maxPosition = Math.max(...allYAxisPositions)
+                const isTopAxis = axisPosition === minPosition
+                const isBottomAxis = axisPosition === maxPosition
+
+                // For the topmost axis, show all labels
+                // For middle axes, hide both min and max labels to prevent overlap
+                // For the bottom axis, show all labels
+                if (isMin && !isTopAxis) {
+                  return "" // Hide min labels for non-top axes as they overlap with axis above
+                }
+                if (isMax && !isBottomAxis) {
+                  return "" // Hide max labels for non-bottom axes as they overlap with axis below
+                }
               }
-              return this.axis.defaultLabelFormatter.call(this)
+
+              // Check which pane we're in based on series using this axis
+              const seriesForThisAxis = chart.series.filter((s: any) => s.yAxis === formattedAxis)
+              const isVolumeAxis = seriesForThisAxis.some((s: any) => s.name && s.name.toLowerCase().includes('volume'))
+
+              // Format volume with K/M/B suffixes
+              if (isVolumeAxis) {
+                if (value >= 1000000000) {
+                  return (value / 1000000000).toFixed(1) + 'B'
+                } else if (value >= 1000000) {
+                  return (value / 1000000).toFixed(1) + 'M'
+                } else if (value >= 1000) {
+                  return (value / 1000).toFixed(1) + 'K'
+                } else {
+                  return value.toFixed(0)
+                }
+              }
+
+              // Format based on asset class for price axes
+              let decimalPlaces = 2 // Default for stocks
+
+              if (selectedAssetDetails?.asset?.asset_class) {
+                const assetClass = selectedAssetDetails.asset.asset_class
+
+                switch (assetClass) {
+                  case 'FX':
+                    decimalPlaces = 5
+                    break
+                  case 'Crypto':
+                    // For crypto, use more decimals for small values
+                    decimalPlaces = value < 1 ? 8 : (value < 100 ? 5 : 2)
+                    break
+                  case 'Stocks':
+                    decimalPlaces = 2
+                    break
+                  case 'Futures':
+                    decimalPlaces = value < 10 ? 4 : 2
+                    break
+                  default:
+                    decimalPlaces = 2
+                }
+              }
+
+              return value.toFixed(decimalPlaces)
             } catch (error) {
-              return String(this.value || "")
+              // Always return empty string on error, never undefined
+              return ''
             }
           },
         },
@@ -394,31 +454,59 @@ const TradeAnalyticsChartRenderer = ({
             align: 'left',
             x: 20, // Increased offset to prevent overlap with static labels
             formatter: function() {
-              const val = (this as any).value
-              if (typeof val === 'number') {
-                let decimalPlaces = 2
+              const context = this as any
+              const val = context.value
+              const axis = context.axis
 
-                if (selectedAssetDetails?.asset?.asset_class) {
-                  const assetClass = selectedAssetDetails.asset.asset_class
-                  switch (assetClass) {
-                    case 'FX':
-                      decimalPlaces = 5
-                      break
-                    case 'Crypto':
-                      decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
-                      break
-                    case 'Stocks':
-                      decimalPlaces = 2
-                      break
-                    case 'Futures':
-                      decimalPlaces = val < 10 ? 4 : 2
-                      break
+              // Validate value
+              if (val === undefined || val === null || isNaN(val) || typeof val !== 'number') {
+                return ''
+              }
+
+              // Check if this is a volume axis
+              const chart = axis?.chart
+              if (chart && axis) {
+                const seriesForThisAxis = chart.series.filter((s: any) => s.yAxis === axis)
+                const isVolumeAxis = seriesForThisAxis.some((s: any) => s.name && s.name.toLowerCase().includes('volume'))
+
+                // Format volume with K/M/B suffixes
+                if (isVolumeAxis) {
+                  if (val >= 1000000000) {
+                    return (val / 1000000000).toFixed(1) + 'B'
+                  } else if (val >= 1000000) {
+                    return (val / 1000000).toFixed(1) + 'M'
+                  } else if (val >= 1000) {
+                    return (val / 1000).toFixed(1) + 'K'
+                  } else {
+                    return val.toFixed(0)
                   }
                 }
-
-                return val.toFixed(decimalPlaces)
               }
-              return String(val)
+
+              // Format based on asset class for price axes
+              let decimalPlaces = 2
+
+              if (selectedAssetDetails?.asset?.asset_class) {
+                const assetClass = selectedAssetDetails.asset.asset_class
+                switch (assetClass) {
+                  case 'FX':
+                    decimalPlaces = 5
+                    break
+                  case 'Crypto':
+                    decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
+                    break
+                  case 'Stocks':
+                    decimalPlaces = 2
+                    break
+                  case 'Futures':
+                    decimalPlaces = val < 10 ? 4 : 2
+                    break
+                  default:
+                    decimalPlaces = 2
+                }
+              }
+
+              return val.toFixed(decimalPlaces)
             },
           },
         },
@@ -652,7 +740,7 @@ const TradeAnalyticsChartRenderer = ({
       xAxis: {
         type: "datetime",
         gridLineWidth: 2,
-        ordinal: false,
+        ordinal: true, // Changed to true to hide weekend/market closed gaps
         gridLineColor: highchartsTheme?.xAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
         gridLineDashStyle: "Solid",
         labels: {
@@ -688,21 +776,32 @@ const TradeAnalyticsChartRenderer = ({
         })),
         events: {
           afterSetExtremes: function (e) {
+            console.log('📊 [Lazy Loading] afterSetExtremes triggered:', {
+              trigger: e.trigger,
+              min: e.min,
+              max: e.max,
+              minDate: e.min ? new Date(e.min).toISOString() : 'undefined',
+              maxDate: e.max ? new Date(e.max).toISOString() : 'undefined'
+            })
+
             // Guard 1: Only respond to user-initiated zoom actions
             // e.trigger can be: 'zoom', 'navigator', 'mousewheel', 'rangeSelectorButton', etc.
             // undefined means programmatic setExtremes calls
             const userTriggers = ['zoom', 'navigator', 'mousewheel', 'rangeSelectorButton']
             if (!e.trigger || !userTriggers.includes(e.trigger)) {
+              console.log('📊 [Lazy Loading] Skipping - not a user trigger:', e.trigger)
               return
             }
 
             // Guard 2: Don't trigger expansion if already fetching data from network
             if (isActuallyFetchingTradeAnalyticsChartData) {
+              console.log('📊 [Lazy Loading] Skipping expansion - already fetching data')
               return
             }
 
             // Guard 3: Must have expansion callback
             if (!onRangeExpansionNeeded) {
+              console.log('📊 [Lazy Loading] No expansion callback provided')
               return
             }
 
@@ -794,8 +893,8 @@ const TradeAnalyticsChartRenderer = ({
                   viewportRange
                 })
 
-                // Trigger data fetch - with ordinal:false, chart will naturally show gaps
-                // No need to manually extend axis - Highcharts handles it automatically
+                // Trigger data fetch for expanded range
+                // The chart will handle the range expansion automatically
                 onRangeExpansionNeeded({
                   from: expansionFrom,
                   to: expansionTo
@@ -818,16 +917,16 @@ const TradeAnalyticsChartRenderer = ({
         useHTML: true,
         style: {
           pointerEvents: "none",
+          zIndex: "20", // Below sidebar (z-50) but above chart
         },
         positioner: function positioner() {
           return {
-            x: 0,
-            y: 0,
+            x: sidebarWidth + 10, // Add offset to avoid sidebar overlap
+            y: 10, // Add top padding to avoid header
           }
         } as unknown as TooltipPositionerCallbackFunction,
         formatter: function tooltipFormatter(this: Highcharts.TooltipFormatterContextObject) {
-          // Since multiple series can have same start y-position, we are grouping the series by the y-position.
-          // And then adding offset (top of 20px) to the series based on the index in the group.
+          // Group series by Y-axis position for proper vertical stacking
           const orderedPointsBasedOnPositionY = Object.values(
             (this.points ?? [])?.reduce(
               (acc, item) => {
@@ -841,41 +940,121 @@ const TradeAnalyticsChartRenderer = ({
               {} as Record<string, typeof this.points>
             )
           )
+
           return `
             ${orderedPointsBasedOnPositionY
               ?.map((points) => {
                 return points
                   ?.map((point, index) => {
-                    return `
-                      <div
-                        class="flex flex-row items-center justify-start gap-3 absolute px-3 py-2 rounded-lg backdrop-blur-md"
-                        style="top:${
-                          point.series.type === "candlestick"
-                            ? -25
-                            : points.length > 1
-                              ? point.series.yAxis.pos + index * 20
-                              : point.series.yAxis.pos
-                        }px; background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.1);">
-                        ${Object.entries(point.point?.options ?? {})
-                          ?.map(([key, value]) => {
-                            return key !== "x"
-                              ? `
-                                <div class="flex flex-row items-center justify-start gap-2">
-                                  <span class="text-xs font-medium ${point.series.type === "candlestick" ? "text-foreground" : "text-muted-foreground"} capitalize">${key === "y" ? point.series.name : key}:</span>
-                                  <span class="text-xs font-semibold lining-nums tabular-nums" style="color:${point.color};">${formatDollarAmount(
-                                    value as unknown as number,
-                                    {
-                                      style: "decimal",
-                                      maximumFractionDigits: 4,
-                                    }
-                                  )}</span>
-                                </div>
-                              `
-                              : ""
-                          })
-                          ?.join("")}
-                      </div>
+                    // TradingView-style inline format
+                    const containerStyle = `
+                      background: transparent;
+                      padding: 2px 4px;
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                      font-size: 11px;
+                      line-height: 1.2;
+                      color: #D1D4DC;
+                      white-space: nowrap;
+                      position: absolute;
+                      top: ${
+                        point.series.type === "candlestick"
+                          ? -25
+                          : points.length > 1
+                            ? point.series.yAxis.pos + index * 20
+                            : point.series.yAxis.pos
+                      }px;
                     `
+
+                    // Check if this is a candlestick series (main price pane)
+                    if (point.series.type === 'candlestick') {
+                      // Get OHLC values
+                      const open = (point.point as any).open || 0
+                      const high = (point.point as any).high || 0
+                      const low = (point.point as any).low || 0
+                      const close = (point.point as any).close || 0
+
+                      // Format based on asset class
+                      const formatValue = (val: number) => {
+                        let decimalPlaces = 2
+
+                        if (selectedAssetDetails?.asset?.asset_class) {
+                          const assetClass = selectedAssetDetails.asset.asset_class
+                          switch (assetClass) {
+                            case 'FX':
+                              decimalPlaces = 5
+                              break
+                            case 'Crypto':
+                              decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
+                              break
+                            case 'Stocks':
+                              decimalPlaces = 2
+                              break
+                            case 'Futures':
+                              decimalPlaces = val < 10 ? 4 : 2
+                              break
+                          }
+                        }
+
+                        return val.toFixed(decimalPlaces)
+                      }
+
+                      // Get asset info from metadata
+                      let displayName = ''
+                      let exchange = ''
+
+                      if (selectedAssetDetails?.asset) {
+                        displayName = selectedAssetDetails.asset.ticker || assetId || ''
+                        displayName = displayName.replace(/^\^/, '')
+                        exchange = selectedAssetDetails.asset.exchange || ''
+                      } else {
+                        displayName = assetId || ''
+                        displayName = displayName.replace(/^\^/, '')
+                      }
+
+                      // TradingView inline format: Ticker • Exchange O H L C
+                      return `
+                        <div style="${containerStyle}">
+                          <span style="color: #D1D4DC; font-weight: 600;">${displayName}</span>
+                          ${exchange ? `<span style="color: #787B86; margin: 0 4px;">•</span><span style="color: #787B86; font-size: 10px;">${exchange}</span>` : ''}
+                          <span style="color: #787B86; margin-left: 8px;">O</span>
+                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(open)}</span>
+                          <span style="color: #787B86; margin-left: 8px;">H</span>
+                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(high)}</span>
+                          <span style="color: #787B86; margin-left: 8px;">L</span>
+                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(low)}</span>
+                          <span style="color: #787B86; margin-left: 8px;">C</span>
+                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(close)}</span>
+                        </div>
+                      `
+                    } else {
+                      // All other series (Volume, MACD, RSI, etc.)
+                      const value = point.point.y || 0
+                      const seriesName = point.series.name || 'Value'
+
+                      // Format value based on series type
+                      let formattedValue = ''
+                      if (seriesName.toLowerCase().includes('volume')) {
+                        // Format volume with K/M/B suffixes
+                        if (value >= 1000000000) {
+                          formattedValue = (value / 1000000000).toFixed(1) + 'B'
+                        } else if (value >= 1000000) {
+                          formattedValue = (value / 1000000).toFixed(1) + 'M'
+                        } else if (value >= 1000) {
+                          formattedValue = (value / 1000).toFixed(1) + 'K'
+                        } else {
+                          formattedValue = value.toFixed(0)
+                        }
+                      } else {
+                        formattedValue = value.toFixed(Math.abs(value) < 1 ? 5 : 2)
+                      }
+
+                      return `
+                        <div style="${containerStyle}">
+                          <span style="color: #787B86;">${seriesName}</span>
+                          <span style="color: #3896D4; font-weight: 600; margin-left: 8px;">${formattedValue}</span>
+                        </div>
+                      `
+                    }
                   })
                   ?.join("")
               })
