@@ -57,12 +57,29 @@ export const useSmartChartData = ({
   useEffect(() => {
     const currentKey = `${assetId}-${timeframe}`
     if (currentKey !== lastAssetTimeframe && assetId && timeframe) {
+      const [oldAsset, oldTimeframe] = lastAssetTimeframe.split('-')
+      const assetChanged = oldAsset !== assetId
+
       setShouldFetchBaseline(true)
       setLastAssetTimeframe(currentKey)
-      // Clear the global cache to ensure fresh data
-      globalDataCacheManager.clearCache()
+
+      // Only clear cache for the old asset if the asset changed
+      // This preserves cache when just switching timeframes on same asset
+      if (assetChanged && strategyId && oldAsset) {
+        console.log('📊 [Lazy Loading] Asset changed, clearing old asset cache:', {
+          oldAsset,
+          newAsset: assetId
+        })
+        globalDataCacheManager.clearAssetCache(strategyId, oldAsset)
+      } else {
+        console.log('📊 [Lazy Loading] Timeframe changed, keeping cache:', {
+          asset: assetId,
+          oldTimeframe,
+          newTimeframe: timeframe
+        })
+      }
     }
-  }, [assetId, timeframe, lastAssetTimeframe])
+  }, [assetId, timeframe, lastAssetTimeframe, strategyId])
 
   // Calculate API parameters based on selected round trips
   const dataFetchRequest = useMemo((): DataFetchRequest | null => {
@@ -154,24 +171,42 @@ export const useSmartChartData = ({
           { from: expansionRange.from, to: expansionRange.to }
         )
 
+        console.log('📊 [Lazy Loading] Expansion requested:', {
+          requestedRange: expansionRange,
+          missingRanges,
+          hasCachedData: !!cachedData,
+          cacheKey: `${strategyId}_${assetId}_${timeframe}`
+        })
+
         if (missingRanges.length === 0 && cachedData) {
+          console.log('📊 [Lazy Loading] All data in cache, returning cached data')
           return cachedData
         } else {
+          console.log('📊 [Lazy Loading] Missing data detected, triggering fetch for ranges:', missingRanges)
           setIsActuallyFetching(true) // Set flag for actual network fetch
         }
         // For now, fetch the entire requested range if there are missing ranges
         // TODO: Implement fetching only missing ranges (requires multiple requests or backend support)
       } else if (cachedData) {
         // If we have cached data and no expansion request, return cached data immediately
+        console.log('📊 [Lazy Loading] No expansion, returning cached data')
         return cachedData
       } else {
         // Initial fetch - no cached data yet
+        console.log('📊 [Lazy Loading] Initial fetch - no cached data')
         setIsActuallyFetching(true)
       }
 
       // Format API parameters for the HTTP request
       const queryParams = formatApiParamsForRequest(dataFetchRequest)
       const queryString = new URLSearchParams(queryParams).toString()
+
+      console.log('📊 [Lazy Loading] API Request:', {
+        dataFetchRequest,
+        queryParams,
+        queryString,
+        url: expansionRange ? 'Expansion fetch' : 'Initial/baseline fetch'
+      })
 
       // Use provided apiEndpoint and userId, or fall back to defaults
       const finalApiEndpoint = apiEndpoint || 'http://localhost:9000'
@@ -255,6 +290,11 @@ export const useSmartChartData = ({
       }
 
       // Cache the fetched data
+      console.log('📊 [Lazy Loading] Caching fetched data:', {
+        rows: table.numRows,
+        columns: table.numCols,
+        cacheKey: `${dataFetchRequest.strategyId}_${dataFetchRequest.assetId}_${dataFetchRequest.timeframe}`
+      })
       globalDataCacheManager.cacheData(dataFetchRequest, table)
 
       // Clear the actually fetching flag now that fetch is complete

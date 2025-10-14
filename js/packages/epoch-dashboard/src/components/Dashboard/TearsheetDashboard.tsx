@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useTransition, useDeferredValue, lazy, Suspense } from 'react'
 import clsx from 'clsx'
 import {
   LayoutGrid,
@@ -10,10 +10,28 @@ import {
   Rows3,
   Grid2x2,
 } from 'lucide-react'
-import TearsheetCategoryContent from './TearsheetCategoryContent'
-import UnifiedCategoryView from './UnifiedCategoryView'
 import { TearSheet } from '../../types/proto'
 import { groupByCategory, formatCategoryLabel } from '../../utils/tearsheetHelpers'
+
+// Lazy load heavy components to reduce initial bundle and enable code splitting
+const TearsheetCategoryContent = lazy(() => import('./TearsheetCategoryContent'))
+const UnifiedCategoryView = lazy(() => import('./UnifiedCategoryView'))
+
+// Loading skeleton for Suspense boundary
+const ContentLoadingSkeleton = () => (
+  <div className="glass rounded-lg p-6">
+    <div className="animate-pulse space-y-6">
+      <div className="grid grid-cols-2 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-[400px] bg-card/50 rounded-lg p-4">
+            <div className="h-4 bg-foreground/10 rounded w-1/3 mb-4" />
+            <div className="h-64 bg-foreground/10 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)
 
 // Dashboard Layout Options
 export const DASHBOARD_LAYOUTS = [
@@ -78,6 +96,30 @@ interface TearsheetDashboardProps {
   rightControls?: React.ReactNode
 }
 
+// Memoized dropdown menu item to prevent re-renders
+const DropdownMenuItem = React.memo(({
+  category,
+  isActive,
+  onClick
+}: {
+  category: { id: string; label: string; value: string };
+  isActive: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={clsx(
+      "w-full text-left px-3 py-2 text-sm transition-colors",
+      isActive
+        ? "bg-muted text-foreground"
+        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+    )}
+  >
+    {category.label}
+  </button>
+))
+DropdownMenuItem.displayName = 'DropdownMenuItem'
+
 const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   tearsheet,
   className = '',
@@ -101,19 +143,57 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
       data
     }))
   }, [tearsheet])
-  // Responsive layout detection
+  // Responsive layout detection and dynamic tab calculation
   const [isResponsive, setIsResponsive] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [visibleTabCount, setVisibleTabCount] = useState(3)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [isPending, startTransition] = useTransition()
 
+  // Calculate how many tabs can fit based on available space
   useEffect(() => {
     const checkResponsive = () => {
-      setIsResponsive(window.innerWidth < 1280) // xl breakpoint
+      const width = window.innerWidth
+      setIsResponsive(width < 1280) // xl breakpoint
+
+      if (width < 1280) {
+        setVisibleTabCount(0) // Use dropdown on mobile
+      } else {
+        // Estimate available space for tabs
+        // Rough calculation: total width - controls - margins - more button space
+        const availableWidth = width - 600 // Reserve space for controls
+        const estimatedTabWidth = 150 // Average tab width with padding
+        const maxVisibleTabs = Math.max(2, Math.floor(availableWidth / estimatedTabWidth))
+
+        // Show all tabs if they fit, otherwise leave room for "More" dropdown
+        if (categories.length <= maxVisibleTabs) {
+          setVisibleTabCount(categories.length)
+        } else {
+          setVisibleTabCount(Math.min(maxVisibleTabs - 1, categories.length - 1))
+        }
+      }
     }
+
     checkResponsive()
+
+    // Use ResizeObserver for more accurate monitoring
+    let resizeObserver: ResizeObserver | null = null
+    if (toolbarRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        checkResponsive()
+      })
+      resizeObserver.observe(toolbarRef.current)
+    }
+
     window.addEventListener('resize', checkResponsive)
-    return () => window.removeEventListener('resize', checkResponsive)
-  }, [])
+    return () => {
+      window.removeEventListener('resize', checkResponsive)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [categories.length])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -132,20 +212,22 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   )
 
   const [selectedLayout, setSelectedLayout] = useState<string>(
-    isResponsive ? 'single' : 'columns_2'
+    isResponsive ? 'single' : 'columns_3'
   )
 
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode)
 
   // Update layout based on responsive state
   useEffect(() => {
-    setSelectedLayout(isResponsive ? 'single' : 'columns_2')
+    setSelectedLayout(isResponsive ? 'single' : 'columns_3')
   }, [isResponsive])
 
-  // Handle category change
+  // Handle category change with transition to reduce blocking
   const handleCategoryChange = (categoryValue: string) => {
-    setActiveCategory(categoryValue)
-    onCategoryChange?.(categoryValue)
+    startTransition(() => {
+      setActiveCategory(categoryValue)
+      onCategoryChange?.(categoryValue)
+    })
   }
 
   // Handle layout change
@@ -165,6 +247,27 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
     return categories.find(cat => cat.value === activeCategory)?.data
   }, [categories, activeCategory])
 
+  // Defer the heavy category data to allow UI to remain responsive
+  // This allows React to prioritize user interactions over rendering heavy content
+  const deferredCategoryData = useDeferredValue(activeCategoryData)
+
+  // Memoize dropdown categories check to avoid expensive .some() on every render
+  const isDropdownCategoryActive = useMemo(() => {
+    return categories.slice(visibleTabCount).some(c => c.value === activeCategory)
+  }, [categories, activeCategory, visibleTabCount])
+
+  // Memoize visible and dropdown categories
+  const visibleCategories = useMemo(() => {
+    return categories.slice(0, visibleTabCount)
+  }, [categories, visibleTabCount])
+
+  const dropdownCategories = useMemo(() => {
+    return categories.slice(visibleTabCount)
+  }, [categories, visibleTabCount])
+
+  // Check if we're showing stale data (deferred value differs from current)
+  const isStale = deferredCategoryData !== activeCategoryData
+
   // Debug logging
   if (debug) {
     console.group('🔍 TearsheetDashboard Debug')
@@ -178,23 +281,24 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
     })))
     console.log('🎯 Active category:', activeCategory)
     console.log('📈 Active category data:', activeCategoryData)
+    console.log('⏳ Is stale (deferred):', isStale)
     console.groupEnd()
   }
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Unified Toolbar - matches Charts toolbar structure */}
-      <div className="sticky top-0 z-10 w-full bg-card border-b border-border">
+      <div className="sticky top-0 z-10 w-full bg-card border-b border-border" ref={toolbarRef}>
         <div className="flex items-center gap-2 px-4 py-2">
-          {/* Category Tabs - Desktop: show first 3, rest in dropdown */}
+          {/* Category Tabs - Desktop: show dynamically calculated tabs, rest in dropdown */}
           {/* Mobile: show dropdown */}
           {/* Only show category tabs in tab view mode */}
           {viewMode === 'tabs' && categories.length > 0 && (
             <>
-              {/* Show first 2-3 tabs on desktop, or use dropdown on mobile */}
+              {/* Show visible tabs on desktop, or use dropdown on mobile */}
               {!isResponsive ? (
                 <>
-                  {categories.slice(0, 3).map((category) => (
+                  {visibleCategories.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => handleCategoryChange(category.value)}
@@ -209,14 +313,14 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
                     </button>
                   ))}
 
-                  {/* Dropdown for remaining categories */}
-                  {categories.length > 3 && (
+                  {/* Dropdown for remaining categories - only show if there are dropdown categories */}
+                  {dropdownCategories.length > 0 && (
                     <div className="relative" ref={dropdownRef}>
                       <button
                         onClick={() => setShowDropdown(!showDropdown)}
                         className={clsx(
                           "px-3 py-1.5 rounded text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1",
-                          categories.slice(3).some(c => c.value === activeCategory)
+                          isDropdownCategoryActive
                             ? "bg-muted text-foreground"
                             : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                         )}
@@ -226,23 +330,17 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
                       </button>
 
                       {showDropdown && (
-                        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[150px] z-20">
-                          {categories.slice(3).map((category) => (
-                            <button
+                        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[150px] max-h-[400px] overflow-y-auto z-20">
+                          {dropdownCategories.map((category) => (
+                            <DropdownMenuItem
                               key={category.id}
+                              category={category}
+                              isActive={activeCategory === category.value}
                               onClick={() => {
                                 handleCategoryChange(category.value)
                                 setShowDropdown(false)
                               }}
-                              className={clsx(
-                                "w-full text-left px-3 py-2 text-sm transition-colors",
-                                activeCategory === category.value
-                                  ? "bg-muted text-foreground"
-                                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                              )}
-                            >
-                              {category.label}
-                            </button>
+                            />
                           ))}
                         </div>
                       )}
@@ -263,23 +361,17 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[200px] max-w-[300px] z-20">
+                    <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[200px] max-w-[300px] max-h-[400px] overflow-y-auto z-20">
                       {categories.map((category) => (
-                        <button
+                        <DropdownMenuItem
                           key={category.id}
+                          category={category}
+                          isActive={activeCategory === category.value}
                           onClick={() => {
                             handleCategoryChange(category.value)
                             setShowDropdown(false)
                           }}
-                          className={clsx(
-                            "w-full text-left px-3 py-2 text-sm transition-colors",
-                            activeCategory === category.value
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                          )}
-                        >
-                          {category.label}
-                        </button>
+                        />
                       ))}
                     </div>
                   )}
@@ -358,37 +450,42 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {viewMode === 'tabs' ? (
-          // Tab View - Show single category
-          <div className="glass rounded-lg p-6">
-            {activeCategoryData ? (
-              <TearsheetCategoryContent
-                categoryData={activeCategoryData}
-                layout={selectedLayout}
-                debug={debug}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="text-foreground/40 text-lg mb-2">
-                    No Data Available
-                  </div>
-                  <div className="text-foreground/20 text-sm">
-                    Select a category to view dashboard content
+      <div className={clsx(
+        "flex-1 overflow-y-auto p-6 transition-opacity duration-200",
+        (isPending || isStale) && "opacity-60"
+      )}>
+        <Suspense fallback={<ContentLoadingSkeleton />}>
+          {viewMode === 'tabs' ? (
+            // Tab View - Show single category
+            <div className="glass rounded-lg p-6">
+              {deferredCategoryData ? (
+                <TearsheetCategoryContent
+                  categoryData={deferredCategoryData}
+                  layout={selectedLayout}
+                  debug={debug}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="text-foreground/40 text-lg mb-2">
+                      No Data Available
+                    </div>
+                    <div className="text-foreground/20 text-sm">
+                      Select a category to view dashboard content
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          // Unified View - Show all categories
-          <UnifiedCategoryView
-            categories={categories}
-            layout={selectedLayout}
-            debug={debug}
-          />
-        )}
+              )}
+            </div>
+          ) : (
+            // Unified View - Show all categories
+            <UnifiedCategoryView
+              categories={categories}
+              layout={selectedLayout}
+              debug={debug}
+            />
+          )}
+        </Suspense>
       </div>
     </div>
   )

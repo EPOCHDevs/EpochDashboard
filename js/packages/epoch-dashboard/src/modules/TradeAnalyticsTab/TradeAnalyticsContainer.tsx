@@ -169,12 +169,14 @@ export function TradeAnalyticsContent({
   const [selectedAssetId, setSelectedAssetId] = useState('')
   const [selectedTimeframe, setSelectedTimeframe] = useState('5m')
   const [isEventsSidebarOpen, setIsEventsSidebarOpen] = useState(false)
+  const [isAssetSwitching, setIsAssetSwitching] = useState(false)
   const [selectedTradeIds, setSelectedTradeIds] = useState<number[]>([])
   const [expandedCardIds, setExpandedCardIds] = useState<number[]>([])
   const [selectedRoundTripForChart, setSelectedRoundTripForChart] = useState<IRoundTrip | null>(null)
   const [loadedDataRange, setLoadedDataRange] = useState<{ min: number; max: number } | null>(null)
   const [isLazyLoading, setIsLazyLoading] = useState(false)
   const [expansionRequest, setExpansionRequest] = useState<{ from: number; to: number } | null>(null)
+  const [debouncedSidebarWidth, setDebouncedSidebarWidth] = useState(56)
 
   // Refs for sidebar and chart
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -230,9 +232,14 @@ export function TradeAnalyticsContent({
 
   // Handle range expansion for lazy loading
   const handleRangeExpansion = useCallback((range: { from: number; to: number }) => {
+    console.log('📊 [Lazy Loading] Container received expansion request:', {
+      from: new Date(range.from).toISOString(),
+      to: new Date(range.to).toISOString(),
+      currentExpansionRequest: expansionRequest
+    })
     setExpansionRequest(range)
     setIsLazyLoading(true)
-  }, [])
+  }, [expansionRequest])
 
   // Fetch metadata
   const {
@@ -254,6 +261,15 @@ export function TradeAnalyticsContent({
     apiEndpoint,
     userId,
   })
+
+  // Debounce sidebar width changes to prevent chart re-renders during animation
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSidebarWidth(isEventsSidebarOpen ? 349 : 56)
+    }, 250) // Wait for animation to complete
+
+    return () => clearTimeout(timeoutId)
+  }, [isEventsSidebarOpen])
 
   // Flatten round trips for selected asset
   const flattenedRoundTrips = useMemo(() => {
@@ -286,7 +302,16 @@ export function TradeAnalyticsContent({
 
   // When asset changes, update timeframe to first available for that asset
   const handleAssetChange = (assetId: string) => {
+    // Immediately set loading state for instant visual feedback
+    setIsAssetSwitching(true)
     setSelectedAssetId(assetId)
+
+    // CRITICAL: Clear any selected trade from previous asset
+    // This prevents fetching with invalid pivot timestamps that are outside
+    // the new asset's data range, which would cause fetch failures and infinite loading
+    setSelectedRoundTripForChart(null)
+    setSelectedTradeIds([])
+    setExpandedCardIds([])
 
     if (tradeAnalyticsMetadata?.asset_info[assetId]) {
       const assetInfo = tradeAnalyticsMetadata.asset_info[assetId]
@@ -301,6 +326,17 @@ export function TradeAnalyticsContent({
   const selectedRoundTripsArray = useMemo(() => {
     return selectedRoundTripForChart ? [selectedRoundTripForChart] : []
   }, [selectedRoundTripForChart])
+
+  // Clear asset switching state when data loads for the new asset
+  useEffect(() => {
+    if (isAssetSwitching && !isLoadingTradeAnalyticsMetadata && !isLoadingRoundTripsData) {
+      // Short delay to ensure data has fully rendered before clearing loading state
+      const timeoutId = setTimeout(() => {
+        setIsAssetSwitching(false)
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isAssetSwitching, isLoadingTradeAnalyticsMetadata, isLoadingRoundTripsData])
 
   // Set absolute bounds from metadata when available
   useEffect(() => {
@@ -326,61 +362,31 @@ export function TradeAnalyticsContent({
     })
   }, [tradeAnalyticsMetadata, selectedAssetId, selectedTimeframe, campaignId])
 
-  // Add resize observer to trigger chart reflow when container size changes
-  useEffect(() => {
-    if (!chartContainerRef.current) return
-
-    const resizeObserver = new ResizeObserver(() => {
-      // Trigger chart reflow when container is resized
-      if (chartRef.current?.chart) {
-        setTimeout(() => {
-          chartRef.current?.chart.reflow()
-        }, 100)
-      }
-    })
-
-    resizeObserver.observe(chartContainerRef.current)
-
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [])
-
-  // Trigger reflow when sidebar opens/closes
-  useEffect(() => {
-    if (chartRef.current?.chart) {
-      // Trigger multiple reflows to ensure proper resizing
-      setTimeout(() => {
-        chartRef.current?.chart.reflow()
-      }, 50) // Quick initial reflow
-
-      setTimeout(() => {
-        chartRef.current?.chart.reflow()
-      }, 350) // After transition completes (300ms + buffer)
-    }
-  }, [isEventsSidebarOpen])
+  // No need for resize observer or reflow since sidebar is now an overlay
 
   // Clear isLazyLoading when expansion request changes
   // We set isLazyLoading=true when requesting, and clear it after a short delay
   // to allow the next expansion request to be processed
   useEffect(() => {
     if (isLazyLoading) {
-      // Clear the loading flag after a short delay to allow request to process
+      // Clear the loading flag after a longer delay to allow fetch to complete
       const timeoutId = setTimeout(() => {
         setIsLazyLoading(false)
-      }, 2000) // 2 second delay to ensure fetch has started
+      }, 5000) // 5 second delay to ensure fetch has completed
 
       return () => clearTimeout(timeoutId)
     }
   }, [isLazyLoading])
 
   // Clear expansion request after it's been processed
+  // Don't clear too quickly - wait for data to actually be fetched
   useEffect(() => {
     if (expansionRequest) {
-      // Clear the expansion request after a delay to prevent re-triggering
+      // Clear the expansion request after a longer delay to allow fetch to complete
+      // This prevents the request from being cleared before the data hook can process it
       const timeoutId = setTimeout(() => {
         setExpansionRequest(null)
-      }, 3000) // 3 seconds
+      }, 10000) // 10 seconds - enough time for fetch to complete
 
       return () => clearTimeout(timeoutId)
     }
@@ -449,28 +455,32 @@ export function TradeAnalyticsContent({
         rightControls={rightControls}
       />
 
-      {/* Main Content Area with Sidebar */}
-      <div className="flex flex-1 w-full flex-row overflow-hidden bg-background">
-        {/* Sidebar - Always visible, changes width when collapsed */}
-        {!shouldHideSidebar && (
+      {/* Main Content Area with Sidebar Overlay */}
+      <div className="flex flex-1 w-full flex-row overflow-hidden bg-background relative">
+        {/* Sidebar - Overlay positioned absolutely */}
+        {(
           <div
             ref={eventsSectionRef}
             className={clsx(
-              "h-full flex-shrink-0 transition-[width] duration-200 ease-in-out will-change-[width]",
+              "absolute left-0 top-0 h-full z-50 transform-gpu",
               isEventsSidebarOpen ? "w-[349px]" : "w-14"
             )}
+            style={{
+              transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: 'width'
+            }}
           >
-            <div className="h-full w-full bg-card border-r-2 border-border shadow-xl flex flex-col">
+            <div className="h-full w-full bg-card border-r border-border shadow-lg flex flex-col">
             {/* Collapsed Toolbar View */}
             {!isEventsSidebarOpen ? (
               <div className="flex flex-col items-center py-4 gap-4">
                 <button
                   onClick={() => setIsEventsSidebarOpen(true)}
-                  className="relative p-2.5 rounded-lg hover:bg-muted/30 transition-all group"
+                  className="relative p-2.5 rounded-lg hover:bg-muted/30 group"
                   title={`${flattenedRoundTrips.length} trades`}
                 >
                   <svg
-                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors"
+                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -502,11 +512,11 @@ export function TradeAnalyticsContent({
                   <button
                     ref={triggerRef}
                     onClick={() => setIsEventsSidebarOpen(false)}
-                    className="p-2 rounded-lg hover:bg-muted/30 transition-all group"
+                    className="p-2 rounded-lg hover:bg-muted/30 group"
                     title="Collapse sidebar"
                   >
                     <svg
-                      className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                      className="w-4 h-4 text-muted-foreground group-hover:text-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -565,10 +575,10 @@ export function TradeAnalyticsContent({
                           <button
                             key={roundTrip.index}
                             className={clsx(
-                              "relative flex flex-col gap-4 overflow-hidden rounded-lg transition-all duration-200 ease-out w-full px-4 py-3 text-left group border",
+                              "relative flex flex-col gap-4 overflow-hidden rounded-lg w-full px-4 py-3 text-left group border transform-gpu transition-transform duration-150",
                               isSelected
-                                ? "bg-accent/20 border-accent shadow-lg ring-1 ring-accent"
-                                : "bg-background border-border hover:bg-muted hover:border-accent/50 hover:shadow-lg"
+                                ? "bg-accent/20 border-accent shadow-md ring-1 ring-accent"
+                                : "bg-background border-border hover:bg-muted hover:border-accent/50 hover:shadow-sm hover:scale-[1.01]"
                             )}
                             onClick={() => {
                               setSelectedTradeIds([roundTrip.index])
@@ -611,7 +621,7 @@ export function TradeAnalyticsContent({
                               >
                                 <svg
                                   className={clsx(
-                                    "w-4 h-4 text-muted-foreground transition-transform duration-300",
+                                    "w-4 h-4 text-muted-foreground transition-transform duration-150",
                                     isExpanded && "rotate-180"
                                   )}
                                   fill="none"
@@ -703,10 +713,10 @@ export function TradeAnalyticsContent({
           </div>
         )}
 
-        {/* Chart Area - Flexible Width */}
+        {/* Chart Area - Full Width (sidebar overlays on top) */}
         <div
           ref={chartContainerRef}
-          className="flex-1 h-full overflow-hidden transition-all duration-300 ease-out"
+          className="w-full h-full overflow-hidden"
         >
           <div className="h-full w-full text-foreground p-2">
             <TradeAnalyticsChartRenderer
@@ -715,7 +725,7 @@ export function TradeAnalyticsContent({
               selectedRoundTrips={selectedRoundTripsArray}
               campaignId={campaignId}
               assetId={selectedAssetId}
-              fetchEntireCandleStickData={!selectedRoundTripForChart && !expansionRequest}
+              fetchEntireCandleStickData={false}
               paddingProfile="STANDARD"
               timeframe={selectedTimeframe}
               chartRef={chartRef}
@@ -724,6 +734,8 @@ export function TradeAnalyticsContent({
               isLazyLoading={isLazyLoading}
               apiEndpoint={apiEndpoint}
               userId={userId}
+              sidebarWidth={debouncedSidebarWidth}
+              isAssetSwitching={isAssetSwitching}
             />
           </div>
         </div>

@@ -79,7 +79,16 @@ export function useTearsheetMetadata(apiEndpoint: string, campaignId: string, us
           throw new Error(errorMessage)
         }
         const metadata = await response.json()
-        setData(metadata)
+
+        // Check if the response contains an error object instead of valid metadata
+        // This can happen when the API returns 200 OK but with an error in the body
+        if (metadata.error === 'DataNotFound' || (metadata.error && !metadata.tearsheet_metadata)) {
+          // Treat DataNotFound as empty metadata rather than an error
+          // This allows the UI to show "No Data Available" instead of an error state
+          setData({ tearsheet_metadata: {} })
+        } else {
+          setData(metadata)
+        }
       } catch (error) {
         console.error('Failed to fetch tearsheet metadata:', error)
         const errorMessage = error instanceof Error ? error.message : 'Failed to fetch metadata'
@@ -228,6 +237,38 @@ export function DashboardContent({
               <p>User: <span className="font-mono text-accent ml-2">{userId}</span></p>
               <p>API: <span className="font-mono text-accent ml-2">{apiEndpoint}</span></p>
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if metadata has loaded but contains no categories (empty tearsheet_metadata)
+  if (!isLoadingMetadata && metadata && categories.length === 0) {
+    return (
+      <div className={clsx("relative h-full bg-background", className)}>
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="max-w-md text-center">
+            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/30">
+              <svg
+                className="w-8 h-8 text-muted-foreground/40"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-foreground mb-2">No Data Available</h2>
+            <p className="text-sm text-muted-foreground/70 leading-relaxed">
+              No trades or performance data found for this campaign.<br />
+              Data will appear here once trades are executed.
+            </p>
           </div>
         </div>
       </div>

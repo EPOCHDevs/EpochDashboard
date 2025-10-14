@@ -204,21 +204,23 @@ export const convertNumericPointsToHighcharts = (
 // Get crosshair configuration
 export const getCrosshairConfig = (axisType: AxisType | undefined, isXAxis: boolean = true): any => {
   return {
+    className: 'highcharts-crosshair-custom',
     width: 1,
     color: CROSSHAIR_COLOR,
-    dashStyle: 'Solid',
-    snap: isXAxis,
+    dashStyle: 'Dash',
+    snap: isXAxis ? true : false,
     label: {
       enabled: true,
-      backgroundColor: TOOLTIP_BORDER_COLOR,
-      borderColor: TOOLTIP_BORDER_COLOR,
-      borderRadius: 3,
-      borderWidth: 0,
-      padding: 5,
+      className: 'highcharts-crosshair-custom-label',
+      backgroundColor: 'rgba(30, 136, 229, 0.9)',
+      borderColor: '#1E88E5',
+      borderRadius: 4,
+      borderWidth: 1,
+      padding: 6,
       style: {
         color: '#FFFFFF',
-        fontSize: '12px',
-        fontWeight: 'normal'
+        fontSize: '11px',
+        fontWeight: 'bold'
       },
       formatter: function(value: any) {
         if (axisType === AxisType.AxisDateTime && typeof value === 'number') {
@@ -226,12 +228,14 @@ export const getCrosshairConfig = (axisType: AxisType | undefined, isXAxis: bool
           return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
           })
         } else if (axisType === AxisType.AxisCategory) {
           return String(value)
         } else if (typeof value === 'number') {
-          return isXAxis ? value.toFixed(2) : formatYAxisValue(value)
+          return formatYAxisValue(value)
         }
         return String(value)
       }
@@ -464,29 +468,16 @@ export const convertBarDataToSeries = (
   }
 }
 
-// Professional muted colors for pie charts
-const PIE_COLORS = [
-  '#5B8DB8',  // Muted blue
-  '#7BA7BC',  // Muted teal
-  '#9BC1C5',  // Soft cyan
-  '#98A4B3',  // Blue gray
-  '#B5B8C2',  // Light gray blue
-  '#8B95A7',  // Steel blue
-  '#6D89A1',  // Slate blue
-  '#A7B8C4',  // Pale blue gray
-  '#8FA1B3',  // Dusty blue
-  '#7A8FA5'   // Stone blue
-]
-
 // Convert pie data to series
+// Note: Colors are intentionally NOT set here to allow chart components to control their own color palettes
 export const convertPieDataToSeries = (
   pieDataDef: PieDataDef,
   _seriesIndex: number
 ): any => {
   const pieData = (pieDataDef.points || []).map((point: PieData, pointIndex: number) => ({
     name: point.name || `Slice ${pointIndex + 1}`,
-    y: point.y || 0,
-    color: PIE_COLORS[pointIndex % PIE_COLORS.length]
+    y: point.y || 0
+    // No color set here - let the chart component apply its own color palette
   }))
 
   const isDonut = pieDataDef.innerSize && pieDataDef.innerSize !== '0%'

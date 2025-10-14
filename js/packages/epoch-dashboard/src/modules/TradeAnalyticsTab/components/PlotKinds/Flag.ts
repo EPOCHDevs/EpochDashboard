@@ -1,7 +1,6 @@
 import { SeriesConfig } from "../../../../types/TradeAnalyticsTypes"
 import { DataType, Table } from "apache-arrow"
 import { SeriesFlagsOptions } from "highcharts"
-import { tailwindColors } from "../../../../utils/tailwindHelpers"
 import { TRADE_ANALYTICS_PLOT_STYLES } from "../../../../constants/tradeAnalytics"
 
 export const FLAG_PLOT_KIND_DATA_KEYS = ["index", "value"]
@@ -41,18 +40,18 @@ export const generateFlagPlotKindSeriesOptions = ({
   if (seriesConfig.id.toLowerCase() === "long") {
     flagTitle = "L"
     flagText = "LONG"
-    flagColor = tailwindColors.territory.success
-    textColor = tailwindColors.primary.white
+    flagColor = "#00FE2A"  // Explicit bright green for LONG
+    textColor = "#FFFFFF"  // White text
   } else if (seriesConfig.id.toLowerCase() === "short") {
     flagTitle = "S"
     flagText = "SHORT"
-    flagColor = tailwindColors.secondary.red
-    textColor = tailwindColors.primary.white
+    flagColor = "#F63C6B"  // Explicit red for SHORT
+    textColor = "#FFFFFF"  // White text
   } else {
     flagTitle = "C"
     flagText = "CrossOver"
-    flagColor = tailwindColors.territory.cyan
-    textColor = tailwindColors.primary.white
+    flagColor = "#000000"  // Black for other flags
+    textColor = "#FFFFFF"  // White text
   }
 
   // Track the first flag value to avoid adding multiple flags for the same value
@@ -67,6 +66,8 @@ export const generateFlagPlotKindSeriesOptions = ({
         x: timestamp,
         title: flagTitle,
         text: flagText,
+        color: flagColor,  // Set color on individual flag point
+        fillColor: flagColor,  // Set fill color on individual flag point
       })
     }
     lastFlag = value

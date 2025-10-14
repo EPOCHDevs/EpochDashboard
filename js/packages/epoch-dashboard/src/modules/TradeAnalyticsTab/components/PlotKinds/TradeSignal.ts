@@ -1,8 +1,7 @@
 import { SeriesConfig } from "../../../../types/TradeAnalyticsTypes"
 import { DataType, Table } from "apache-arrow"
 import { SeriesFlagsOptions } from "highcharts"
-import { TRADE_ANALYTICS_PLOT_STYLES, getTradeAnalyticsPlotStyles } from "../../../../constants/tradeAnalytics"
-import { getChartColors } from "../../../../constants"
+import { getTradeAnalyticsPlotStyles } from "../../../../constants/tradeAnalytics"
 
 export const TRADE_SIGNAL_PLOT_KIND_DATA_KEYS = [
   "index",
@@ -43,12 +42,16 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
 
   const seriesOptions: SeriesFlagsOptions[] = []
   const styles = getTradeAnalyticsPlotStyles().flag
-  const themeColors = getChartColors()
 
-  // Define colors for different trade signal types (theme-aware)
-  const longColor = themeColors.long // Green for long positions
-  const shortColor = themeColors.short // Red for short positions
-  const closeColor = themeColors.warning // Amber for exits
+  // Use explicit colors that match TradeAnalytics position badges
+  // These match territory-success (#26a69a) and secondary-red (#f23645) from constants
+  const longColor = "#26a69a" // TradingView green (territory-success)
+  const shortColor = "#f23645" // TradingView red (secondary-red)
+  const borderColor = "#000000" // Black border for entry flags
+  const textColor = "#FFFFFF" // White text for entry flags
+  const exitFlagFillColor = "#000000" // Black background for exit flags
+  const exitFlagBorderColor = "#FFFFFF" // White border for exit flags
+  const exitFlagTextColor = "#FFFFFF" // White text for exit flags
 
   // Enter Long
   if (enterLongColumn) {
@@ -81,10 +84,10 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         shape: styles.shape,
         width: styles.width,
         fillColor: longColor,
-        color: longColor,
+        lineColor: borderColor,  // Theme-aware border
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.textColor,
+          color: textColor,  // Theme-aware text color
           fontSize: "10px",
           fontWeight: "bold",
         },
@@ -136,10 +139,10 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         shape: styles.shape,
         width: styles.width,
         fillColor: shortColor,
-        color: shortColor,
+        lineColor: borderColor,  // Theme-aware border
         lineWidth: styles.lineWidth,
         style: {
-          color: styles.textColor,
+          color: textColor,  // Theme-aware text color
           fontSize: "10px",
           fontWeight: "bold",
         },
@@ -190,17 +193,18 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: closeColor,
-        color: closeColor,
-        lineWidth: styles.lineWidth,
+        fillColor: exitFlagFillColor,
+        lineColor: exitFlagBorderColor,  // White border
+        lineWidth: 2,
         style: {
-          color: styles.textColor,
+          color: exitFlagTextColor,  // White text
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: closeColor,
+            fillColor: exitFlagFillColor,
+            lineColor: exitFlagBorderColor,
             brightness: 0.2,
           },
         },
@@ -229,6 +233,7 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
           x: timestamp,
           title: "XS",
           text: "EXIT SHORT",
+
         })
       }
       lastExitShortFlag = value
@@ -244,17 +249,18 @@ export const generateTradeSignalPlotKindSeriesOptions = ({
         zIndex: seriesConfig.zIndex,
         shape: styles.shape,
         width: styles.width,
-        fillColor: closeColor,
-        color: closeColor,
-        lineWidth: styles.lineWidth,
+        fillColor: exitFlagFillColor,
+        lineColor: exitFlagBorderColor,  // White border
+        lineWidth: 2,
         style: {
-          color: styles.textColor,
+          color: exitFlagTextColor,  // White text
           fontSize: "10px",
           fontWeight: "bold",
         },
         states: {
           hover: {
-            fillColor: closeColor,
+            fillColor: exitFlagFillColor,
+            lineColor: exitFlagBorderColor,
             brightness: 0.2,
           },
         },

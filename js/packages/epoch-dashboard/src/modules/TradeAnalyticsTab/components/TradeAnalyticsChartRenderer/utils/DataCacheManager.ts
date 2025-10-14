@@ -471,6 +471,24 @@ export class DataCacheManager {
 
     keysToRemove.forEach((key) => this.cache.delete(key))
   }
+
+  /**
+   * Removes cached data for a specific asset within a strategy
+   */
+  public clearAssetCache(strategyId: string, assetId: string): void {
+    const keysToRemove: string[] = []
+
+    for (const [key, entry] of Array.from(this.cache.entries())) {
+      // Key format is: strategyId_assetId_timeframe
+      if (key.startsWith(`${strategyId}_${assetId}_`)) {
+        keysToRemove.push(key)
+        this.totalSize -= entry.size
+      }
+    }
+
+    keysToRemove.forEach((key) => this.cache.delete(key))
+    console.log(`📊 [Cache] Cleared cache for asset: ${assetId} (${keysToRemove.length} entries)`)
+  }
 }
 
 // Singleton instance for global use

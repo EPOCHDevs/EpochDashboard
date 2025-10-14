@@ -26,17 +26,15 @@
   opacity: 0.8;
 }
 
-/* Smooth transition for pane height changes */
+/* Smooth transition for pane height changes - DISABLED */
 .highcharts-yaxis {
-  transition:
-    height 0.3s ease-in-out,
-    top 0.3s ease-in-out;
+  transition: none;
 }
 
 /* Enhanced resize handle styling */
 .highcharts-resize-handle {
   opacity: 0.6;
-  transition: opacity 0.2s ease-in-out;
+  transition: none;
   stroke: rgba(255, 255, 255, 0.3);
   stroke-width: 2px;
 }
@@ -55,7 +53,7 @@
 /* Better visual separation between collapsed and expanded panes */
 .highcharts-yaxis[data-collapsed="true"] {
   opacity: 0.5;
-  transition: opacity 0.3s ease-in-out;
+  transition: none;
 }
 
 /* Loading animation for progress bar */
@@ -149,4 +147,59 @@
 /* Grid line skeleton */
 .skeleton-grid-line {
   animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Enhanced crosshair styling */
+.highcharts-crosshair-custom {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 5, 5;
+  pointer-events: none;
+  transition: none !important;
+}
+
+.highcharts-crosshair-custom-label {
+  font-weight: bold !important;
+  font-size: 11px !important;
+  text-shadow: none !important;
+  transition: none !important;
+}
+
+/* Make crosshair labels more prominent */
+.highcharts-crosshair-label text {
+  font-weight: bold !important;
+  paint-order: stroke fill;
+  stroke: rgba(0, 0, 0, 0.3);
+  stroke-width: 2px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  transition: none !important;
+}
+
+/* Disable all animations for crosshair elements */
+.highcharts-crosshair,
+.highcharts-crosshair-label,
+.highcharts-crosshair-label rect,
+.highcharts-crosshair-label text {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Ensure tooltip container is visible but below sidebar (z-50) */
+.highcharts-tooltip-container {
+  z-index: 30 !important; /* Below sidebar (z-50) but above chart content */
+  pointer-events: none !important;
+}
+
+/* Ensure tooltip content is visible */
+.highcharts-tooltip {
+  z-index: 30 !important;
+  opacity: 1 !important;
+}
+
+/* Fix for tooltip span visibility */
+.highcharts-tooltip > span {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }

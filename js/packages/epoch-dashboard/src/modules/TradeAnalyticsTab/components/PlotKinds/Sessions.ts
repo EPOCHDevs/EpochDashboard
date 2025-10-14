@@ -41,7 +41,7 @@ export const generateSessionsPlotElements = ({
   const SESSION_COLOR_MAP: Record<string, string> = {
     Sydney: "#F59E0B", // amber
     Tokyo: "#3B82F6", // blue
-        London: "#8B5CF6", // violet
+    London: "#8B5CF6", // violet
     NewYork: "#6366F1", // indigo
     AsianKillZone: "#FBBF24", // lighter amber
     LondonOpenKillZone: "#A78BFA", // light violet

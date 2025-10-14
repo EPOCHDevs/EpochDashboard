@@ -65,6 +65,9 @@ interface TradeAnalyticsChartRendererProps extends Highcharts.Options {
   isLazyLoading?: boolean // Flag to prevent duplicate expansion requests
   apiEndpoint?: string // API endpoint for fetching data
   userId?: string // User ID for authentication
+  sidebarWidth?: number // Width of the sidebar overlay for tooltip positioning
+  isAssetSwitching?: boolean // Flag to show loading state during asset switch
+  initialDisplayBars?: number // Number of bars to display initially (default 150, range 100-200)
 }
 
 interface PaneState {
@@ -100,6 +103,9 @@ const TradeAnalyticsChartRenderer = ({
   isLazyLoading = false,
   apiEndpoint,
   userId,
+  sidebarWidth = 56, // Default to collapsed sidebar width
+  isAssetSwitching = false, // Default to false
+  initialDisplayBars = 500, // Default to 500 bars for better visibility
 }: TradeAnalyticsChartRendererProps) => {
   const internalChartRef = React.useRef<HighchartsReact.RefObject>(null)
   const chartRef = externalChartRef || internalChartRef
@@ -154,7 +160,6 @@ const TradeAnalyticsChartRenderer = ({
   const [internalTimeframe, setInternalTimeframe] = useState<string>("")
   const [chartKey, setChartKey] = useState<string>("")
   const [isTimeframeSwitching, setIsTimeframeSwitching] = useState(false)
-  const baselineAppliedRef = useRef<string>("")
 
   // Get theme-aware Highcharts configuration
   const highchartsTheme = useHighchartsTheme()
@@ -328,6 +333,7 @@ const TradeAnalyticsChartRenderer = ({
         return undefined
       }
 
+
     // Configure yAxes based on pane states with validation
     const yAxes: Highcharts.YAxisOptions[] = paneStates
       .filter((pane) => pane && typeof pane.top === "number" && typeof pane.height === "number")
@@ -364,6 +370,56 @@ const TradeAnalyticsChartRenderer = ({
             } catch (error) {
               return String(this.value || "")
             }
+          },
+        },
+        crosshair: {
+          className: 'highcharts-crosshair-custom',
+          enabled: true,
+          snap: false,
+          dashStyle: 'Dash',
+          animation: false,
+          label: {
+            enabled: true,
+            className: 'highcharts-crosshair-custom-label',
+            backgroundColor: `${themeColors.foreground}E6`,
+            borderColor: themeColors.foreground,
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: 6,
+            style: {
+              color: themeColors.background,
+              fontWeight: 'bold',
+              fontSize: '11px',
+            },
+            align: 'left',
+            x: 20, // Increased offset to prevent overlap with static labels
+            formatter: function() {
+              const val = (this as any).value
+              if (typeof val === 'number') {
+                let decimalPlaces = 2
+
+                if (selectedAssetDetails?.asset?.asset_class) {
+                  const assetClass = selectedAssetDetails.asset.asset_class
+                  switch (assetClass) {
+                    case 'FX':
+                      decimalPlaces = 5
+                      break
+                    case 'Crypto':
+                      decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
+                      break
+                    case 'Stocks':
+                      decimalPlaces = 2
+                      break
+                    case 'Futures':
+                      decimalPlaces = val < 10 ? 4 : 2
+                      break
+                  }
+                }
+
+                return val.toFixed(decimalPlaces)
+              }
+              return String(val)
+            },
           },
         },
         title: { text: "" },
@@ -413,6 +469,16 @@ const TradeAnalyticsChartRenderer = ({
                     // First series gets the original ID
                     options.id = seriesConfig.id
                   }
+
+                  // IMPORTANT: Preserve the yAxis assignment to ensure series go to correct panes
+                  // The yAxis might already be set in seriesOptions, but we override with seriesConfig.yAxis if present
+                  if (seriesConfig.yAxis !== undefined && seriesConfig.yAxis !== null) {
+                    (options as any).yAxis = seriesConfig.yAxis
+                  } else if (!(options as any).yAxis && seriesConfig.yAxis === 0) {
+                    // Handle the case where yAxis is 0 (falsy but valid)
+                    (options as any).yAxis = 0
+                  }
+
                   if (seriesConfig.linkedTo) {
                     if (seriesConfig.type === "flag") {
                       ;(options as SeriesFlagsOptions).onSeries = seriesConfig.linkedTo
@@ -502,23 +568,74 @@ const TradeAnalyticsChartRenderer = ({
         panKey: "shift",
         height: height || undefined,
         width: width || undefined,
+        marginLeft: 0,
+        marginRight: 120, // Increased right margin to provide more space for Y-axis labels
         marginBottom: 40, // Reduced bottom margin
         events: {
           load() {
+            const chart = this
+
             // Disable the initial animation completely
-            this.series.forEach((series) => {
-              try {
-                ;(series as any).update(
-                  {
-                    animation: false,
-                  },
-                  false
-                )
-              } catch (error) {
-                // Silently skip animation disabling errors
+            try {
+              if (chart.series && Array.isArray(chart.series) && chart.series.length > 0) {
+                chart.series.forEach((series) => {
+                  if (series && typeof series === 'object') {
+                    try {
+                      ;(series as any).options.animation = false
+                    } catch (error) {
+                      // Silently skip if can't disable animation
+                    }
+                  }
+                })
               }
-            })
-            this.redraw(false)
+            } catch (error) {
+              // Silently handle any series access errors
+            }
+
+            // Apply initial zoom to show only last N bars
+            // Use immediate execution instead of setTimeout to reduce flicker
+            try {
+              if (!selectedRoundTrips.length && chart && chart.xAxis && Array.isArray(chart.xAxis) && chart.xAxis[0]) {
+                const xAxis = chart.xAxis[0] as any
+
+                // Get timestamps directly from the first series
+                let allTimes: number[] = []
+                if (chart.series && chart.series.length > 0) {
+                  const firstSeries = chart.series[0] as any
+
+                  if (firstSeries.xData && firstSeries.xData.length > 0) {
+                    allTimes = firstSeries.xData as number[]
+                  } else if (firstSeries.options && firstSeries.options.data) {
+                    const seriesData = firstSeries.options.data as any[]
+                    allTimes = seriesData.map((point: any) => {
+                      if (Array.isArray(point)) {
+                        return point[0]
+                      } else if (point && typeof point === 'object' && 'x' in point) {
+                        return point.x
+                      }
+                      return 0
+                    }).filter((t: number) => t > 0)
+                  }
+                }
+
+                if (allTimes && allTimes.length > 1) {
+                  const validTimes = allTimes.filter(t => t > 0).sort((a, b) => a - b)
+
+                  // Calculate how many bars to show using initialDisplayBars
+                  const barsToShow = Math.min(initialDisplayBars, validTimes.length)
+                  const startIdx = Math.max(0, validTimes.length - barsToShow)
+                  const endIdx = validTimes.length - 1
+
+                  // Apply the extremes immediately to prevent flicker
+                  xAxis.setExtremes(validTimes[startIdx], validTimes[endIdx], false, false)
+                }
+              }
+            } catch (error) {
+              // Silently handle zoom errors
+            }
+
+            // Single redraw at the end
+            chart.redraw(false)
           },
         },
         reflow: true, // Enable reflow for proper sizing
@@ -535,7 +652,7 @@ const TradeAnalyticsChartRenderer = ({
       xAxis: {
         type: "datetime",
         gridLineWidth: 2,
-        ordinal: true,
+        ordinal: false,
         gridLineColor: highchartsTheme?.xAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
         gridLineDashStyle: "Solid",
         labels: {
@@ -545,9 +662,13 @@ const TradeAnalyticsChartRenderer = ({
           },
         },
         crosshair: {
+          className: 'highcharts-crosshair-custom',
+          enabled: true,
           dashStyle: "Dash",
+          animation: false,
           label: {
             enabled: true,
+            className: 'highcharts-crosshair-custom-label',
             format: "{value:%Y-%m-%d %H:%M}",
             backgroundColor: `${themeColors.foreground}E6`,
             borderColor: themeColors.foreground,
@@ -644,6 +765,17 @@ const TradeAnalyticsChartRenderer = ({
               const needsExpansion = approachingStart || approachingEnd
 
               if (needsExpansion) {
+                console.log('📊 [Lazy Loading] Expansion needed:', {
+                  viewMin,
+                  viewMax,
+                  cachedMin,
+                  cachedMax,
+                  approachingStart,
+                  approachingEnd,
+                  cachedRange,
+                  frontBuffer,
+                  backBuffer
+                })
 
                 // Calculate expansion range: extend beyond viewport by 200% on each side
                 // VERY aggressive prefetching to ensure we NEVER hit the limit
@@ -654,6 +786,13 @@ const TradeAnalyticsChartRenderer = ({
                 // Expand beyond current viewport (not just current data bounds)
                 const expansionFrom = viewMin - expansionBuffer
                 const expansionTo = viewMax + expansionBuffer
+
+                console.log('📊 [Lazy Loading] Requesting expansion:', {
+                  from: new Date(expansionFrom).toISOString(),
+                  to: new Date(expansionTo).toISOString(),
+                  expansionBuffer,
+                  viewportRange
+                })
 
                 // Trigger data fetch - with ordinal:false, chart will naturally show gaps
                 // No need to manually extend axis - Highcharts handles it automatically
@@ -671,7 +810,7 @@ const TradeAnalyticsChartRenderer = ({
         shared: true,
         split: true,
         enabled: true,
-        outside: true,
+        outside: true, // Fixed at top-right corner
         padding: 0,
         backgroundColor: "transparent",
         borderRadius: 0,
@@ -874,6 +1013,10 @@ const TradeAnalyticsChartRenderer = ({
     highchartsTheme, // Update chart when theme changes
     themeColors, // Update chart when theme colors change
     isActuallyFetchingTradeAnalyticsChartData, // Include so event handler can check if fetch is in progress
+    assetId, // CRITICAL: Ensure chartOptions rebuilds completely when asset changes
+    campaignId, // Also include campaignId for completeness
+    sidebarWidth, // Update tooltip position when sidebar width changes
+    initialDisplayBars, // Include for initial zoom calculation
   ])
 
   const handleSeriesVisibility = useCallback(
@@ -899,7 +1042,6 @@ const TradeAnalyticsChartRenderer = ({
   // Do not auto-focus or zoom; show default range provided by Highcharts
   useEffect(() => {
     // no-op: keep effect to react to data changes without adjusting extremes
-    baselineAppliedRef.current = "" // reset baseline application on data change
   }, [tradeAnalyticsChartData])
 
   // Reset chart rendered state when data changes
@@ -914,11 +1056,16 @@ const TradeAnalyticsChartRenderer = ({
     // Clear visible series state to prevent stale series references
     setVisibleSeriesIds([])
 
-    // Debounce the chart key update to prevent rapid switching issues
+    // CRITICAL: Clear viewport range ref to prevent zoom state transfer between assets
+    previousViewportRangeRef.current = null
+
+    // Force immediate chart key update to recreate chart with clean state
+    setChartKey(`${selectedTimeframe}-${assetId}-${Date.now()}`)
+
+    // Short delay before marking switching as complete
     const timeoutId = setTimeout(() => {
-      setChartKey(`${selectedTimeframe}-${assetId}-${Date.now()}`)
       setIsTimeframeSwitching(false)
-    }, 150) // 150ms debounce
+    }, 50) // Reduced debounce
 
     return () => clearTimeout(timeoutId)
   }, [selectedTimeframe, assetId])
@@ -967,8 +1114,8 @@ const TradeAnalyticsChartRenderer = ({
   return (
     <div className="flex h-full w-full flex-col items-start">
       <div className="relative h-full w-full flex-1" ref={chartContainerRef}>
-        {/* Show loading skeleton on INITIAL load or when data is being fetched */}
-        {(isLoading || isTimeframeSwitching || isLoadingTradeAnalyticsChartData) && !tradeAnalyticsChartData ? (
+        {/* Show loading skeleton on INITIAL load, timeframe switch, OR asset switch */}
+        {((isLoading || isTimeframeSwitching || isLoadingTradeAnalyticsChartData) && !tradeAnalyticsChartData) || isAssetSwitching ? (
           <div className="h-full w-full flex items-center justify-center">
             <div className="text-center">
               <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-accent border-r-transparent mb-4" />
@@ -1087,29 +1234,6 @@ const TradeAnalyticsChartRenderer = ({
                 // Trigger reflow to ensure proper sizing
                 if (chart) {
                   chart.reflow()
-                }
-
-                // If there are no selected round trips, apply a baseline window
-                try {
-                  if (!selectedRoundTrips.length && tradeAnalyticsChartData) {
-                    const rawTimes = tradeAnalyticsChartData.getChild("index")?.toArray() as
-                      | Array<number | bigint>
-                      | undefined
-                    const allTimes = (rawTimes ?? []).map((t) =>
-                      typeof t === "bigint" ? Number(t) : (t as number)
-                    )
-                    if (allTimes && allTimes.length > 1) {
-                      const baselineUnits = DEFAULT_PADDING_CONFIGS[paddingProfile].baselineUnits
-                      const endIdx = Math.min(allTimes.length - 1, baselineUnits - 1)
-                      const key = `${assetId}-${selectedTimeframe}-${endIdx}`
-                      if (baselineAppliedRef.current !== key) {
-                        chart.xAxis[0].setExtremes(allTimes[0], allTimes[endIdx], false, false)
-                        baselineAppliedRef.current = key
-                      }
-                    }
-                  }
-                } catch (_) {
-                  // ignore baseline setting errors
                 }
 
                 // Mark as rendered immediately since we disabled animations

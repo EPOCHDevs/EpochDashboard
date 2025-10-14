@@ -53,8 +53,8 @@ const TableSkeleton = () => (
   </div>
 )
 
-// Component mapper for chart types
-const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => {
+// Component mapper for chart types (memoized to prevent re-renders)
+const ChartComponent = React.memo(({ chart, debug }: { chart: Chart, debug?: boolean }) => {
   // Debug logging for individual charts
   if (debug) {
     const chartType = chart.areaDef ? 'Area' :
@@ -93,7 +93,7 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
   } else if (chart.xRangeDef) {
     return <XRangeChart data={chart.xRangeDef} height={400} />
   } else if (chart.pieDef) {
-    return <PieChart data={chart.pieDef} height={400} />
+    return <PieChart data={chart.pieDef} height={600} /> // Larger for better visibility with 500+ assets
   }
 
   // Fallback for unsupported chart types
@@ -108,7 +108,7 @@ const ChartComponent = ({ chart, debug }: { chart: Chart, debug?: boolean }) => 
       </div>
     </div>
   )
-}
+})
 
 interface TearsheetCategoryContentProps {
   categoryData: CategoryData
@@ -121,8 +121,30 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
   layout,
   debug = false
 }) => {
-  const layoutConfig = DASHBOARD_LAYOUTS.find(l => l.value === layout)
-  const gridClass = layoutConfig?.gridClass || 'grid-cols-2'
+  const layoutConfig = React.useMemo(() =>
+    DASHBOARD_LAYOUTS.find(l => l.value === layout),
+    [layout]
+  )
+
+  // Build responsive grid classes based on layout selection
+  const gridClass = React.useMemo(() => {
+    const baseClass = layoutConfig?.gridClass || 'grid-cols-2'
+
+    // Map layout to responsive classes
+    // Default: 1 column on mobile, 2 on tablet, respect layout choice on desktop
+    if (layout === 'columns_3') {
+      return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+    } else if (layout === 'columns_2') {
+      return 'grid-cols-1 md:grid-cols-2'
+    } else if (layout === 'columns_2x2') {
+      return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:grid-rows-2'
+    } else if (layout === 'single') {
+      return 'grid-cols-1'
+    }
+
+    // Fallback: default responsive behavior (1 col mobile, 2 col tablet, 3 col desktop)
+    return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+  }, [layout, layoutConfig])
 
   // Determine if we should use full width for tables
   const isCompactLayout = layout === 'columns_3' || layout === 'columns_2x2'
@@ -173,10 +195,19 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
     })
   }
 
-  // Sort charts, tables, and cards based on category
-  const sortedCharts = sortStatItems(categoryData.charts)
-  const sortedTables = sortStatItems(categoryData.tables)
-  const sortedCards = sortStatItems(categoryData.cards)
+  // Sort charts, tables, and cards based on category (memoized to prevent re-sorting on every render)
+  const sortedCharts = React.useMemo(
+    () => sortStatItems(categoryData.charts),
+    [categoryData.charts, categoryData.label]
+  )
+  const sortedTables = React.useMemo(
+    () => sortStatItems(categoryData.tables),
+    [categoryData.tables, categoryData.label]
+  )
+  const sortedCards = React.useMemo(
+    () => sortStatItems(categoryData.cards),
+    [categoryData.cards, categoryData.label]
+  )
 
   // Helper to determine if chart should span full width
   const isFullWidthChart = (chart: Chart): boolean => {
@@ -268,4 +299,5 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
   )
 }
 
-export default TearsheetCategoryContent
+// Memoize the entire component to prevent unnecessary re-renders
+export default React.memo(TearsheetCategoryContent)

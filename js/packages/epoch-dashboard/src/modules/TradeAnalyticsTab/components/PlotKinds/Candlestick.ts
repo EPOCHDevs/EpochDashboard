@@ -62,7 +62,9 @@ export const generateCandlestickPlotKindSeriesOptions = ({
     } as SeriesCandlestickOptions)
   }
 
-  if (roundTrips?.length) {
+  const hasRoundTrips = Array.isArray(roundTrips)
+  if (hasRoundTrips) {
+    const safeRoundTrips = roundTrips ?? []
     // Separate buy and sell points based on position side
     const buyPoints: Array<{ x: number; y: number; roundTrip: IRoundTrip }> = []
     const sellPoints: Array<{ x: number; y: number; roundTrip: IRoundTrip }> = []
@@ -71,7 +73,7 @@ export const generateCandlestickPlotKindSeriesOptions = ({
     const shapes: AnnotationsOptions["shapes"] = []
     const labels: AnnotationsOptions["labels"] = []
 
-    roundTrips.forEach((roundTrip) => {
+    safeRoundTrips.forEach((roundTrip) => {
       const openTimestamp = new Date(roundTrip.open_datetime).getTime()
 
       if (roundTrip.side === TRADE_POSITION.LONG) {
@@ -109,75 +111,71 @@ export const generateCandlestickPlotKindSeriesOptions = ({
       }
     })
 
-    // Render Buy point series
-    if (buyPoints.length) {
-      series.push({
-        type: "scatter",
-        name: "Buy Point",
-        id: "buy-point",
-        data: buyPoints.map((point) => [point.x, point.y]),
-        marker: {
-          symbol: `url(data:image/svg+xml;base64,${btoa(getArrowPointSVG("up"))})`,
-          width: 32,
-          height: 40,
-          enabled: true,
+    // Render Buy point series (always include series so stale markers are cleared)
+    series.push({
+      type: "scatter",
+      name: "Buy Point",
+      id: "buy-point",
+      data: buyPoints.map((point) => [point.x, point.y]),
+      marker: {
+        symbol: `url(data:image/svg+xml;base64,${btoa(getArrowPointSVG("up"))})`,
+        width: 32,
+        height: 40,
+        enabled: true,
+      },
+      dataLabels: {
+        enabled: true,
+        format: `Bought {y:.2f}`,
+        style: {
+          color: "white",
+          textOutline: "2px black",
+          fontSize: "12px",
+          fontWeight: "bold",
         },
-        dataLabels: {
-          enabled: true,
-          format: `Bought {y:.2f}`,
-          style: {
-            color: "white",
-            textOutline: "2px black",
-            fontSize: "12px",
-            fontWeight: "bold",
-          },
-          backgroundColor: "rgba(0, 128, 0, 0.8)",
-          borderColor: "rgba(0, 128, 0, 1)",
-          borderRadius: 4,
-          borderWidth: 1,
-          padding: 4,
-          y: 50, // Move further down to avoid overlap
-          x: 0,
-        },
-        enableMouseTracking: true,
-        yAxis: 0, // Assume the first yAxis is for price
-      })
-    }
+        backgroundColor: "rgba(0, 128, 0, 0.8)",
+        borderColor: "rgba(0, 128, 0, 1)",
+        borderRadius: 4,
+        borderWidth: 1,
+        padding: 4,
+        y: 50, // Move further down to avoid overlap
+        x: 0,
+      },
+      enableMouseTracking: true,
+      yAxis: 0, // Assume the first yAxis is for price
+    })
 
-    // Render Sell point series
-    if (sellPoints.length) {
-      series.push({
-        type: "scatter",
-        name: "Sell Point",
-        id: "sell-point",
-        data: sellPoints.map((point) => [point.x, point.y]),
-        marker: {
-          symbol: `url(data:image/svg+xml;base64,${btoa(getArrowPointSVG("down"))})`,
-          width: 32,
-          height: 40,
-          enabled: true,
+    // Render Sell point series (always include series so stale markers are cleared)
+    series.push({
+      type: "scatter",
+      name: "Sell Point",
+      id: "sell-point",
+      data: sellPoints.map((point) => [point.x, point.y]),
+      marker: {
+        symbol: `url(data:image/svg+xml;base64,${btoa(getArrowPointSVG("down"))})`,
+        width: 32,
+        height: 40,
+        enabled: true,
+      },
+      dataLabels: {
+        enabled: true,
+        format: `Sold {y:.2f}`,
+        style: {
+          color: "white",
+          textOutline: "2px black",
+          fontSize: "12px",
+          fontWeight: "bold",
         },
-        dataLabels: {
-          enabled: true,
-          format: `Sold {y:.2f}`,
-          style: {
-            color: "white",
-            textOutline: "2px black",
-            fontSize: "12px",
-            fontWeight: "bold",
-          },
-          backgroundColor: "rgba(220, 38, 38, 0.8)",
-          borderColor: "rgba(220, 38, 38, 1)",
-          borderRadius: 4,
-          borderWidth: 1,
-          padding: 4,
-          y: -50, // Move further up to avoid overlap
-          x: 0,
-        },
-        enableMouseTracking: true,
-        yAxis: 0, // Assume the first yAxis is for price
-      })
-    }
+        backgroundColor: "rgba(220, 38, 38, 0.8)",
+        borderColor: "rgba(220, 38, 38, 1)",
+        borderRadius: 4,
+        borderWidth: 1,
+        padding: 4,
+        y: -50, // Move further up to avoid overlap
+        x: 0,
+      },
+      enableMouseTracking: true,
+      yAxis: 0, // Assume the first yAxis is for price
+    })
 
     // Add annotations if we have any shapes
     if (shapes.length > 0) {

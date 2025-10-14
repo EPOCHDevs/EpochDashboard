@@ -1,6 +1,6 @@
 {
   "name": "@epochlab/epoch-dashboard-workspace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Monorepo for Epoch Dashboard package and examples",
   "private": true,
   "workspaces": [

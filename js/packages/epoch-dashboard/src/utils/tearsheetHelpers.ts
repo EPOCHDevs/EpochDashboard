@@ -28,6 +28,7 @@ export function extractCategories(tearsheet: TearSheet): string[] {
       // Check each chart type for category
       const category =
         chart.linesDef?.chartDef?.category ||
+        chart.numericLinesDef?.chartDef?.category ||
         chart.barDef?.chartDef?.category ||
         chart.areaDef?.chartDef?.category ||
         chart.heatMapDef?.chartDef?.category ||
@@ -159,6 +160,7 @@ export function groupByCategory(tearsheet: TearSheet): Map<string, CategoryData>
 function getChartCategory(chart: Chart): string {
   return (
     chart.linesDef?.chartDef?.category ||
+    chart.numericLinesDef?.chartDef?.category ||
     chart.barDef?.chartDef?.category ||
     chart.areaDef?.chartDef?.category ||
     chart.heatMapDef?.chartDef?.category ||
@@ -230,6 +232,7 @@ export function formatCategoryLabel(category: string): string {
 export function getChartTitle(chart: Chart): string {
   return (
     chart.linesDef?.chartDef?.title ||
+    chart.numericLinesDef?.chartDef?.title ||
     chart.barDef?.chartDef?.title ||
     chart.areaDef?.chartDef?.title ||
     chart.heatMapDef?.chartDef?.title ||
@@ -247,6 +250,7 @@ export function getChartTitle(chart: Chart): string {
 export function getChartId(chart: Chart): string {
   return (
     chart.linesDef?.chartDef?.id ||
+    chart.numericLinesDef?.chartDef?.id ||
     chart.barDef?.chartDef?.id ||
     chart.areaDef?.chartDef?.id ||
     chart.heatMapDef?.chartDef?.id ||
