@@ -71,7 +71,7 @@ if(BUILD_SHARED_LIBS)
     )
 endif()
 
-add_subdirectory(thirdparty)
+include(${PROJECT_SOURCE_DIR}/cmake/EpochProtos.cmake)
 
 target_include_directories(epoch_dashboard
         PUBLIC
@@ -82,7 +82,6 @@ target_include_directories(epoch_dashboard
 
 target_compile_options(epoch_dashboard PRIVATE -Wall -Wextra -Werror)
 
-# Add thirdparty subdirectory before linking
 add_subdirectory(src)
 
 # Prefer static protobuf when bundling

@@ -1,0 +1,46 @@
+{
+    // CMake Configuration
+    "cmake.configureArgs": [
+        "-DBUILD_TEST=ON",
+        "-DBUILD_SHARED_LIBS=ON"
+    ],
+    "cmake.buildDirectory": "${workspaceFolder}/CmakeBuildDebug",
+    "cmake.configureOnOpen": true,
+    "cmake.configureOnEdit": true,
+    // Test Configuration - Disable CTest, use native Catch2 discovery
+    "cmake.ctest.allowParallelJobs": false,
+    "cmake.ctest.parallelJobs": 0,
+    "cmake.testExplorerIntegrationEnabled": false,
+    // Catch2 Test Adapter configuration
+    "testMate.cpp.test.executables": "${workspaceFolder}/CmakeBuildDebug/bin/epoch_dashboard_test",
+    "testMate.cpp.test.advancedExecutables": [
+        {
+            "pattern": "${workspaceFolder}/CmakeBuildDebug/bin/*test*",
+            "cwd": "${workspaceFolder}/CmakeBuildDebug",
+            "env": {}
+        }
+    ],
+    // C++ Configuration
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.cppStandard": "c++23",
+    "C_Cpp.errorSquiggles": "enabled",
+    // Editor Settings
+    "files.associations": {
+        "*.cmake": "cmake",
+        "CMakeLists.txt": "cmake"
+    },
+    // Test Explorer UI
+    "testExplorer.useNativeTesting": true,
+    "testExplorer.onStart": "clear",
+    // Build Settings
+    "cmake.buildBeforeRun": true,
+    "cmake.clearOutputBeforeBuild": true,
+    // Generator (optional - uncomment if needed)
+    // "cmake.generator": "Ninja",
+    // Additional CMake options
+    "cmake.configureSettings": {
+        "BUILD_TEST": "ON",
+        "BUILD_SHARED_LIBS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    }
+}
