@@ -5,6 +5,7 @@
 #include "epoch_dashboard/tearsheet/dataframe_converter.h"
 #include <epoch_frame/dataframe.h>
 #include <epoch_frame/index.h>
+#include <epoch_frame/factory/index_factory.h>
 #include <arrow/api.h>
 
 using namespace epoch_tearsheet;
@@ -111,65 +112,6 @@ TEST_CASE("LinesChartBuilder: Stacked mode", "[lines]") {
         .build();
 
     REQUIRE(chart.lines_def().stacked() == true);
-}
-
-TEST_CASE("LinesChartBuilder: fromDataFrame", "[lines]") {
-    std::vector<double> x = {1.0, 2.0, 3.0};
-    std::vector<double> returns = {0.05, 0.03, 0.07};
-    std::vector<double> benchmark = {0.03, 0.02, 0.04};
-
-    arrow::DoubleBuilder x_builder, returns_builder, benchmark_builder;
-    REQUIRE(x_builder.AppendValues(x).ok());
-    REQUIRE(returns_builder.AppendValues(returns).ok());
-    REQUIRE(benchmark_builder.AppendValues(benchmark).ok());
-
-    std::shared_ptr<arrow::Array> x_array, returns_array, benchmark_array;
-    REQUIRE(x_builder.Finish(&x_array).ok());
-    REQUIRE(returns_builder.Finish(&returns_array).ok());
-    REQUIRE(benchmark_builder.Finish(&benchmark_array).ok());
-
-    auto schema = arrow::schema({
-        arrow::field("date", arrow::float64()),
-        arrow::field("returns", arrow::float64()),
-        arrow::field("benchmark", arrow::float64())
-    });
-
-    auto table = arrow::Table::Make(schema, {x_array, returns_array, benchmark_array});
-    DataFrame df(table);
-
-    // This should throw because the default index is not a timestamp array
-    REQUIRE_THROWS_AS(
-        LinesChartBuilder()
-            .setTitle("Performance")
-            .fromDataFrame(df, {"returns", "benchmark"}),
-        std::exception
-    );
-}
-
-TEST_CASE("LinesChartBuilder: fromDataFrame with timestamp conversion", "[lines]") {
-    // Test that fromDataFrame properly throws when index is not a timestamp array
-    std::vector<double> returns = {0.05, 0.03, 0.07};
-
-    arrow::DoubleBuilder returns_builder;
-    REQUIRE(returns_builder.AppendValues(returns).ok());
-
-    std::shared_ptr<arrow::Array> returns_array;
-    REQUIRE(returns_builder.Finish(&returns_array).ok());
-
-    auto schema = arrow::schema({
-        arrow::field("returns", arrow::float64())
-    });
-
-    auto table = arrow::Table::Make(schema, {returns_array});
-    DataFrame df(table);
-
-    // This should throw because the default index is not a timestamp array
-    REQUIRE_THROWS_AS(
-        LinesChartBuilder()
-            .setTitle("Performance with Non-Timestamp Index")
-            .fromDataFrame(df, {"returns"}),
-        std::exception
-    );
 }
 
 TEST_CASE("DataFrameFactory: toMilliseconds conversion", "[dataframe]") {

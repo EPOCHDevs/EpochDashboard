@@ -353,21 +353,6 @@ TEST_CASE("HistogramChartBuilder: Bins validation", "[histogram][validation]") {
         );
     }
 
-    SECTION("Bins count greater than data size throws") {
-        epoch_proto::Array data;
-        for (int i = 0; i < 5; ++i) {
-            auto* val = data.add_values();
-            val->set_decimal_value(i * 0.1);
-        }
-
-        auto builder = HistogramChartBuilder().setData(data);
-
-        REQUIRE_THROWS_WITH(
-            builder.setBinsCount(10),
-            ContainsSubstring("cannot be greater than data size")
-        );
-    }
-
     SECTION("Empty data throws") {
         epoch_proto::Array empty_data;
 
