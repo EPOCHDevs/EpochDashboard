@@ -9,6 +9,7 @@ import {
   calculateMultiRoundTripApiParams,
   formatApiParamsForRequest,
   DEFAULT_PADDING_CONFIGS,
+  getMsPerBar,
   type PaddingConfig,
 } from "../utils/BackendPaddingUtils"
 import { IRoundTrip } from "../../../../../types/TradeAnalyticsTypes"
@@ -63,20 +64,8 @@ export const useSmartChartData = ({
       setShouldFetchBaseline(true)
       setLastAssetTimeframe(currentKey)
 
-      // Only clear cache for the old asset if the asset changed
-      // This preserves cache when just switching timeframes on same asset
       if (assetChanged && strategyId && oldAsset) {
-        console.log('📊 [Lazy Loading] Asset changed, clearing old asset cache:', {
-          oldAsset,
-          newAsset: assetId
-        })
         globalDataCacheManager.clearAssetCache(strategyId, oldAsset)
-      } else {
-        console.log('📊 [Lazy Loading] Timeframe changed, keeping cache:', {
-          asset: assetId,
-          oldTimeframe,
-          newTimeframe: timeframe
-        })
       }
     }
   }, [assetId, timeframe, lastAssetTimeframe, strategyId])
@@ -87,7 +76,7 @@ export const useSmartChartData = ({
 
     const baseParams = { strategyId, assetId, timeframe }
 
-    // Priority 1: Handle range expansion for lazy loading
+    // Priority 1: Handle range expansion for lazy loading (user zoomed/panned)
     if (expansionRange) {
       return {
         ...baseParams,
@@ -96,32 +85,45 @@ export const useSmartChartData = ({
       }
     }
 
-    // Priority 2: If fetchEntireCandleStickData is true, always fetch baseline
+    // Priority 2: If round trips are selected, fetch focused range around trade(s)
+    if (selectedRoundTrips.length > 0) {
+      // Simple approach: fetch from open_datetime with padding
+      const msPerBar = getMsPerBar(timeframe)
+      const openTime = new Date(selectedRoundTrips[0].open_datetime).getTime()
+
+      // Calculate padding in milliseconds
+      const padBars = paddingConfig.frontPadUnits + paddingConfig.backPadUnits
+      const padMs = padBars * msPerBar
+
+      const from_ms = openTime - (paddingConfig.frontPadUnits * msPerBar)
+      const to_ms = openTime + (paddingConfig.backPadUnits * msPerBar)
+
+      return {
+        ...baseParams,
+        from_ms,
+        to_ms
+      }
+    }
+
+    // Priority 3: Check if we already have full data loaded in cache
+    const isFullyLoaded = globalDataCacheManager.isFullDataLoaded(baseParams)
+    if (isFullyLoaded) {
+      return baseParams
+    }
+
+    // Priority 4: If fetchEntireCandleStickData is true, always fetch baseline
     if (fetchEntireCandleStickData) {
       return calculateBaselineApiParams(baseParams)
     }
 
-    // Priority 3: If no round trips selected, ALWAYS return baseline params to keep query alive
-    // The cache manager will prevent unnecessary fetches by returning cached data
-    if (selectedRoundTrips.length === 0) {
-      // Always return baseline params - this keeps the query enabled
-      // If we have cached data, queryFn will return it immediately
-      // If not, it will fetch fresh data
-      return calculateBaselineApiParams(baseParams)
+    // Priority 5: If no cache exists and no trade selected, fetch ALL data (no time params)
+    const hasCachedData = globalDataCacheManager.getCachedData(baseParams) !== null
+    if (!hasCachedData) {
+      return baseParams
     }
 
-    // Priority 4: Convert round trips to the format expected by the utility function
-    const roundTripTimes = selectedRoundTrips.map((rt) => ({
-      openTime: new Date(rt.open_datetime).getTime(),
-      closeTime: rt.close_datetime ? new Date(rt.close_datetime).getTime() : Date.now(),
-    }))
-
-    // Use multi-round trip calculation for optimal backend padding
-    const apiParams = calculateMultiRoundTripApiParams(baseParams, roundTripTimes, paddingConfig)
-
-    // Always return the apiParams to trigger fetch
-    // (React Query will handle caching)
-    return apiParams
+    // Priority 6: Default to baseline if we have cache but no specific request
+    return calculateBaselineApiParams(baseParams)
   }, [
     strategyId,
     assetId,
@@ -135,19 +137,23 @@ export const useSmartChartData = ({
   ])
 
   // Generate query key for React Query
-  // Use ONLY strategyId, assetId, timeframe - no request hash
-  // This prevents React Query from entering fetching state on every zoom
-  // Cache manager handles all range checking and merging internally
+  // Include the fetch request parameters so React Query knows when to refetch
   const queryKey = useMemo(() => {
-    if (!enabled || !strategyId || !assetId || !timeframe) return ["no-fetch"] as const
+    if (!enabled || !strategyId || !assetId || !timeframe || !dataFetchRequest) return ["no-fetch"] as const
+
+    // Include time range in key to trigger refetch when trade selection changes
+    const timeRangeKey = dataFetchRequest.from_ms && dataFetchRequest.to_ms
+      ? `${dataFetchRequest.from_ms}-${dataFetchRequest.to_ms}`
+      : 'all'
 
     return [
       "TRADE_ANALYTICS_CHART_DATA",
       strategyId,
       assetId,
       timeframe,
+      timeRangeKey,
     ] as const
-  }, [enabled, strategyId, assetId, timeframe])
+  }, [enabled, strategyId, assetId, timeframe, dataFetchRequest])
 
   // React Query for actual data fetching
   const {
@@ -160,53 +166,10 @@ export const useSmartChartData = ({
     queryFn: async (): Promise<Table<Record<string | number | symbol, DataType>>> => {
       if (!dataFetchRequest) throw new Error("No fetch request")
 
-      // ALWAYS check cache first - prevents unnecessary fetches
-      const cachedData = globalDataCacheManager.getCachedData({ strategyId, assetId, timeframe })
+      setIsActuallyFetching(true)
 
-      // Check if we need to fetch based on range expansion logic
-      // This is only relevant when expansionRange is set
-      if (expansionRange) {
-        const missingRanges = globalDataCacheManager.needsRangeExpansion(
-          { strategyId, assetId, timeframe },
-          { from: expansionRange.from, to: expansionRange.to }
-        )
-
-        console.log('📊 [Lazy Loading] Expansion requested:', {
-          requestedRange: expansionRange,
-          missingRanges,
-          hasCachedData: !!cachedData,
-          cacheKey: `${strategyId}_${assetId}_${timeframe}`
-        })
-
-        if (missingRanges.length === 0 && cachedData) {
-          console.log('📊 [Lazy Loading] All data in cache, returning cached data')
-          return cachedData
-        } else {
-          console.log('📊 [Lazy Loading] Missing data detected, triggering fetch for ranges:', missingRanges)
-          setIsActuallyFetching(true) // Set flag for actual network fetch
-        }
-        // For now, fetch the entire requested range if there are missing ranges
-        // TODO: Implement fetching only missing ranges (requires multiple requests or backend support)
-      } else if (cachedData) {
-        // If we have cached data and no expansion request, return cached data immediately
-        console.log('📊 [Lazy Loading] No expansion, returning cached data')
-        return cachedData
-      } else {
-        // Initial fetch - no cached data yet
-        console.log('📊 [Lazy Loading] Initial fetch - no cached data')
-        setIsActuallyFetching(true)
-      }
-
-      // Format API parameters for the HTTP request
       const queryParams = formatApiParamsForRequest(dataFetchRequest)
       const queryString = new URLSearchParams(queryParams).toString()
-
-      console.log('📊 [Lazy Loading] API Request:', {
-        dataFetchRequest,
-        queryParams,
-        queryString,
-        url: expansionRange ? 'Expansion fetch' : 'Initial/baseline fetch'
-      })
 
       // Use provided apiEndpoint and userId, or fall back to defaults
       const finalApiEndpoint = apiEndpoint || 'http://localhost:9000'
@@ -255,19 +218,12 @@ export const useSmartChartData = ({
             const errorData = JSON.parse(text)
             errorMessage = errorData.error || `HTTP ${response.status}`
             errorDetails = errorData.details || ''
-            console.error('📊 Chart data API error:', {
-              status: response.status,
-              error: errorMessage,
-              details: errorDetails,
-              url: errorData.url
-            })
           } else if (text.startsWith('<!DOCTYPE')) {
             errorMessage = 'Server returned HTML error page'
-            errorDetails = text.substring(0, 500) // First 500 chars of HTML
-            console.error('📊 Chart data HTML error:', errorMessage)
+            errorDetails = text.substring(0, 500)
           }
         } catch (e) {
-          console.error('📊 Error parsing response:', e)
+          // Silently handle parsing error
         }
 
         // Clear fetching flag before throwing error
@@ -278,32 +234,20 @@ export const useSmartChartData = ({
         throw new Error(fullError)
       }
 
-      // Parse Arrow data with error handling
       let table
       try {
         table = tableFromIPC(new Uint8Array(response.data))
       } catch (parseError) {
-        console.error('📊 Failed to parse Arrow data:', parseError)
-        // Clear fetching flag before throwing error
         setIsActuallyFetching(false)
         throw new Error(`Failed to parse chart data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
       }
 
-      // Cache the fetched data
-      console.log('📊 [Lazy Loading] Caching fetched data:', {
-        rows: table.numRows,
-        columns: table.numCols,
-        cacheKey: `${dataFetchRequest.strategyId}_${dataFetchRequest.assetId}_${dataFetchRequest.timeframe}`
-      })
-      globalDataCacheManager.cacheData(dataFetchRequest, table)
-
-      // Clear the actually fetching flag now that fetch is complete
       setIsActuallyFetching(false)
 
       return table
     },
     enabled: Boolean(dataFetchRequest && enabled),
-    staleTime: Infinity, // Never mark as stale - we manage freshness via cache
+    staleTime: 5 * 60 * 1000, // 5 minutes - rely on Next.js caching
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
     refetchOnWindowFocus: false,
     retry: 2,
@@ -323,32 +267,8 @@ export const useSmartChartData = ({
     }
   }, [error])
 
-  // Get the appropriate data (from cache or fresh fetch)
-  // CRITICAL: Always return cached data to prevent "No data found" flashing
-  const finalData = useMemo((): Table<Record<string | number | symbol, DataType>> | undefined => {
-    // ALWAYS check cache first - this is our source of truth
-    if (strategyId && assetId && timeframe) {
-      const cachedData = globalDataCacheManager.getCachedData({
-        strategyId,
-        assetId,
-        timeframe
-      })
-
-      if (cachedData) {
-        return cachedData
-      }
-    }
-
-    // Only use fetchedData if cache is completely empty (initial load only)
-    if (fetchedData) {
-      return fetchedData
-    }
-
-    return undefined
-  }, [fetchedData, strategyId, assetId, timeframe, isFetching])
-
   return {
-    data: finalData,
+    data: fetchedData, // Use React Query data directly - rely on Next.js for caching
     isLoading,
     isFetching,
     isActuallyFetching, // True only when making real network request

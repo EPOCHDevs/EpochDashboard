@@ -21,9 +21,9 @@ export const DEFAULT_PADDING_CONFIGS = {
   },
   // Standard padding - balanced approach with more context
   STANDARD: {
-    frontPadUnits: 100,
-    backPadUnits: 100,
-    baselineUnits: 500, // Reduced from 1500 for faster initial render
+    frontPadUnits: 1000,
+    backPadUnits: 1000,
+    baselineUnits: 800, // Keep focused for initial render
   },
   // Aggressive padding - maximum context
   AGGRESSIVE: {

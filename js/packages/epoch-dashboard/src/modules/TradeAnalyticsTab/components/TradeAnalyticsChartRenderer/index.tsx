@@ -1,41 +1,46 @@
 /* eslint-disable new-cap */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useRef, useMemo } from 'react'
 import {
   GetTradeAnalyticsMetadataResponseType,
   IRoundTrip,
-  PLOT_KIND,
-} from "../../../../types/TradeAnalyticsTypes"
-import { generatePlotElements } from "../PlotKinds/EpochPlotKindOptions"
-import {
-  AnnotationsOptions,
-  Chart,
-  SeriesFlagsOptions,
-  SeriesLineOptions,
-  SeriesOptionsType,
-  TooltipPositionerCallbackFunction,
-  XAxisPlotBandsOptions,
-} from "highcharts"
-import HighchartsReact from "highcharts-react-official"
-import Highcharts from "highcharts/highstock"
-import HighchartsMore from "highcharts/highcharts-more"
-import HighchartsAnnotations from "highcharts/modules/annotations"
-import HighchartsDragPanes from "highcharts/modules/drag-panes"
-import { tailwindColors, tailwindTypography } from "../../../../utils/tailwindHelpers"
-import { formatDollarAmount } from "../../../../utils/formatters"
-import { useSmartChartData } from "./hooks/useSmartChartData"
-import { DEFAULT_PADDING_CONFIGS } from "./utils/BackendPaddingUtils"
-import { globalDataCacheManager } from "./utils/DataCacheManager"
-import { useHighchartsTheme } from "../../../../hooks/useHighchartsTheme"
-import { getChartColors } from "../../../../constants"
-import "./styles.css"
+} from '../../../../types/TradeAnalyticsTypes'
+import HighchartsReact from 'highcharts-react-official'
+import Highcharts from 'highcharts/highstock'
+import HighchartsMore from 'highcharts/highcharts-more'
+import HighchartsAnnotations from 'highcharts/modules/annotations'
+import HighchartsDragPanes from 'highcharts/modules/drag-panes'
+import { useHighchartsTheme } from '../../../../hooks/useHighchartsTheme'
+import { getChartColors } from '../../../../constants'
+
+// Hooks
+import { useChartDimensions } from './hooks/useChartDimensions'
+import { useTimeframeManager } from './hooks/useTimeframeManager'
+import { usePaneManager } from './hooks/usePaneManager'
+import { useLazyLoading } from './hooks/useLazyLoading'
+import { useSmartChartData } from './hooks/useSmartChartData'
+
+// Config builders
+import { buildYAxisOptions } from './config/yAxisConfig'
+import { buildXAxisOptions } from './config/xAxisConfig'
+import { buildTooltipOptions } from './config/tooltipConfig'
+import { buildSeriesConfig } from './config/seriesConfig'
+import { buildChartConfig } from './config/chartConfig'
+
+// Components
+import { ChartLoadingState } from './components/ChartLoadingState'
+import { ChartContainer } from './components/ChartContainer'
+
+// Utils
+import { DEFAULT_PADDING_CONFIGS } from './utils/BackendPaddingUtils'
+import './styles.css'
 
 // Initialize Highcharts modules safely for SSR
-if (typeof Highcharts !== "undefined" && typeof window !== "undefined") {
+if (typeof Highcharts !== 'undefined' && typeof window !== 'undefined') {
   HighchartsMore(Highcharts)
   HighchartsAnnotations(Highcharts)
   HighchartsDragPanes(Highcharts)
 
-  // Globally disable animations for instant chart appearance
+  // Globally disable animations
   Highcharts.setOptions({
     chart: {
       animation: false,
@@ -55,36 +60,20 @@ interface TradeAnalyticsChartRendererProps extends Highcharts.Options {
   campaignId: string
   assetId: string
   fetchEntireCandleStickData?: boolean
-  paddingProfile?: "MINIMAL" | "CONSERVATIVE" | "STANDARD" | "AGGRESSIVE" // Padding configuration profile
-  wheelZoomMode?: "default" | "cursor" // default: Highcharts built-in; cursor: TradingView-like
+  paddingProfile?: 'MINIMAL' | 'CONSERVATIVE' | 'STANDARD' | 'AGGRESSIVE'
+  wheelZoomMode?: 'default' | 'cursor'
   isFullScreen?: boolean
-  timeframe?: string // Optional timeframe override from parent
-  chartRef?: React.RefObject<HighchartsReact.RefObject> // Optional external chart ref
-  onRangeExpansionNeeded?: (range: { from: number; to: number }) => void // Callback when lazy loading is needed
-  expansionRange?: { from: number; to: number } | null // Range to expand/fetch for lazy loading
-  isLazyLoading?: boolean // Flag to prevent duplicate expansion requests
-  apiEndpoint?: string // API endpoint for fetching data
-  userId?: string // User ID for authentication
-  sidebarWidth?: number // Width of the sidebar overlay for tooltip positioning
-  isAssetSwitching?: boolean // Flag to show loading state during asset switch
-  initialDisplayBars?: number // Number of bars to display initially (default 150, range 100-200)
+  timeframe?: string
+  chartRef?: React.RefObject<HighchartsReact.RefObject>
+  onRangeExpansionNeeded?: (range: { from: number; to: number }) => void
+  expansionRange?: { from: number; to: number } | null
+  isLazyLoading?: boolean
+  apiEndpoint?: string
+  userId?: string
+  sidebarWidth?: number
+  isAssetSwitching?: boolean
+  initialDisplayBars?: number
 }
-
-interface PaneState {
-  id: string
-  name: string
-  collapsed: boolean
-  height: number
-  top: number
-  originalHeight?: number
-}
-
-const UNHANDLED_PLOT_KINDS = [
-  PLOT_KIND.ORDER_BLOCKS,
-  PLOT_KIND.BOS_CHOCH,
-  PLOT_KIND.FVG,
-  PLOT_KIND.LIQUIDITY,
-]
 
 const TradeAnalyticsChartRenderer = ({
   isLoading = false,
@@ -93,117 +82,57 @@ const TradeAnalyticsChartRenderer = ({
   assetId,
   campaignId,
   fetchEntireCandleStickData = false,
-  paddingProfile = "STANDARD",
-  wheelZoomMode = "default",
-  isFullScreen = false,
+  paddingProfile = 'STANDARD',
+  wheelZoomMode = 'default',
   timeframe,
   chartRef: externalChartRef,
   onRangeExpansionNeeded,
   expansionRange,
-  isLazyLoading = false,
   apiEndpoint,
   userId,
-  sidebarWidth = 56, // Default to collapsed sidebar width
-  isAssetSwitching = false, // Default to false
-  initialDisplayBars = 500, // Default to 500 bars for better visibility
+  sidebarWidth = 56,
+  isAssetSwitching = false,
+  initialDisplayBars = 500,
 }: TradeAnalyticsChartRendererProps) => {
+  // Refs
   const internalChartRef = React.useRef<HighchartsReact.RefObject>(null)
   const chartRef = externalChartRef || internalChartRef
   const chartContainerRef = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState(0)
-  const [width, setWidth] = useState(0)
-  const previousViewportRangeRef = useRef<number | null>(null) // Track previous viewport size to detect zoom in vs out
 
-  // Update dimensions on resize - use ResizeObserver for container changes
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (chartContainerRef.current) {
-        const newHeight = chartContainerRef.current.clientHeight
-        const newWidth = chartContainerRef.current.clientWidth
+  // Custom hooks
+  const { height, width } = useChartDimensions(chartContainerRef)
+  const { selectedTimeframe, isTimeframeSwitching, chartKey } = useTimeframeManager(
+    assetId,
+    timeframe,
+    tradeAnalyticsMetadata
+  )
 
-        // Only update if dimensions actually changed to avoid unnecessary rerenders
-        if (newHeight !== height || newWidth !== width) {
-          setHeight(newHeight)
-          setWidth(newWidth)
-        }
-      }
-    }
-
-    // Initial dimension update
-    updateDimensions()
-
-    // Use ResizeObserver to detect container size changes (more reliable than window resize)
-    const resizeObserver = new ResizeObserver(() => {
-      updateDimensions()
-    })
-
-    if (chartContainerRef.current) {
-      resizeObserver.observe(chartContainerRef.current)
-    }
-
-    // Also listen to window resize as fallback
-    window.addEventListener("resize", updateDimensions)
-
-    return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener("resize", updateDimensions)
-    }
-  }, [height, width])
-
-  const [visibleSeriesIds, setVisibleSeriesIds] = useState<string[]>([])
-  const [paneStates, setPaneStates] = useState<PaneState[]>([])
-
-  // Debug paneStates changes
-  useEffect(() => {
-  }, [paneStates])
-  const [isChartRendered, setIsChartRendered] = useState(false)
-  const [internalTimeframe, setInternalTimeframe] = useState<string>("")
-  const [chartKey, setChartKey] = useState<string>("")
-  const [isTimeframeSwitching, setIsTimeframeSwitching] = useState(false)
-
-  // Get theme-aware Highcharts configuration
+  // Theme
   const highchartsTheme = useHighchartsTheme()
   const themeColors = useMemo(() => getChartColors(), [])
 
-  // Use the prop timeframe if provided, otherwise use internal state
-  const selectedTimeframe = timeframe || internalTimeframe
-
-  // Initialize or reset timeframe from metadata whenever asset changes
-  useEffect(() => {
-    // Only manage internal timeframe if no prop is provided
-    if (!timeframe && assetId && tradeAnalyticsMetadata?.asset_info?.[assetId]) {
-      const assetInfo = tradeAnalyticsMetadata.asset_info[assetId]
-      const defaultTf = assetInfo.timeframes[0]?.timeframe
-      const currentTfValid = internalTimeframe && tradeAnalyticsMetadata.chart_info?.[internalTimeframe]
-
-      // Only update if we don't have a valid timeframe
-      if (defaultTf && !currentTfValid) {
-        setInternalTimeframe(defaultTf)
-      }
+  // Timeframe config and pane management
+  const timeframeConfig = useMemo(() => {
+    if (selectedTimeframe && tradeAnalyticsMetadata?.chart_info) {
+      return tradeAnalyticsMetadata.chart_info[selectedTimeframe]
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetId, tradeAnalyticsMetadata, timeframe])
+    return undefined
+  }, [selectedTimeframe, tradeAnalyticsMetadata])
 
-  // Ensure timeframe matches the selected asset; update if not present in new asset
-  useEffect(() => {
-    // Only manage internal timeframe if no prop is provided
-    if (!timeframe && assetId && tradeAnalyticsMetadata?.asset_info?.[assetId] && internalTimeframe) {
-      const tfs = tradeAnalyticsMetadata.asset_info[assetId].timeframes
-      const isValidForAsset = tfs.some(tf => tf.timeframe === internalTimeframe)
+  const paneStates = usePaneManager(timeframeConfig)
 
-      // Only update if current timeframe is invalid for this asset
-      if (!isValidForAsset && tfs[0]?.timeframe) {
-        setInternalTimeframe(tfs[0].timeframe)
-      }
+  // Asset details
+  const selectedAssetDetails = useMemo(() => {
+    if (assetId && tradeAnalyticsMetadata?.asset_info[assetId]) {
+      return tradeAnalyticsMetadata.asset_info[assetId]
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetId, tradeAnalyticsMetadata, timeframe])
+    return undefined
+  }, [assetId, tradeAnalyticsMetadata?.asset_info])
 
-  // Smart data loading with caching and lazy loading
+  // Data fetching
   const {
     data: tradeAnalyticsChartData,
     error: tradeAnalyticsChartDataError,
-    isFetching: isFetchingTradeAnalyticsChartData,
     isActuallyFetching: isActuallyFetchingTradeAnalyticsChartData,
     isLoading: isLoadingTradeAnalyticsChartData,
   } = useSmartChartData({
@@ -219,1241 +148,129 @@ const TradeAnalyticsChartRenderer = ({
     userId: userId,
   })
 
-  const selectedAssetDetails = useMemo(() => {
-    if (assetId && tradeAnalyticsMetadata?.asset_info[assetId]) {
-      return tradeAnalyticsMetadata.asset_info[assetId]
+  // Lazy loading
+  const { previousViewportRangeRef, createAfterSetExtremesHandler } = useLazyLoading()
+
+  // Build chart configuration
+  const chartOptions = useMemo(() => {
+    // Guard: Check if we have all required pieces
+    if (
+      !timeframeConfig ||
+      !selectedTimeframe ||
+      !tradeAnalyticsChartData ||
+      !paneStates.length ||
+      !highchartsTheme
+    ) {
+      return undefined
     }
-    return undefined
-  }, [assetId, tradeAnalyticsMetadata?.asset_info])
 
-
-  const timeframeConfig = useMemo(() => {
-    if (selectedTimeframe && tradeAnalyticsMetadata?.chart_info)
-      return tradeAnalyticsMetadata.chart_info[selectedTimeframe]
-    return undefined
-  }, [selectedTimeframe, tradeAnalyticsMetadata])
-
-  // Initialize pane states from timeframe config
-  useEffect(() => {
-    if (timeframeConfig?.yAxis && timeframeConfig.yAxis.length > 0) {
-      setIsChartRendered(false) // Reset chart rendered state when config changes
-
-      // Force chart cleanup when timeframe changes
-      const chart = chartRef.current?.chart
-      if (chart) {
-        try {
-          // Clear any existing extremes or zoom state
-          chart.xAxis?.forEach((axis) => {
-            if (axis && axis.setExtremes) {
-              axis.setExtremes(undefined, undefined, false, false)
-            }
-          })
-          chart.yAxis?.forEach((axis) => {
-            if (axis && axis.setExtremes) {
-              axis.setExtremes(undefined, undefined, false, false)
-            }
-          })
-          // Reset zoom if available
-          if (chart && "resetZoomButton" in chart && (chart as any).resetZoomButton) {
-            ;(chart as any).resetZoomButton.destroy()
-          }
-        } catch (error) {
-          // Silently skip cleanup errors
-        }
-      }
-
-      const initialPaneStates: PaneState[] = timeframeConfig.yAxis.map((axis, index) => {
-        // Try to determine pane name from series that use this yAxis
-        const seriesForThisAxis = timeframeConfig.series.filter((series) => series.yAxis === index)
-        let paneName = `Pane ${index + 1}`
-
-        if (seriesForThisAxis.length > 0) {
-          const firstSeries = seriesForThisAxis[0]
-          if (firstSeries.type === "candlestick") {
-            paneName = "Price"
-          } else if (
-            firstSeries.type === "column" &&
-            firstSeries.name?.toLowerCase().includes("volume")
-          ) {
-            paneName = "Volume"
-          } else if (firstSeries.name) {
-            paneName = firstSeries.name
-          }
-        }
-
-        const height = axis.height || 70 // Default height if not specified
-        const top = axis.top !== undefined ? axis.top : (index * 35) // Default top if not specified
-
-        // Only keep Price (index 0) and Volume (index 1) panes expanded by default
-        // All other panes (TradeSignal, etc.) should be collapsed by default
-        const shouldCollapse = index > 1
-
-        return {
-          id: `pane-${index}`,
-          name: paneName,
-          collapsed: shouldCollapse,
-          height,
-          top,
-          originalHeight: height,
-        }
-      })
-
-      setPaneStates(initialPaneStates)
-    }
-  }, [timeframeConfig])
-
-  // Track unimplemented series
-  const unimplementedSeries = useMemo(() => {
-    if (!timeframeConfig) return []
-
-    const unimplemented: Array<{ id: string; name: string; type: string }> = []
-    timeframeConfig.series.forEach((seriesConfig) => {
-      if (UNHANDLED_PLOT_KINDS.includes(seriesConfig.type)) {
-        unimplemented.push({
-          id: seriesConfig.id,
-          name: seriesConfig.name,
-          type: seriesConfig.type,
-        })
-      }
+    // Build Y-axis configuration
+    const yAxes = buildYAxisOptions({
+      paneStates,
+      highchartsTheme,
+      themeColors,
+      selectedAssetDetails,
     })
-    return unimplemented
-  }, [timeframeConfig])
 
-  const chartOptions: Highcharts.Options | undefined = useMemo(() => {
-    try {
-      // CRITICAL: Only skip rendering on TRUE initial load (no config/data yet)
-      // NEVER skip if we have data - even if we're fetching more data in background
-      if (
-        !timeframeConfig ||
-        !selectedTimeframe ||
-        !tradeAnalyticsChartData ||
-        !paneStates.length ||
-        !highchartsTheme
-      ) {
-        return undefined
-      }
-
-
-    // Configure yAxes based on pane states with validation
-    const yAxes: Highcharts.YAxisOptions[] = paneStates
-      .filter((pane) => pane && typeof pane.top === "number" && typeof pane.height === "number")
-      .map((pane) => ({
-        top: `${Math.max(0, Math.min(100, pane.top))}%`, // Clamp between 0-100%
-        height: `${Math.max(1, Math.min(100, pane.height))}%`, // Clamp between 1-100%
-        offset: 0,
-        labels: {
-          align: "left",
-          style: {
-            ...tailwindTypography.desktopL14Regular.css,
-            color: highchartsTheme?.yAxis?.labels?.style?.color || tailwindColors.secondary.cementGrey,
-          },
-          distance: 10,
-          formatter: function tooltipFormatter(this) {
-            try {
-              const formattedAxis = this.axis
-              const value = this.value as number
-
-              // Check if value is valid
-              if (value === undefined || value === null || isNaN(value) || typeof value !== 'number') {
-                return ''
-              }
-
-              const isMin = value === formattedAxis.min
-              const isMax = value === formattedAxis.max
-
-              // Get the axis position - check if this is not the first/topmost or bottommost axis
-              const axisPosition = formattedAxis.pos || 0
-              const chart = formattedAxis.chart
-              const allYAxisPositions = chart.yAxis.map((axis: any) => axis.pos || 0).filter((pos: number) => !isNaN(pos))
-
-              if (allYAxisPositions.length > 0) {
-                const minPosition = Math.min(...allYAxisPositions)
-                const maxPosition = Math.max(...allYAxisPositions)
-                const isTopAxis = axisPosition === minPosition
-                const isBottomAxis = axisPosition === maxPosition
-
-                // For the topmost axis, show all labels
-                // For middle axes, hide both min and max labels to prevent overlap
-                // For the bottom axis, show all labels
-                if (isMin && !isTopAxis) {
-                  return "" // Hide min labels for non-top axes as they overlap with axis above
-                }
-                if (isMax && !isBottomAxis) {
-                  return "" // Hide max labels for non-bottom axes as they overlap with axis below
-                }
-              }
-
-              // Check which pane we're in based on series using this axis
-              const seriesForThisAxis = chart.series.filter((s: any) => s.yAxis === formattedAxis)
-              const isVolumeAxis = seriesForThisAxis.some((s: any) => s.name && s.name.toLowerCase().includes('volume'))
-
-              // Format volume with K/M/B suffixes
-              if (isVolumeAxis) {
-                if (value >= 1000000000) {
-                  return (value / 1000000000).toFixed(1) + 'B'
-                } else if (value >= 1000000) {
-                  return (value / 1000000).toFixed(1) + 'M'
-                } else if (value >= 1000) {
-                  return (value / 1000).toFixed(1) + 'K'
-                } else {
-                  return value.toFixed(0)
-                }
-              }
-
-              // Format based on asset class for price axes
-              let decimalPlaces = 2 // Default for stocks
-
-              if (selectedAssetDetails?.asset?.asset_class) {
-                const assetClass = selectedAssetDetails.asset.asset_class
-
-                switch (assetClass) {
-                  case 'FX':
-                    decimalPlaces = 5
-                    break
-                  case 'Crypto':
-                    // For crypto, use more decimals for small values
-                    decimalPlaces = value < 1 ? 8 : (value < 100 ? 5 : 2)
-                    break
-                  case 'Stocks':
-                    decimalPlaces = 2
-                    break
-                  case 'Futures':
-                    decimalPlaces = value < 10 ? 4 : 2
-                    break
-                  default:
-                    decimalPlaces = 2
-                }
-              }
-
-              return value.toFixed(decimalPlaces)
-            } catch (error) {
-              // Always return empty string on error, never undefined
-              return ''
-            }
-          },
-        },
-        crosshair: {
-          className: 'highcharts-crosshair-custom',
-          enabled: true,
-          snap: false,
-          dashStyle: 'Dash',
-          animation: false,
-          label: {
-            enabled: true,
-            className: 'highcharts-crosshair-custom-label',
-            backgroundColor: `${themeColors.foreground}E6`,
-            borderColor: themeColors.foreground,
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: 6,
-            style: {
-              color: themeColors.background,
-              fontWeight: 'bold',
-              fontSize: '11px',
-            },
-            align: 'left',
-            x: 20, // Increased offset to prevent overlap with static labels
-            formatter: function() {
-              const context = this as any
-              const val = context.value
-              const axis = context.axis
-
-              // Validate value
-              if (val === undefined || val === null || isNaN(val) || typeof val !== 'number') {
-                return ''
-              }
-
-              // Check if this is a volume axis
-              const chart = axis?.chart
-              if (chart && axis) {
-                const seriesForThisAxis = chart.series.filter((s: any) => s.yAxis === axis)
-                const isVolumeAxis = seriesForThisAxis.some((s: any) => s.name && s.name.toLowerCase().includes('volume'))
-
-                // Format volume with K/M/B suffixes
-                if (isVolumeAxis) {
-                  if (val >= 1000000000) {
-                    return (val / 1000000000).toFixed(1) + 'B'
-                  } else if (val >= 1000000) {
-                    return (val / 1000000).toFixed(1) + 'M'
-                  } else if (val >= 1000) {
-                    return (val / 1000).toFixed(1) + 'K'
-                  } else {
-                    return val.toFixed(0)
-                  }
-                }
-              }
-
-              // Format based on asset class for price axes
-              let decimalPlaces = 2
-
-              if (selectedAssetDetails?.asset?.asset_class) {
-                const assetClass = selectedAssetDetails.asset.asset_class
-                switch (assetClass) {
-                  case 'FX':
-                    decimalPlaces = 5
-                    break
-                  case 'Crypto':
-                    decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
-                    break
-                  case 'Stocks':
-                    decimalPlaces = 2
-                    break
-                  case 'Futures':
-                    decimalPlaces = val < 10 ? 4 : 2
-                    break
-                  default:
-                    decimalPlaces = 2
-                }
-              }
-
-              return val.toFixed(decimalPlaces)
-            },
-          },
-        },
-        title: { text: "" },
-        lineWidth: 2,
-        gridLineWidth: 2,
-        gridLineColor: highchartsTheme?.yAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
-        gridLineDashStyle: "Solid",
-        opposite: true,
-        resize: {
-          enabled: true,
-        },
-      }))
-
-    // Create series based on metadata using our plot kind factory
-    const allSeries: Array<SeriesOptionsType> = []
-    const allSeriesPlotBands: XAxisPlotBandsOptions[] = []
-    const allAnnotations: AnnotationsOptions[] = []
-
-    // Add safety check for timeframeConfig.series
-    if (timeframeConfig?.series && Array.isArray(timeframeConfig.series)) {
-      timeframeConfig.series.forEach((seriesConfig) => {
-        if (!seriesConfig || !seriesConfig.type) {
-          return
-        }
-
-        if (!UNHANDLED_PLOT_KINDS.includes(seriesConfig.type)) {
-          try {
-            const plotElements = generatePlotElements({
-              seriesConfig,
-              data: tradeAnalyticsChartData,
-              roundTrips: selectedRoundTrips,
-            })
-
-            if (plotElements) {
-              if (
-                plotElements.series &&
-                Array.isArray(plotElements.series) &&
-                plotElements.series.length > 0
-              ) {
-                plotElements.series.forEach((seriesOptions, index) => {
-                  if (!seriesOptions) {
-                    return
-                  }
-
-                  const options: SeriesOptionsType = { ...seriesOptions }
-                  if (index === 0) {
-                    // First series gets the original ID
-                    options.id = seriesConfig.id
-                  }
-
-                  // IMPORTANT: Preserve the yAxis assignment to ensure series go to correct panes
-                  // The yAxis might already be set in seriesOptions, but we override with seriesConfig.yAxis if present
-                  if (seriesConfig.yAxis !== undefined && seriesConfig.yAxis !== null) {
-                    (options as any).yAxis = seriesConfig.yAxis
-                  } else if (!(options as any).yAxis && seriesConfig.yAxis === 0) {
-                    // Handle the case where yAxis is 0 (falsy but valid)
-                    (options as any).yAxis = 0
-                  }
-
-                  if (seriesConfig.linkedTo) {
-                    if (seriesConfig.type === "flag") {
-                      ;(options as SeriesFlagsOptions).onSeries = seriesConfig.linkedTo
-                    } else {
-                      ;(options as SeriesLineOptions).linkedTo = seriesConfig.linkedTo
-                    }
-                  }
-
-                  allSeries.push(options)
-                })
-              }
-
-              if (
-                plotElements.plotBands &&
-                Array.isArray(plotElements.plotBands) &&
-                plotElements.plotBands.length > 0
-              ) {
-                allSeriesPlotBands.push(...plotElements.plotBands)
-              }
-              if (
-                plotElements.annotations &&
-                Array.isArray(plotElements.annotations) &&
-                plotElements.annotations.length > 0
-              ) {
-                allAnnotations.push(...plotElements.annotations)
-              }
-            }
-          } catch (error) {
-            // Silently skip invalid plot elements
-          }
-        }
-      })
-    }
-
-    // Setting default value for Series Visibility dropdown
-    setVisibleSeriesIds(() => allSeries.map((series) => series.id as string))
-
-    // Validate that we have at least some data before returning chart options
-    if (allSeries.length === 0) {
-      return undefined // Don't render chart with no series
-    }
-
-    // Validate yAxes configuration
     if (yAxes.length === 0) {
       return undefined
     }
 
-    // Validate that all series have valid data (where applicable)
-    const validSeries = allSeries.filter((series) => {
-      // Some series types don't have data property (like annotations), so we check if it exists first
-      const hasDataProperty = "data" in series
-      if (hasDataProperty) {
-        const seriesData = (series as { data?: unknown }).data
-        if (!seriesData || !Array.isArray(seriesData)) {
-          return false
-        }
-      }
-      return true
+    // Build series configuration
+    const seriesConfigResult = buildSeriesConfig({
+      timeframeConfig,
+      tradeAnalyticsChartData,
+      selectedRoundTrips,
+      maxYAxisIndex: yAxes.length - 1,
     })
 
-    if (validSeries.length === 0) {
+    if (!seriesConfigResult) {
       return undefined
     }
 
-    return {
-      accessibility: {
-        enabled: false,
-      },
-      legend: {
-        enabled: false,
-      },
-      chart: {
-        backgroundColor: "transparent",
-        animation: false, // Disable chart animations
-        zooming: {
-          // Use built-in wheel zoom by default; switch off when using cursor-anchored mode
-          mouseWheel: {
-            enabled: wheelZoomMode === "default",
-            type: "x",
-            sensitivity: 1.5,
-          },
-        },
-        panning: {
-          enabled: true,
-          type: "x",
-        },
-        panKey: "shift",
-        height: height || undefined,
-        width: width || undefined,
-        marginLeft: 0,
-        marginRight: 120, // Increased right margin to provide more space for Y-axis labels
-        marginBottom: 40, // Reduced bottom margin
-        events: {
-          load() {
-            const chart = this
+    // Build afterSetExtremes handler
+    const afterSetExtremesHandler = createAfterSetExtremesHandler({
+      campaignId,
+      assetId,
+      selectedTimeframe,
+      isActuallyFetching: isActuallyFetchingTradeAnalyticsChartData,
+      onRangeExpansionNeeded,
+    })
 
-            // Disable the initial animation completely
-            try {
-              if (chart.series && Array.isArray(chart.series) && chart.series.length > 0) {
-                chart.series.forEach((series) => {
-                  if (series && typeof series === 'object') {
-                    try {
-                      ;(series as any).options.animation = false
-                    } catch (error) {
-                      // Silently skip if can't disable animation
-                    }
-                  }
-                })
-              }
-            } catch (error) {
-              // Silently handle any series access errors
-            }
+    // Build X-axis configuration
+    const xAxis = buildXAxisOptions({
+      highchartsTheme,
+      themeColors,
+      plotBands: seriesConfigResult.plotBands,
+      afterSetExtremesHandler,
+    })
 
-            // Apply initial zoom to show only last N bars
-            // Use immediate execution instead of setTimeout to reduce flicker
-            try {
-              if (!selectedRoundTrips.length && chart && chart.xAxis && Array.isArray(chart.xAxis) && chart.xAxis[0]) {
-                const xAxis = chart.xAxis[0] as any
+    // Build tooltip configuration
+    const tooltip = buildTooltipOptions({
+      sidebarWidth,
+      selectedAssetDetails,
+      assetId,
+    })
 
-                // Get timestamps directly from the first series
-                let allTimes: number[] = []
-                if (chart.series && chart.series.length > 0) {
-                  const firstSeries = chart.series[0] as any
-
-                  if (firstSeries.xData && firstSeries.xData.length > 0) {
-                    allTimes = firstSeries.xData as number[]
-                  } else if (firstSeries.options && firstSeries.options.data) {
-                    const seriesData = firstSeries.options.data as any[]
-                    allTimes = seriesData.map((point: any) => {
-                      if (Array.isArray(point)) {
-                        return point[0]
-                      } else if (point && typeof point === 'object' && 'x' in point) {
-                        return point.x
-                      }
-                      return 0
-                    }).filter((t: number) => t > 0)
-                  }
-                }
-
-                if (allTimes && allTimes.length > 1) {
-                  const validTimes = allTimes.filter(t => t > 0).sort((a, b) => a - b)
-
-                  // Calculate how many bars to show using initialDisplayBars
-                  const barsToShow = Math.min(initialDisplayBars, validTimes.length)
-                  const startIdx = Math.max(0, validTimes.length - barsToShow)
-                  const endIdx = validTimes.length - 1
-
-                  // Apply the extremes immediately to prevent flicker
-                  xAxis.setExtremes(validTimes[startIdx], validTimes[endIdx], false, false)
-                }
-              }
-            } catch (error) {
-              // Silently handle zoom errors
-            }
-
-            // Single redraw at the end
-            chart.redraw(false)
-          },
-        },
-        reflow: true, // Enable reflow for proper sizing
-      },
-      navigator: {
-        enabled: false,
-      },
-      scrollbar: {
-        enabled: false,
-      },
-      title: {
-        text: "",
-      },
-      xAxis: {
-        type: "datetime",
-        gridLineWidth: 2,
-        ordinal: true, // Changed to true to hide weekend/market closed gaps
-        gridLineColor: highchartsTheme?.xAxis?.gridLineColor || `${tailwindColors.primary.white}05`,
-        gridLineDashStyle: "Solid",
-        labels: {
-          style: {
-            ...tailwindTypography.desktopL14Regular.css,
-            color: highchartsTheme?.xAxis?.labels?.style?.color || tailwindColors.secondary.cementGrey,
-          },
-        },
-        crosshair: {
-          className: 'highcharts-crosshair-custom',
-          enabled: true,
-          dashStyle: "Dash",
-          animation: false,
-          label: {
-            enabled: true,
-            className: 'highcharts-crosshair-custom-label',
-            format: "{value:%Y-%m-%d %H:%M}",
-            backgroundColor: `${themeColors.foreground}E6`,
-            borderColor: themeColors.foreground,
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: 6,
-            style: {
-              color: themeColors.background,
-              fontWeight: "bold",
-              fontSize: "11px",
-            },
-          },
-        },
-        plotBands: allSeriesPlotBands?.map((band) => ({
-          ...band,
-          color: band.color ? band.color : `${themeColors.foreground}0D`,
-        })),
-        events: {
-          afterSetExtremes: function (e) {
-            console.log('📊 [Lazy Loading] afterSetExtremes triggered:', {
-              trigger: e.trigger,
-              min: e.min,
-              max: e.max,
-              minDate: e.min ? new Date(e.min).toISOString() : 'undefined',
-              maxDate: e.max ? new Date(e.max).toISOString() : 'undefined'
-            })
-
-            // Guard 1: Only respond to user-initiated zoom actions
-            // e.trigger can be: 'zoom', 'navigator', 'mousewheel', 'rangeSelectorButton', etc.
-            // undefined means programmatic setExtremes calls
-            const userTriggers = ['zoom', 'navigator', 'mousewheel', 'rangeSelectorButton']
-            if (!e.trigger || !userTriggers.includes(e.trigger)) {
-              console.log('📊 [Lazy Loading] Skipping - not a user trigger:', e.trigger)
-              return
-            }
-
-            // Guard 2: Don't trigger expansion if already fetching data from network
-            if (isActuallyFetchingTradeAnalyticsChartData) {
-              console.log('📊 [Lazy Loading] Skipping expansion - already fetching data')
-              return
-            }
-
-            // Guard 3: Must have expansion callback
-            if (!onRangeExpansionNeeded) {
-              console.log('📊 [Lazy Loading] No expansion callback provided')
-              return
-            }
-
-            const axis = this
-            const viewMin = e.min
-            const viewMax = e.max
-            const currentViewportRange = viewMax - viewMin
-
-            // Detect zoom direction: zoom IN = smaller viewport, zoom OUT = larger viewport
-            const previousRange = previousViewportRangeRef.current
-
-            // Only process if we have a previous range to compare
-            if (previousRange === null) {
-              // First zoom - just record the range, don't trigger expansion
-              previousViewportRangeRef.current = currentViewportRange
-              return
-            }
-
-            const isZoomingOut = currentViewportRange > previousRange
-            const isZoomingIn = currentViewportRange < previousRange
-            const isPanning = Math.abs(currentViewportRange - previousRange) < 1 // Almost same size = panning
-
-            // Update ref for next comparison
-            previousViewportRangeRef.current = currentViewportRange
-
-            // ONLY trigger expansion when zooming OUT (or panning) and approaching data boundaries
-            // Never trigger on zoom IN - we already have that data cached
-            if (isZoomingIn) {
-              return
-            }
-
-            // Get cached data bounds from the cache manager (not chart's dataMin/dataMax)
-            // This is crucial - we need to check against what's in cache, not what's displayed
-            const cacheRequest = {
-              strategyId: campaignId,
-              assetId: assetId,
-              timeframe: selectedTimeframe
-            }
-            const loadedRanges = globalDataCacheManager.getLoadedRanges(cacheRequest)
-
-            if (loadedRanges.length === 0) {
-              return
-            }
-
-            // Get the overall cached data bounds (earliest from and latest to)
-            const cachedMin = Math.min(...loadedRanges.map(r => r.from))
-            const cachedMax = Math.max(...loadedRanges.map(r => r.to))
-
-            // Now check if we're zooming out or panning
-            if (isZoomingOut || isPanning) {
-              // Calculate how close we are to the CACHED data boundaries
-              // Use 50% threshold for VERY aggressive prefetching to avoid hitting limits
-              // This triggers fetch much earlier, preventing freeze when user reaches boundary
-              const cachedRange = cachedMax - cachedMin
-              const frontBuffer = cachedRange * 0.5
-              const backBuffer = cachedRange * 0.5
-
-              const approachingStart = viewMin < (cachedMin + frontBuffer)
-              const approachingEnd = viewMax > (cachedMax - backBuffer)
-              const needsExpansion = approachingStart || approachingEnd
-
-              if (needsExpansion) {
-                console.log('📊 [Lazy Loading] Expansion needed:', {
-                  viewMin,
-                  viewMax,
-                  cachedMin,
-                  cachedMax,
-                  approachingStart,
-                  approachingEnd,
-                  cachedRange,
-                  frontBuffer,
-                  backBuffer
-                })
-
-                // Calculate expansion range: extend beyond viewport by 200% on each side
-                // VERY aggressive prefetching to ensure we NEVER hit the limit
-                // This fetches way more data than currently visible to prevent freeze
-                const viewportRange = viewMax - viewMin
-                const expansionBuffer = viewportRange * 2.0
-
-                // Expand beyond current viewport (not just current data bounds)
-                const expansionFrom = viewMin - expansionBuffer
-                const expansionTo = viewMax + expansionBuffer
-
-                console.log('📊 [Lazy Loading] Requesting expansion:', {
-                  from: new Date(expansionFrom).toISOString(),
-                  to: new Date(expansionTo).toISOString(),
-                  expansionBuffer,
-                  viewportRange
-                })
-
-                // Trigger data fetch for expanded range
-                // The chart will handle the range expansion automatically
-                onRangeExpansionNeeded({
-                  from: expansionFrom,
-                  to: expansionTo
-                })
-              }
-            }
-          }
-        }
-      },
-      yAxis: yAxes,
-      tooltip: {
-        shared: true,
-        split: true,
-        enabled: true,
-        outside: true, // Fixed at top-right corner
-        padding: 0,
-        backgroundColor: "transparent",
-        borderRadius: 0,
-        borderWidth: 0,
-        useHTML: true,
-        style: {
-          pointerEvents: "none",
-          zIndex: "20", // Below sidebar (z-50) but above chart
-        },
-        positioner: function positioner() {
-          return {
-            x: sidebarWidth + 10, // Add offset to avoid sidebar overlap
-            y: 10, // Add top padding to avoid header
-          }
-        } as unknown as TooltipPositionerCallbackFunction,
-        formatter: function tooltipFormatter(this: Highcharts.TooltipFormatterContextObject) {
-          // Group series by Y-axis position for proper vertical stacking
-          const orderedPointsBasedOnPositionY = Object.values(
-            (this.points ?? [])?.reduce(
-              (acc, item) => {
-                const key = item.series.yAxis.pos
-                if (!acc[key]) {
-                  acc[key] = []
-                }
-                acc[key].push(item)
-                return acc
-              },
-              {} as Record<string, typeof this.points>
-            )
-          )
-
-          return `
-            ${orderedPointsBasedOnPositionY
-              ?.map((points) => {
-                return points
-                  ?.map((point, index) => {
-                    // TradingView-style inline format
-                    const containerStyle = `
-                      background: transparent;
-                      padding: 2px 4px;
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                      font-size: 11px;
-                      line-height: 1.2;
-                      color: #D1D4DC;
-                      white-space: nowrap;
-                      position: absolute;
-                      top: ${
-                        point.series.type === "candlestick"
-                          ? -25
-                          : points.length > 1
-                            ? point.series.yAxis.pos + index * 20
-                            : point.series.yAxis.pos
-                      }px;
-                    `
-
-                    // Check if this is a candlestick series (main price pane)
-                    if (point.series.type === 'candlestick') {
-                      // Get OHLC values
-                      const open = (point.point as any).open || 0
-                      const high = (point.point as any).high || 0
-                      const low = (point.point as any).low || 0
-                      const close = (point.point as any).close || 0
-
-                      // Format based on asset class
-                      const formatValue = (val: number) => {
-                        let decimalPlaces = 2
-
-                        if (selectedAssetDetails?.asset?.asset_class) {
-                          const assetClass = selectedAssetDetails.asset.asset_class
-                          switch (assetClass) {
-                            case 'FX':
-                              decimalPlaces = 5
-                              break
-                            case 'Crypto':
-                              decimalPlaces = val < 1 ? 8 : (val < 100 ? 5 : 2)
-                              break
-                            case 'Stocks':
-                              decimalPlaces = 2
-                              break
-                            case 'Futures':
-                              decimalPlaces = val < 10 ? 4 : 2
-                              break
-                          }
-                        }
-
-                        return val.toFixed(decimalPlaces)
-                      }
-
-                      // Get asset info from metadata
-                      let displayName = ''
-                      let exchange = ''
-
-                      if (selectedAssetDetails?.asset) {
-                        displayName = selectedAssetDetails.asset.ticker || assetId || ''
-                        displayName = displayName.replace(/^\^/, '')
-                        exchange = selectedAssetDetails.asset.exchange || ''
-                      } else {
-                        displayName = assetId || ''
-                        displayName = displayName.replace(/^\^/, '')
-                      }
-
-                      // TradingView inline format: Ticker • Exchange O H L C
-                      return `
-                        <div style="${containerStyle}">
-                          <span style="color: #D1D4DC; font-weight: 600;">${displayName}</span>
-                          ${exchange ? `<span style="color: #787B86; margin: 0 4px;">•</span><span style="color: #787B86; font-size: 10px;">${exchange}</span>` : ''}
-                          <span style="color: #787B86; margin-left: 8px;">O</span>
-                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(open)}</span>
-                          <span style="color: #787B86; margin-left: 8px;">H</span>
-                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(high)}</span>
-                          <span style="color: #787B86; margin-left: 8px;">L</span>
-                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(low)}</span>
-                          <span style="color: #787B86; margin-left: 8px;">C</span>
-                          <span style="color: #3896D4; margin-left: 4px;">${formatValue(close)}</span>
-                        </div>
-                      `
-                    } else {
-                      // All other series (Volume, MACD, RSI, etc.)
-                      const value = point.point.y || 0
-                      const seriesName = point.series.name || 'Value'
-
-                      // Format value based on series type
-                      let formattedValue = ''
-                      if (seriesName.toLowerCase().includes('volume')) {
-                        // Format volume with K/M/B suffixes
-                        if (value >= 1000000000) {
-                          formattedValue = (value / 1000000000).toFixed(1) + 'B'
-                        } else if (value >= 1000000) {
-                          formattedValue = (value / 1000000).toFixed(1) + 'M'
-                        } else if (value >= 1000) {
-                          formattedValue = (value / 1000).toFixed(1) + 'K'
-                        } else {
-                          formattedValue = value.toFixed(0)
-                        }
-                      } else {
-                        formattedValue = value.toFixed(Math.abs(value) < 1 ? 5 : 2)
-                      }
-
-                      return `
-                        <div style="${containerStyle}">
-                          <span style="color: #787B86;">${seriesName}</span>
-                          <span style="color: #3896D4; font-weight: 600; margin-left: 8px;">${formattedValue}</span>
-                        </div>
-                      `
-                    }
-                  })
-                  ?.join("")
-              })
-              ?.join("")}
-          `
-        } as Highcharts.TooltipFormatterCallbackFunction,
-      },
-      plotOptions: {
-        candlestick: {
-          upColor: tailwindColors.territory.success,
-          upLineColor: tailwindColors.territory.success,
-          color: tailwindColors.secondary.red,
-          lineColor: tailwindColors.secondary.red,
-          dataLabels: { enabled: false },
-          enableMouseTracking: true,
-          animation: false, // Disable candlestick animations
-        },
-        column: {
-          animation: false, // Disable column animations
-          zones: [
-            {
-              value: 0,
-              color: "transparent", // for zero values
-            },
-            {
-              color: tailwindColors.territory.success, // Positive volume
-            },
-          ],
-        },
-        scatter: {
-          animation: false, // Disable scatter animations
-          enableMouseTracking: true,
-          states: {
-            hover: {
-              enabled: true,
-            },
-          },
-        },
-        line: {
-          animation: false, // Disable line animations
-          enableMouseTracking: true,
-          states: {
-            hover: {
-              enabled: true,
-            },
-          },
-          marker: {
-            enabled: false,
-          },
-        },
-        series: {
-          animation: false, // Disable all series animations
-          dataGrouping: (() => {
-            // Enable data grouping for all intraday timeframes (ending with Min/m/H/h)
-            // This automatically resamples data as you zoom out for better performance
-            const isIntraday = /^[0-9]+(Min|m|H|h)$/i.test(selectedTimeframe)
-            const isHourly = /^[0-9]+(H|h)$/i.test(selectedTimeframe)
-            const isMinute = /^[0-9]+(Min|m)$/i.test(selectedTimeframe)
-
-            // Different grouping units based on timeframe
-            let units: any[] = []
-            if (isMinute) {
-              // For minute charts: allow grouping into minutes, hours, days, weeks, months
-              units = [
-                ['minute', [1, 2, 5, 10, 15, 30]],
-                ['hour', [1, 2, 3, 4, 6, 8, 12]],
-                ['day', [1]],
-                ['week', [1]],
-                ['month', [1]],
-              ]
-            } else if (isHourly) {
-              // For hourly charts: skip minutes, start with hours
-              units = [
-                ['hour', [1, 2, 3, 4, 6, 8, 12]],
-                ['day', [1]],
-                ['week', [1]],
-                ['month', [1, 3, 6]],
-              ]
-            }
-
-            return {
-              enabled: isIntraday,
-              forced: isIntraday,
-              units: units,
-            }
-          })(),
-          states: {
-            inactive: {
-              enabled: false,
-            },
-          },
-          turboThreshold: 5000, // Optimal threshold for candlestick performance with lazy loading
-        },
-      },
-      series: validSeries, // Use validated series instead of allSeries
-      // Ensure annotations are fixed (non-draggable) and consistent
-      annotations: allAnnotations.map((annotation) => ({
-        ...annotation,
-        draggable: "",
-        zIndex: typeof annotation.zIndex === "number" ? annotation.zIndex : 7,
-        labelOptions: {
-          ...(annotation.labelOptions || {}),
-          allowOverlap: true,
-        },
-      })),
-      credits: {
-        enabled: false,
-      },
-      loading: {
-        labelStyle: {
-          color: "#e0e0e0",
-        },
-        style: {
-          backgroundColor: "rgba(33, 33, 33, 0.85)",
-        },
-      },
-    } as Highcharts.Options
-    } catch (error) {
-      console.error("Error creating chart options:", error)
-      return undefined
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Compose final chart configuration
+    return buildChartConfig({
+      yAxes,
+      xAxis,
+      tooltip,
+      seriesConfigResult,
+      height,
+      width,
+      selectedTimeframe,
+      selectedRoundTrips,
+      initialDisplayBars,
+      wheelZoomMode,
+      highchartsTheme,
+    })
   }, [
-    isLoading,
-    isLoadingTradeAnalyticsChartData,
     timeframeConfig,
     selectedTimeframe,
     tradeAnalyticsChartData,
+    paneStates,
+    highchartsTheme,
+    themeColors,
+    selectedAssetDetails,
+    selectedRoundTrips,
     height,
     width,
-    selectedRoundTrips,
-    fetchEntireCandleStickData,
-    paneStates,
-    onRangeExpansionNeeded, // Include callback in deps so event handler has fresh reference
-    highchartsTheme, // Update chart when theme changes
-    themeColors, // Update chart when theme colors change
-    isActuallyFetchingTradeAnalyticsChartData, // Include so event handler can check if fetch is in progress
-    assetId, // CRITICAL: Ensure chartOptions rebuilds completely when asset changes
-    campaignId, // Also include campaignId for completeness
-    sidebarWidth, // Update tooltip position when sidebar width changes
-    initialDisplayBars, // Include for initial zoom calculation
+    sidebarWidth,
+    assetId,
+    campaignId,
+    initialDisplayBars,
+    wheelZoomMode,
+    isActuallyFetchingTradeAnalyticsChartData,
+    onRangeExpansionNeeded,
+    createAfterSetExtremesHandler,
   ])
-
-  const handleSeriesVisibility = useCallback(
-    (seriesId: string) => {
-      const chart = chartRef.current?.chart
-      if (!chart || !chartOptions?.series) return
-
-      const seriesIndex = chartOptions.series.findIndex((series) => series.id === seriesId)
-      if (seriesIndex >= 0) {
-        if (chart.series[seriesIndex].visible) {
-          chart.series[seriesIndex].hide()
-          setVisibleSeriesIds((prev) => prev.filter((si) => si !== seriesId))
-        } else {
-          chart.series[seriesIndex].show()
-          setVisibleSeriesIds((prev) => [...prev, seriesId])
-        }
-      }
-    },
-    [chartOptions]
-  )
-
-  // Focus on the selected round trip by default
-  // Do not auto-focus or zoom; show default range provided by Highcharts
-  useEffect(() => {
-    // no-op: keep effect to react to data changes without adjusting extremes
-  }, [tradeAnalyticsChartData])
-
-  // Reset chart rendered state when data changes
-  useEffect(() => {
-    setIsChartRendered(false)
-  }, [tradeAnalyticsChartData])
-
-  // Additional cleanup when timeframe changes with debouncing
-  useEffect(() => {
-    setIsTimeframeSwitching(true)
-    setIsChartRendered(false)
-    // Clear visible series state to prevent stale series references
-    setVisibleSeriesIds([])
-
-    // CRITICAL: Clear viewport range ref to prevent zoom state transfer between assets
-    previousViewportRangeRef.current = null
-
-    // Force immediate chart key update to recreate chart with clean state
-    setChartKey(`${selectedTimeframe}-${assetId}-${Date.now()}`)
-
-    // Short delay before marking switching as complete
-    const timeoutId = setTimeout(() => {
-      setIsTimeframeSwitching(false)
-    }, 50) // Reduced debounce
-
-    return () => clearTimeout(timeoutId)
-  }, [selectedTimeframe, assetId])
-
-  // Update chart panes when pane states change
-  useEffect(() => {
-    const chart = chartRef.current?.chart
-    if (chart && paneStates.length > 0) {
-      // Update yAxis properties dynamically
-      paneStates.forEach((pane, index) => {
-        if (chart.yAxis[index]) {
-          chart.yAxis[index].update(
-            {
-              top: `${pane.top}%`,
-              height: `${pane.height}%`,
-            },
-            false
-          )
-        }
-      })
-      chart.redraw()
-    }
-  }, [paneStates])
-
-  // Trigger reflow when dimensions change (but don't force size to allow resize handles to work)
-  useEffect(() => {
-    const chart = chartRef.current?.chart
-    if (chart) {
-      try {
-        // Just trigger reflow, don't force size - this allows resize handles to work
-        chart.reflow()
-      } catch (error) {
-        // Silently skip reflow errors
-      }
-    }
-  }, [height, width])
-
-  if (tradeAnalyticsChartDataError) {
-    return (
-      <div className="text-red-500">
-        Unable to fetch trade data! Please try again later.
-      </div>
-    )
-  }
 
   return (
     <div className="flex h-full w-full flex-col items-start">
       <div className="relative h-full w-full flex-1" ref={chartContainerRef}>
-        {/* Show loading skeleton on INITIAL load, timeframe switch, OR asset switch */}
-        {((isLoading || isTimeframeSwitching || isLoadingTradeAnalyticsChartData) && !tradeAnalyticsChartData) || isAssetSwitching ? (
-          <div className="h-full w-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-accent border-r-transparent mb-4" />
-              <p className="text-muted-foreground">Loading chart...</p>
-            </div>
-          </div>
-        ) : typeof chartOptions === "undefined" || !assetId ? (
-          <div className="h-full w-full rounded-3xl">
-            <div className="flex h-full items-center justify-center text-gray-500">
-              {!assetId ? "Please select an asset" : "No data found!"}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Skeleton loader - ONLY shown when actually fetching from network */}
-            {isActuallyFetchingTradeAnalyticsChartData && tradeAnalyticsChartData && (
-              <div className="absolute inset-0 z-40 skeleton-chart-loader">
-                {/* Shimmer effect */}
-                <div className="skeleton-shimmer" />
-
-                {/* Chart structure skeleton */}
-                <div className="relative w-full h-full flex flex-col p-4">
-                  {/* Price chart area (70% height) */}
-                  <div className="relative flex-1 flex items-end gap-1 px-8 py-4">
-                    {/* Horizontal grid lines */}
-                    {[...Array(5)].map((_, i) => (
-                      <div
-                        key={`grid-h-${i}`}
-                        className="absolute left-0 right-0 h-px skeleton-grid-line"
-                        style={{
-                          bottom: `${i * 20}%`,
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          animationDelay: `${i * 0.1}s`,
-                        }}
-                      />
-                    ))}
-
-                    {/* Candlestick skeletons */}
-                    {[...Array(20)].map((_, i) => {
-                      // Random heights for realistic candlestick appearance
-                      const height = 20 + Math.random() * 60
-                      const wickTop = Math.random() * 20
-                      const wickBottom = Math.random() * 20
-                      const isGreen = Math.random() > 0.5
-
-                      return (
-                        <div
-                          key={`candle-${i}`}
-                          className="flex-1 flex flex-col items-center justify-end skeleton-candle"
-                          style={{ animationDelay: `${i * 0.05}s` }}
-                        >
-                          {/* Upper wick */}
-                          <div
-                            className="w-0.5 bg-primary-white/20"
-                            style={{ height: `${wickTop}%` }}
-                          />
-                          {/* Candle body */}
-                          <div
-                            className="w-full rounded-sm"
-                            style={{
-                              height: `${height}%`,
-                              background: isGreen
-                                ? 'rgba(34, 197, 94, 0.15)'
-                                : 'rgba(239, 68, 68, 0.15)',
-                              border: `1px solid ${isGreen ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                            }}
-                          />
-                          {/* Lower wick */}
-                          <div
-                            className="w-0.5 bg-primary-white/20"
-                            style={{ height: `${wickBottom}%` }}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Volume bars area (30% height) */}
-                  <div className="relative h-32 flex items-end gap-1 px-8 py-4 border-t border-primary-white/5">
-                    {[...Array(20)].map((_, i) => {
-                      const volumeHeight = 20 + Math.random() * 80
-                      return (
-                        <div
-                          key={`volume-${i}`}
-                          className="flex-1 skeleton-volume-bar rounded-t-sm"
-                          style={{
-                            height: `${volumeHeight}%`,
-                            background: 'rgba(34, 197, 94, 0.1)',
-                            animationDelay: `${i * 0.05 + 0.5}s`,
-                          }}
-                        />
-                      )
-                    })}
-                  </div>
-
-                  {/* Loading indicator badge */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 bg-background/80 backdrop-blur-md rounded-lg border border-territory-blue/30">
-                    <div className="w-2 h-2 bg-territory-blue rounded-full animate-pulse" />
-                    <span className="text-xs font-medium text-primary-white/80">Loading data...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <HighchartsReact
-              key={chartKey || `${selectedTimeframe}-${assetId}`} // Force complete reinitialization on timeframe/asset change
-              highcharts={Highcharts}
-              options={chartOptions}
-              ref={chartRef}
-              style={{
-                opacity: 1, // Always visible, no fade animation
-                height: "100%",
-                width: "100%",
-              }}
-            callback={(chart: Chart) => {
-              try {
-                // Trigger reflow to ensure proper sizing
-                if (chart) {
-                  chart.reflow()
-                }
-
-                // Mark as rendered immediately since we disabled animations
-                setIsChartRendered(true)
-              } catch (error) {
-                // Still mark as rendered to prevent infinite loading
-                setIsChartRendered(true)
-              }
-            }}
+        <ChartLoadingState
+          isLoading={isLoading || isLoadingTradeAnalyticsChartData}
+          isTimeframeSwitching={isTimeframeSwitching}
+          isAssetSwitching={isAssetSwitching}
+          hasData={!!tradeAnalyticsChartData && !!chartOptions}
+          assetId={assetId}
+          error={tradeAnalyticsChartDataError as Error | null}
+        >
+          <div className="h-full w-full text-foreground p-2">
+            <ChartContainer
+              chartOptions={chartOptions}
+              chartKey={chartKey}
+              chartRef={chartRef}
+              assetId={assetId}
+              selectedTimeframe={selectedTimeframe}
+              isActuallyFetching={isActuallyFetchingTradeAnalyticsChartData}
+              hasData={!!tradeAnalyticsChartData}
             />
-          </>
-        )}
-      </div>
-      {/* Only show bottom timeframe selector if no timeframe prop is provided */}
-      {!timeframe && (
-        <div className="flex min-h-11.5 w-full flex-row items-center justify-between gap-4 pt-3.75">
-          <div className="flex flex-1 flex-row items-center justify-start gap-2">
-            {selectedAssetDetails?.timeframes && (
-              <>
-                <p className="typography-desktopL14Regular shrink-0 text-primary-white/50">
-                  Time frame:
-                </p>
-                <div className="flex w-full flex-row items-center justify-start gap-1.5 lg:gap-2">
-                  {selectedAssetDetails?.timeframes?.map((tfInfo, index) => (
-                    <button
-                      className={`typography-desktopL14Regular flex h-7.5 w-10 items-center justify-center rounded ${
-                        tfInfo.timeframe === selectedTimeframe
-                          ? "pointer-events-none bg-primary-white/10 text-primary-white/50"
-                          : "cursor-pointer bg-transparent text-primary-white/30"
-                      }`}
-                      key={index}
-                      onClick={() => !timeframe && setInternalTimeframe(tfInfo.timeframe)}>
-                      {tfInfo.timeframe}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
-        </div>
-      )}
+        </ChartLoadingState>
+      </div>
     </div>
   )
 }

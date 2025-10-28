@@ -59,6 +59,9 @@
     "vitest": "latest"
   },
   "dependencies": {
-    "@epochlab/epoch-protos": "file:../../EpochProtos/typescript_package/epochlab-epoch-protos-2.0.9.tgz"
+    "@epochlab/epoch-protos": "file:../../EpochProtos/typescript_package/epochlab-epoch-protos-2.0.9.tgz",
+    "lucide-react": "^0.548.0",
+    "ms": "^2.1.3",
+    "react-intersection-observer": "^9.16.0"
   }
 }

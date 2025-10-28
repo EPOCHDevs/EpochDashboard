@@ -97,6 +97,7 @@ export interface TradeAnalyticsMetadataAssetInfoType {
 export interface GetTradeAnalyticsMetadataResponseType {
   asset_info: Record<string, TradeAnalyticsMetadataAssetInfoType>
   chart_info?: TradeAnalyticsMetadataChartInfoType
+  // Note: selector_metadata is now fetched from a separate endpoint: /selector-metadata/{id}
 }
 
 export interface IRoundTrip {

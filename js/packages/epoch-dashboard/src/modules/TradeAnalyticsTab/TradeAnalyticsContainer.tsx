@@ -4,9 +4,15 @@ import clsx from 'clsx'
 import TradeAnalyticsChartRenderer from './components/TradeAnalyticsChartRenderer'
 import DefaultTopToolbar from './components/DefaultTopToolbar'
 import type { GetTradeAnalyticsMetadataResponseType, IRoundTrip } from '../../types/TradeAnalyticsTypes'
+import { TRADE_POSITION, TRADE_RESULT } from '../../types/TradeAnalyticsTypes'
 import { getMsPerBar } from './components/TradeAnalyticsChartRenderer/utils/BackendPaddingUtils'
 import { globalDataCacheManager } from './components/TradeAnalyticsChartRenderer/utils/DataCacheManager'
 import HighchartsReact from 'highcharts-react-official'
+import CardSelector from '../../components/CardSelector'
+import type { CardRowData } from '../../types/SelectorTypes'
+import { useSelectorMetadata } from '../../hooks/useSelectorMetadata'
+import { useSelectorCounts } from '../../hooks/useSelectorCounts'
+import { SelectorIcon } from '../../utils/iconHelpers'
 
 // Create a query client for React Query (exported for use in UnifiedDashboardContainer)
 export const tradeAnalyticsQueryClient = new QueryClient({
@@ -170,27 +176,26 @@ export function TradeAnalyticsContent({
   const [selectedTimeframe, setSelectedTimeframe] = useState('5m')
   const [isEventsSidebarOpen, setIsEventsSidebarOpen] = useState(false)
   const [isAssetSwitching, setIsAssetSwitching] = useState(false)
-  const [selectedTradeIds, setSelectedTradeIds] = useState<number[]>([])
-  const [expandedCardIds, setExpandedCardIds] = useState<number[]>([])
   const [selectedRoundTripForChart, setSelectedRoundTripForChart] = useState<IRoundTrip | null>(null)
   const [loadedDataRange, setLoadedDataRange] = useState<{ min: number; max: number } | null>(null)
   const [isLazyLoading, setIsLazyLoading] = useState(false)
   const [expansionRequest, setExpansionRequest] = useState<{ from: number; to: number } | null>(null)
   const [debouncedSidebarWidth, setDebouncedSidebarWidth] = useState(56)
+  const [activeSelectorIndex, setActiveSelectorIndex] = useState(0)
 
   // Refs for sidebar and chart
   const triggerRef = useRef<HTMLButtonElement>(null)
   const eventsSectionRef = useRef<HTMLDivElement>(null)
-  const parentRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<HighchartsReact.RefObject>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
 
-  // Chart focus handler - zooms to trade time range
+  // Chart focus handler - zooms to trade time range and price range
   const focusOnTrade = (roundTrip: IRoundTrip) => {
     const chart = chartRef.current?.chart
     if (!chart) return
 
     const xAxis = chart.xAxis[0]
+    const yAxis = chart.yAxis[0]
     if (!xAxis) return
 
     const msPerBar = getMsPerBar(selectedTimeframe)
@@ -217,18 +222,11 @@ export function TradeAnalyticsContent({
 
     if (startTime >= endTime) return
 
+    // Set X-axis extremes (time range)
+    // Let Highcharts automatically determine the Y-axis range based on visible data
     xAxis.setExtremes(startTime, endTime, true, true)
   }
 
-  // Toggle card expansion
-  const toggleCardExpansion = (cardId: number, event: React.MouseEvent) => {
-    event.stopPropagation()
-    setExpandedCardIds(prev =>
-      prev.includes(cardId)
-        ? prev.filter(id => id !== cardId)
-        : [...prev, cardId]
-    )
-  }
 
   // Handle range expansion for lazy loading
   const handleRangeExpansion = useCallback((range: { from: number; to: number }) => {
@@ -248,19 +246,43 @@ export function TradeAnalyticsContent({
     error: tradeAnalyticsMetadataError
   } = useTradeMetadata(apiEndpoint, campaignId, userId)
 
-  // Fetch round trips data
+  // Fetch selector metadata from separate endpoint
   const {
-    data: roundTripsData,
-    isLoading: isLoadingRoundTripsData,
-    error: roundTripsDataError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetTradeAnalyticsRoundTrips({
+    data: selectorMetadata,
+    isLoading: isLoadingSelectorMetadata,
+    error: selectorMetadataError
+  } = useSelectorMetadata({
     campaignId,
-    apiEndpoint,
     userId,
+    apiEndpoint,
+    enabled: true,
   })
+
+  // Get available selectors for the current asset
+  const availableSelectors = useMemo(() => {
+    if (!selectorMetadata || !selectedAssetId) return []
+    return selectorMetadata[selectedAssetId] || []
+  }, [selectorMetadata, selectedAssetId])
+
+  // Reset active selector index when asset changes
+  useEffect(() => {
+    if (availableSelectors.length > 0 && activeSelectorIndex >= availableSelectors.length) {
+      setActiveSelectorIndex(0)
+    }
+  }, [availableSelectors, activeSelectorIndex])
+
+  // Fetch counts for all selectors dynamically
+  const { counts: selectorCounts } = useSelectorCounts({
+    campaignId,
+    userId,
+    assetId: selectedAssetId,
+    selectorCount: availableSelectors.length,
+    apiEndpoint,
+    enabled: !!selectedAssetId,
+  })
+
+  // Note: Round trips data is now fetched inside CardSelector via the selector endpoint
+  // No longer fetching round trips directly in this component
 
   // Debounce sidebar width changes to prevent chart re-renders during animation
   useEffect(() => {
@@ -271,20 +293,6 @@ export function TradeAnalyticsContent({
     return () => clearTimeout(timeoutId)
   }, [isEventsSidebarOpen])
 
-  // Flatten round trips for selected asset
-  const flattenedRoundTrips = useMemo(() => {
-    if (!roundTripsData || !selectedAssetId) return []
-
-    const allRoundTrips = (roundTripsData as unknown as InfiniteData<any>).pages.flatMap((page) => page.items)
-    const roundTripsOfSelectedAsset = allRoundTrips.filter((val) => val.asset_id === selectedAssetId)
-
-    return roundTripsOfSelectedAsset
-  }, [roundTripsData, selectedAssetId])
-
-  // Check if we should hide the sidebar - hide when no trades for selected asset
-  const shouldHideSidebar = useMemo(() => {
-    return flattenedRoundTrips.length === 0
-  }, [flattenedRoundTrips])
 
   // Set the initial asset and timeframe selection
   useEffect(() => {
@@ -310,8 +318,6 @@ export function TradeAnalyticsContent({
     // This prevents fetching with invalid pivot timestamps that are outside
     // the new asset's data range, which would cause fetch failures and infinite loading
     setSelectedRoundTripForChart(null)
-    setSelectedTradeIds([])
-    setExpandedCardIds([])
 
     if (tradeAnalyticsMetadata?.asset_info[assetId]) {
       const assetInfo = tradeAnalyticsMetadata.asset_info[assetId]
@@ -329,14 +335,14 @@ export function TradeAnalyticsContent({
 
   // Clear asset switching state when data loads for the new asset
   useEffect(() => {
-    if (isAssetSwitching && !isLoadingTradeAnalyticsMetadata && !isLoadingRoundTripsData) {
+    if (isAssetSwitching && !isLoadingTradeAnalyticsMetadata) {
       // Short delay to ensure data has fully rendered before clearing loading state
       const timeoutId = setTimeout(() => {
         setIsAssetSwitching(false)
       }, 300)
       return () => clearTimeout(timeoutId)
     }
-  }, [isAssetSwitching, isLoadingTradeAnalyticsMetadata, isLoadingRoundTripsData])
+  }, [isAssetSwitching, isLoadingTradeAnalyticsMetadata])
 
   // Set absolute bounds from metadata when available
   useEffect(() => {
@@ -474,27 +480,40 @@ export function TradeAnalyticsContent({
             {/* Collapsed Toolbar View */}
             {!isEventsSidebarOpen ? (
               <div className="flex flex-col items-center py-4 gap-4">
-                <button
-                  onClick={() => setIsEventsSidebarOpen(true)}
-                  className="relative p-2.5 rounded-lg hover:bg-muted/30 group"
-                  title={`${flattenedRoundTrips.length} trades`}
-                >
-                  <svg
-                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {availableSelectors.map((selector, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setActiveSelectorIndex(index)
+                      setIsEventsSidebarOpen(true)
+                    }}
+                    className="relative p-2.5 rounded-lg hover:bg-muted/30 group"
+                    title={selector.title || 'View cards'}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  {/* Trade count badge */}
-                  {flattenedRoundTrips.length > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold rounded-full px-1">
-                      {flattenedRoundTrips.length}
-                    </span>
-                  )}
-                </button>
+                    <SelectorIcon
+                      icon={selector.icon}
+                      count={selectorCounts[index]}
+                      size={24}
+                    />
+                  </button>
+                ))}
+                {availableSelectors.length === 0 && (
+                  <button
+                    onClick={() => setIsEventsSidebarOpen(true)}
+                    className="relative p-2.5 rounded-lg hover:bg-muted/30 group"
+                    title="View cards"
+                  >
+                    <svg
+                      className="w-6 h-6 text-muted-foreground group-hover:text-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -503,10 +522,9 @@ export function TradeAnalyticsContent({
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-6 bg-accent/80 rounded-full" />
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground">Trades</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {flattenedRoundTrips.length} {flattenedRoundTrips.length === 1 ? 'trade' : 'trades'}
-                      </p>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {availableSelectors[activeSelectorIndex]?.title || 'Cards'}
+                      </h3>
                     </div>
                   </div>
                   <button
@@ -529,185 +547,100 @@ export function TradeAnalyticsContent({
             )}
 
             {/* Content Section - Shows for both collapsed and expanded states */}
-            {isEventsSidebarOpen && (isLoadingTradeAnalyticsMetadata || isLoadingRoundTripsData ? (
+            {isEventsSidebarOpen && (isLoadingSelectorMetadata ? (
               <div className="flex h-full w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-accent" />
-                  <p className="text-xs text-muted-foreground">Loading trades...</p>
+                  <p className="text-xs text-muted-foreground">Loading selector metadata...</p>
                 </div>
               </div>
             ) : (
-              <div className="flex h-full flex-col flex-1 overflow-hidden">
-                <div
-                  className="hide-scrollbar relative w-full flex-1 overflow-y-auto overflow-x-hidden px-5 py-4"
-                  ref={parentRef}
-                  style={{
-                    transform: "none",
-                    WebkitTransform: "none",
-                    willChange: "scroll-position",
-                  }}>
-                  <div
-                    className="relative flex w-full flex-col gap-3"
-                    style={{
-                      transform: "none",
-                      WebkitTransform: "none",
-                    }}>
-                    {flattenedRoundTrips.length ? (
-                      flattenedRoundTrips.map((roundTrip) => {
-                        const formattedDate = new Date(roundTrip.open_datetime).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true,
-                          timeZone: 'UTC'
-                        })
+              // Use generic CardSelector if selector metadata exists, otherwise show message
+              availableSelectors.length > 0 && availableSelectors[activeSelectorIndex] ? (
+                <CardSelector
+                  key={`${selectedAssetId}-${activeSelectorIndex}`} // Force re-mount on asset/selector change
+                  campaignId={campaignId}
+                  userId={userId}
+                  assetId={selectedAssetId}
+                  selectorIndex={activeSelectorIndex}
+                  apiEndpoint={apiEndpoint}
+                  metadata={availableSelectors[activeSelectorIndex]}
+                  onCardClick={(rowData: CardRowData) => {
+                    // Generic card click handler using pivot_index
+                    const metadata = availableSelectors[activeSelectorIndex]
+                    if (!metadata) return
 
-                        const formattedReturn = roundTrip.net_return >= 0
-                          ? `$${roundTrip.net_return.toLocaleString()}`
-                          : `-$${Math.abs(roundTrip.net_return).toLocaleString()}`
+                    // Use pivot_index to get the timestamp column
+                    const pivotSchema = metadata.schemas[metadata.pivot_index]
+                    if (!pivotSchema) return
 
-                        const isExpanded = expandedCardIds.includes(roundTrip.index)
-                        const isSelected = selectedTradeIds.includes(roundTrip.index)
+                    const pivotColumnId = pivotSchema.column_id
+                    const pivotValue = rowData[pivotColumnId]
 
-                        return (
-                          <button
-                            key={roundTrip.index}
-                            className={clsx(
-                              "relative flex flex-col gap-4 overflow-hidden rounded-lg w-full px-4 py-3 text-left group border transform-gpu transition-transform duration-150",
-                              isSelected
-                                ? "bg-accent/20 border-accent shadow-md ring-1 ring-accent"
-                                : "bg-background border-border hover:bg-muted hover:border-accent/50 hover:shadow-sm hover:scale-[1.01]"
-                            )}
-                            onClick={() => {
-                              setSelectedTradeIds([roundTrip.index])
-                              setSelectedRoundTripForChart(roundTrip)
-                              setTimeout(() => focusOnTrade(roundTrip), 500)
-                            }}>
-                            {/* Card Header */}
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="text-base font-semibold text-foreground">{roundTrip.asset}</h4>
-                                  {roundTrip.status === 'WIN' ? (
-                                    <span className="px-2 py-0.5 rounded-md bg-territory-success/20 text-territory-success text-xs font-medium">WIN</span>
-                                  ) : (
-                                    <span className="px-2 py-0.5 rounded-md bg-territory-alert/20 text-territory-alert text-xs font-medium">LOSS</span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className={clsx(
-                                    "px-2 py-0.5 rounded-md text-xs font-medium",
-                                    roundTrip.side === 'Long' ? "bg-territory-success/10 text-territory-success" : "bg-territory-warning/10 text-territory-warning"
-                                  )}>
-                                    {roundTrip.side?.toUpperCase()}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <span className="text-xs text-muted-foreground">{formattedDate}</span>
-                                </div>
-                              </div>
-                              <div
-                                onClick={(e) => toggleCardExpansion(roundTrip.index, e)}
-                                className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors shrink-0 cursor-pointer"
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault()
-                                    toggleCardExpansion(roundTrip.index, e as any)
-                                  }
-                                }}
-                              >
-                                <svg
-                                  className={clsx(
-                                    "w-4 h-4 text-muted-foreground transition-transform duration-150",
-                                    isExpanded && "rotate-180"
-                                  )}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </div>
-                            </div>
+                    if (!pivotValue) return
 
-                            {/* Return Info */}
-                            <div className="flex items-baseline gap-2">
-                              <span className={clsx(
-                                "text-2xl font-bold",
-                                roundTrip.net_return >= 0 ? "text-territory-success" : "text-territory-alert"
-                              )}>
-                                {formattedReturn}
-                              </span>
-                              <span className={clsx(
-                                "text-sm font-medium",
-                                roundTrip.net_return >= 0 ? "text-territory-success/80" : "text-territory-alert/80"
-                              )}>
-                                ({roundTrip.return_percent.toFixed(2)}%)
-                              </span>
-                            </div>
+                    // Create a minimal round trip object for chart navigation
+                    // Only populate the fields needed for focusOnTrade
+                    const roundTrip: IRoundTrip = {
+                      // Asset identification
+                      asset: (rowData.asset as string) || selectedAssetId,
+                      asset_id: (rowData.asset_id as string) || selectedAssetId,
+                      asset_root_id: (rowData.asset_root_id as string) || selectedAssetId,
 
-                            {/* Expanded Details */}
-                            {isExpanded && (
-                              <div className="overflow-hidden">
-                                <div className="pt-3 border-t border-border/50">
-                                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                    {roundTrip.close_datetime && (
-                                      <div>
-                                        <p className="text-xs text-muted-foreground mb-1">Close Date</p>
-                                        <p className="text-sm text-foreground">
-                                          {new Date(roundTrip.close_datetime).toLocaleString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            hour12: true,
-                                            timeZone: 'UTC'
-                                          })}
-                                        </p>
-                                      </div>
-                                    )}
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Size</p>
-                                      <p className="text-sm text-foreground font-medium">{roundTrip.size.toFixed(2)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Avg Entry</p>
-                                      <p className="text-sm text-foreground font-medium">${roundTrip.avg_entry_price.toFixed(2)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Avg Exit</p>
-                                      <p className="text-sm text-foreground font-medium">${roundTrip.avg_exit_price.toFixed(2)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Duration</p>
-                                      <p className="text-sm text-foreground font-medium">{roundTrip.duration} days</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </button>
-                        )
-                      })
-                    ) : (
-                      <div className="flex h-full items-center justify-center py-12">
-                        <div className="text-center">
-                          <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-3">
-                            <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                          </div>
-                          <p className="text-sm text-muted-foreground">No trades found</p>
-                        </div>
-                      </div>
+                      // Timestamps - use pivot value as the primary timestamp
+                      open_datetime: pivotValue as string,
+                      close_datetime: (rowData.close_datetime as string) || pivotValue as string,
+
+                      // Position info - use defaults if not available
+                      side: (rowData.side as TRADE_POSITION) || TRADE_POSITION.LONG,
+                      status: (rowData.status as TRADE_RESULT) || TRADE_RESULT.OPEN,
+                      index: (rowData.index as number) || 0,
+
+                      // Prices - optional
+                      lowest_price: rowData.lowest_price as number,
+                      highest_price: rowData.highest_price as number,
+                      avg_entry_price: rowData.avg_entry_price as number,
+                      avg_exit_price: rowData.avg_exit_price as number,
+                      opening_price: rowData.opening_price as number,
+                      closing_price: rowData.closing_price as number,
+
+                      // Other fields - use defaults
+                      cost: (rowData.cost as number) || 0,
+                      entry_cost: (rowData.entry_cost as number) || 0,
+                      exit_cost: (rowData.exit_cost as number) || 0,
+                      size: (rowData.size as number) || 0,
+                      position: (rowData.position as number) || 0,
+                      entry_trade_sizes: (rowData.entry_trade_sizes as number) || 0,
+                      exit_trade_sizes: (rowData.exit_trade_sizes as number) || 0,
+                      net_return: (rowData.net_return as number) || 0,
+                      return_percent: (rowData.return_percent as number) || 0,
+                      return_nominal: (rowData.return_nominal as number) || 0,
+                      return_size: (rowData.return_size as number) || 0,
+                      duration: (rowData.duration as number) || 0,
+                      stop_loss: (rowData.stop_loss as number) || null,
+                      take_profit: (rowData.take_profit as number) || null,
+                      total_commissions: (rowData.total_commissions as number) || null,
+                    }
+
+                    setSelectedRoundTripForChart(roundTrip)
+                    setTimeout(() => focusOnTrade(roundTrip), 100)
+                  }}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-muted-foreground">No selector data available</p>
+                    {selectorMetadataError && (
+                      <p className="text-xs text-destructive mt-2">{selectorMetadataError}</p>
                     )}
                   </div>
                 </div>
-              </div>
+              )
             ))}
           </div>
           </div>

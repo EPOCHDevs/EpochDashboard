@@ -9,6 +9,7 @@ export interface DataCacheEntry {
   data: Table<Record<string | number | symbol, DataType>>
   loadedRanges: DataRange[] // Track all loaded time ranges (can be non-contiguous)
   absoluteBounds?: DataRange // Hard limits from backend metadata
+  fullDataLoaded: boolean // True if all available data has been fetched from backend
   timestamp: number
   size: number // Estimated memory footprint in bytes
   accessCount: number
@@ -306,6 +307,7 @@ export class DataCacheManager {
       data: finalData,
       loadedRanges: finalLoadedRanges,
       absoluteBounds: existingEntry?.absoluteBounds, // Preserve absolute bounds
+      fullDataLoaded: existingEntry?.fullDataLoaded || false, // Preserve fullDataLoaded flag
       timestamp: Date.now(),
       size: finalSize,
       accessCount: existingEntry ? existingEntry.accessCount + 1 : 1,
@@ -362,6 +364,12 @@ export class DataCacheManager {
     const key = this.getCacheKey(request)
     const entry = this.cache.get(key)
 
+    // If full data is already loaded, no expansion needed
+    if (entry?.fullDataLoaded) {
+      console.log(`📊 [Cache] Full data already loaded for ${key}, skipping expansion`)
+      return []
+    }
+
     // Clamp target range to absolute bounds if they exist
     let clampedRange = targetRange
     if (entry?.absoluteBounds) {
@@ -407,6 +415,7 @@ export class DataCacheManager {
         data: emptyTable,
         loadedRanges: [],
         absoluteBounds: bounds,
+        fullDataLoaded: false,
         timestamp: Date.now(),
         size: 0,
         accessCount: 0,
@@ -425,6 +434,29 @@ export class DataCacheManager {
     const key = this.getCacheKey(request)
     const entry = this.cache.get(key)
     return entry?.absoluteBounds
+  }
+
+  /**
+   * Marks a cache entry as having all available data loaded
+   * This prevents further backend fetches for this key
+   */
+  public setFullDataLoaded(request: DataFetchRequest): void {
+    const key = this.getCacheKey(request)
+    const entry = this.cache.get(key)
+
+    if (entry) {
+      entry.fullDataLoaded = true
+      console.log(`📊 [Cache] Marked as fully loaded: ${key}`)
+    }
+  }
+
+  /**
+   * Checks if all available data has been loaded for a cache entry
+   */
+  public isFullDataLoaded(request: DataFetchRequest): boolean {
+    const key = this.getCacheKey(request)
+    const entry = this.cache.get(key)
+    return entry?.fullDataLoaded || false
   }
 
   /**

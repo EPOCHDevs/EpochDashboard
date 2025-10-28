@@ -78,9 +78,10 @@ export const generateCandlestickPlotKindSeriesOptions = ({
 
       if (roundTrip.side === TRADE_POSITION.LONG) {
         // For long positions: Buy at open, Sell at close
+        // Use actual opening_price and closing_price for marker positions
         buyPoints.push({
           x: openTimestamp,
-          y: roundTrip.lowest_price, // Position at the lowest price
+          y: roundTrip.opening_price, // Actual buy price
           roundTrip,
         })
         if (roundTrip.close_datetime) {
@@ -88,15 +89,16 @@ export const generateCandlestickPlotKindSeriesOptions = ({
 
           sellPoints.push({
             x: closeTimestamp,
-            y: roundTrip.highest_price, // Position at the highest price
+            y: roundTrip.closing_price, // Actual sell price
             roundTrip,
           })
         }
       } else if (roundTrip.side === TRADE_POSITION.SHORT) {
         // For short positions: Sell at open, Buy at close
+        // Use actual opening_price and closing_price for marker positions
         sellPoints.push({
           x: openTimestamp,
-          y: roundTrip.highest_price, // Position at the highest price
+          y: roundTrip.opening_price, // Actual sell price
           roundTrip,
         })
         if (roundTrip.close_datetime) {
@@ -104,7 +106,7 @@ export const generateCandlestickPlotKindSeriesOptions = ({
 
           buyPoints.push({
             x: closeTimestamp,
-            y: roundTrip.lowest_price, // Position at the lowest price
+            y: roundTrip.closing_price, // Actual buy price
             roundTrip,
           })
         }

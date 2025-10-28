@@ -2,6 +2,7 @@ import { SeriesConfig } from "../../../../types/TradeAnalyticsTypes"
 import { DataType, Table } from "apache-arrow"
 import { extractPlotKindSeriesData, getSharedPlotKindSeriesOptions } from "./EpochPlotKindOptions"
 import { SeriesColumnOptions, SeriesLineOptions, SeriesOptionsType } from "highcharts"
+import { tailwindColors } from "../../../../utils/tailwindHelpers"
 
 export const MACD_PLOT_KIND_DATA_KEYS = ["index", "macd", "macd_signal", "macd_histogram"]
 export interface MACDStyleOptions {
@@ -48,28 +49,28 @@ export const generateMACDPlotKindSeriesOptions = ({
 
   const series: SeriesOptionsType[] = []
 
-  // MACD line
+  // MACD line - use green to match bullish candlesticks
   series.push({
     ...getSharedPlotKindSeriesOptions(seriesConfig),
     type: "line",
     name: `${seriesConfig.name} MACD`,
     id: seriesConfig.id,
     data: macdLineData,
-    color: styleOptions?.macdColor || "#2563eb",
+    color: styleOptions?.macdColor || tailwindColors.territory.success,
     lineWidth: 2,
     marker: {
       enabled: false,
     },
   } as SeriesLineOptions)
 
-  // Signal line
+  // Signal line - use white/foreground color
   series.push({
     ...getSharedPlotKindSeriesOptions(seriesConfig),
     type: "line",
     name: `${seriesConfig.name} Signal`,
     id: `${seriesConfig.id}_signal`,
     data: signalLineData,
-    color: styleOptions?.signalColor || "#f59e0b",
+    color: styleOptions?.signalColor || tailwindColors.primary.white,
     lineWidth: 2,
     dashStyle: "Dash",
     linkedTo: seriesConfig.id,
@@ -78,22 +79,23 @@ export const generateMACDPlotKindSeriesOptions = ({
     },
   } as SeriesLineOptions)
 
-  // Histogram
+  // Histogram - match candlestick colors exactly
   series.push({
     ...getSharedPlotKindSeriesOptions(seriesConfig),
     type: "column",
     name: `${seriesConfig.name} Histogram`,
     id: `${seriesConfig.id}_histogram`,
     data: histogramData,
-    color: "#6b7280", // Default gray
+    color: tailwindColors.secondary.red, // Default bearish
     linkedTo: seriesConfig.id,
+    borderWidth: 0, // Remove white border
     zones: [
       {
         value: 0,
-        color: styleOptions?.histogramBearishColor || "#ef4444",
+        color: styleOptions?.histogramBearishColor || tailwindColors.secondary.red,
       },
       {
-        color: styleOptions?.histogramBullishColor || "#10b981",
+        color: styleOptions?.histogramBullishColor || tailwindColors.territory.success,
       },
     ],
   } as SeriesColumnOptions)
