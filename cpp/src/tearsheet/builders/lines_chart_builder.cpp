@@ -149,7 +149,7 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
 
     auto index_type = df.index()->array()->type();
 
-    // Branch based on index type
+    // Branch based on index type - timestamp and integer types supported, but not float/double
     switch (index_type->id()) {
         case arrow::Type::TIMESTAMP:
             processDataFrameWithTimestampIndex(df, y_cols, lines);
@@ -163,8 +163,11 @@ LinesChartBuilder& LinesChartBuilder::fromDataFrame(const epoch_frame::DataFrame
             processDataFrameWithIntegerIndex<uint64_t>(df, y_cols, lines);
             setXAxisType(epoch_proto::AxisLinear);
             break;
+        case arrow::Type::DOUBLE:
+        case arrow::Type::FLOAT:
+            throw std::runtime_error("Float/Double index types are not supported for LinesChartBuilder. Use SplineChartBuilder for continuous data.");
         default:
-            throw std::runtime_error("Unsupported index type for LinesChartBuilder. Supported types: timestamp, int64_t, uint64_t");
+            throw std::runtime_error("Unsupported index type for LinesChartBuilder. Supported types: timestamp, int64, uint64. Found: " + index_type->ToString());
     }
 
     addLines(lines);

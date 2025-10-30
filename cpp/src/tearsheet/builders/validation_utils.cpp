@@ -235,12 +235,8 @@ void ValidationUtils::validateHistogramBins(uint32_t bins_count, size_t data_siz
         throw std::runtime_error("Cannot create histogram from empty data");
     }
 
-    if (bins_count > data_size) {
-        std::stringstream ss;
-        ss << "Histogram bins_count (" << bins_count
-           << ") cannot be greater than data size (" << data_size << ")";
-        throw std::runtime_error(ss.str());
-    }
+    // Histograms can have more bins than data points - bins can be empty
+    // This is standard behavior for histogram visualization
 }
 
 std::string ValidationUtils::getMonotonicErrorMessage(const std::vector<epoch_proto::Point>& points) {

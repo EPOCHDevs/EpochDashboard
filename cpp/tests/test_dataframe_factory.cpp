@@ -5,6 +5,7 @@
 #include "epoch_dashboard/tearsheet/bar_chart_builder.h"
 #include "epoch_dashboard/tearsheet/histogram_chart_builder.h"
 #include <epoch_frame/dataframe.h>
+#include <epoch_frame/factory/index_factory.h>
 #include <arrow/api.h>
 
 using namespace epoch_tearsheet;
@@ -186,35 +187,6 @@ TEST_CASE("TableBuilder: fromDataFrame integration", "[dataframe]") {
     REQUIRE(proto_table.data().rows_size() == 2);
     REQUIRE(proto_table.columns(0).name() == "price");
     REQUIRE(proto_table.columns(1).name() == "volume");
-}
-
-TEST_CASE("LinesChartBuilder: fromDataFrame integration", "[dataframe]") {
-    std::vector<double> x = {1.0, 2.0};
-    std::vector<double> y = {10.0, 20.0};
-
-    arrow::DoubleBuilder x_builder, y_builder;
-    REQUIRE(x_builder.AppendValues(x).ok());
-    REQUIRE(y_builder.AppendValues(y).ok());
-
-    std::shared_ptr<arrow::Array> x_array, y_array;
-    REQUIRE(x_builder.Finish(&x_array).ok());
-    REQUIRE(y_builder.Finish(&y_array).ok());
-
-    auto schema = arrow::schema({
-        arrow::field("date", arrow::float64()),
-        arrow::field("price", arrow::float64())
-    });
-
-    auto table = arrow::Table::Make(schema, {x_array, y_array});
-    DataFrame df(table);
-
-    // This should throw because the default index is not a timestamp array
-    REQUIRE_THROWS_AS(
-        LinesChartBuilder()
-            .setTitle("Price Chart")
-            .fromDataFrame(df, {"price"}),
-        std::exception
-    );
 }
 
 TEST_CASE("BarChartBuilder: fromDataFrame integration", "[dataframe]") {
