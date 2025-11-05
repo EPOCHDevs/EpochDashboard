@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 
+#include <tbb/enumerable_thread_specific.h>
+
 #include "epoch_protos/tearsheet.pb.h"
 
 namespace epoch_tearsheet {
@@ -19,9 +21,11 @@ public:
 
 private:
     std::string category_;
-    std::vector<epoch_proto::CardDef> cards_;
-    std::vector<epoch_proto::Chart> charts_;
-    std::vector<epoch_proto::Table> tables_;
+    // Thread-local buckets for concurrent add* calls from worker threads.
+    // Kept mutable to allow merging in build() while preserving const API.
+    mutable tbb::enumerable_thread_specific<std::vector<epoch_proto::CardDef>> cards_tls_;
+    mutable tbb::enumerable_thread_specific<std::vector<epoch_proto::Chart>> charts_tls_;
+    mutable tbb::enumerable_thread_specific<std::vector<epoch_proto::Table>> tables_tls_;
 };
 
 class FullDashboardBuilder {

@@ -21,6 +21,7 @@ add_executable(epoch_dashboard_test
     test_line_builder.cpp
     test_numeric_line_builder.cpp
     test_chart_validation.cpp
+    test_tearsheet_parallel_thread_safety.cpp
 )
 
 # Link libraries

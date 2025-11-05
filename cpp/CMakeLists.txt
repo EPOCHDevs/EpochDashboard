@@ -89,9 +89,11 @@ if(BUNDLE_PROTOBUF_RUNTIME)
     set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 find_package(Protobuf REQUIRED)
+find_package(TBB CONFIG REQUIRED)
 target_link_libraries(epoch_dashboard PUBLIC
         epoch::data_sdk
-        epoch::proto)
+        epoch::proto
+        TBB::tbb)
 
 if (BUILD_TEST)
     add_subdirectory(tests)
