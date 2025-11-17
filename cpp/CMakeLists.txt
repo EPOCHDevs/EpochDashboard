@@ -88,7 +88,7 @@ add_subdirectory(src)
 if(BUNDLE_PROTOBUF_RUNTIME)
     set(Protobuf_USE_STATIC_LIBS ON)
 endif()
-find_package(Protobuf REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(epoch_dashboard PUBLIC
         epoch::data_sdk

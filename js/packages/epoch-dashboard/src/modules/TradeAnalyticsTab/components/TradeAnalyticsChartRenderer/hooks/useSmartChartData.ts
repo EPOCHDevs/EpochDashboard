@@ -172,7 +172,6 @@ export const useSmartChartData = ({
       const queryString = new URLSearchParams(queryParams).toString()
 
       // Use provided apiEndpoint and userId, or fall back to defaults
-      const finalApiEndpoint = apiEndpoint || 'http://localhost:9000'
       const finalUserId = userId || 'guest'
 
       // Check if we're in a Next.js environment (has /api routes)
@@ -181,11 +180,11 @@ export const useSmartChartData = ({
       let response
       if (isNextJsEnv || !apiEndpoint) {
         // Use local proxy endpoint (Next.js API route)
+        // Don't send X-API-URL header - let the proxy use its own BACKEND_SERVER_URL
         response = await axios.get(
           `/api/backend-server/dashboard/trade-analytics-chart-data/${dataFetchRequest.strategyId}?${queryString}`,
           {
             headers: {
-              'X-API-URL': finalApiEndpoint,
               'X-User-Id': finalUserId,
             },
             responseType: 'arraybuffer',
