@@ -182,6 +182,12 @@ export function TradeAnalyticsContent({
   const [expansionRequest, setExpansionRequest] = useState<{ from: number; to: number } | null>(null)
   const [debouncedSidebarWidth, setDebouncedSidebarWidth] = useState(56)
   const [activeSelectorIndex, setActiveSelectorIndex] = useState(0)
+  const [indicatorVisibility, setIndicatorVisibility] = useState<{
+    visibilityState: Record<string, boolean>
+    onToggleIndicator: (seriesId: string) => boolean
+    getVisibleCount: () => { visible: number; total: number }
+    canShowMore: () => boolean
+  } | null>(null)
 
   // Refs for sidebar and chart
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -459,6 +465,8 @@ export function TradeAnalyticsContent({
         onAssetChange={handleAssetChange}
         onTimeframeChange={setSelectedTimeframe}
         rightControls={rightControls}
+        timeframeConfig={tradeAnalyticsMetadata?.chart_info?.[selectedTimeframe]}
+        indicatorVisibility={indicatorVisibility || undefined}
       />
 
       {/* Main Content Area with Sidebar Overlay */}
@@ -661,7 +669,7 @@ export function TradeAnalyticsContent({
               fetchEntireCandleStickData={false}
               paddingProfile="STANDARD"
               timeframe={selectedTimeframe}
-              chartRef={chartRef}
+              chartRef={chartRef as React.RefObject<HighchartsReact.RefObject>}
               onRangeExpansionNeeded={handleRangeExpansion}
               expansionRange={expansionRequest}
               isLazyLoading={isLazyLoading}
@@ -669,6 +677,7 @@ export function TradeAnalyticsContent({
               userId={userId}
               sidebarWidth={debouncedSidebarWidth}
               isAssetSwitching={isAssetSwitching}
+              onIndicatorVisibilityChange={setIndicatorVisibility}
             />
           </div>
         </div>

@@ -165,11 +165,11 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
     return item.title || ''
   }
 
-  // Sort function for STAT category items - sort by title prefix [S, R, T, A]
-  const sortStatItems = <T,>(items: T[]): T[] => {
-    if (categoryData.label !== 'STAT') return items
+  // Sort function for ALL category items - sort by title prefix [S, R, T, A]
+  const sortAllItems = <T,>(items: T[]): T[] => {
+    if (categoryData.label !== 'ALL') return items
 
-    const statOrder = ['S', 'R', 'T', 'A']
+    const allOrder = ['S', 'R', 'T', 'A']
     return [...items].sort((a, b) => {
       const titleA = getTitle(a)
       const titleB = getTitle(b)
@@ -178,15 +178,15 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
       const prefixA = titleA.charAt(0).toUpperCase()
       const prefixB = titleB.charAt(0).toUpperCase()
 
-      const indexA = statOrder.indexOf(prefixA)
-      const indexB = statOrder.indexOf(prefixB)
+      const indexA = allOrder.indexOf(prefixA)
+      const indexB = allOrder.indexOf(prefixB)
 
-      // If both have STAT prefixes, sort by order
+      // If both have ALL prefixes, sort by order
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB
       }
 
-      // If only one has STAT prefix, it comes first
+      // If only one has ALL prefix, it comes first
       if (indexA !== -1) return -1
       if (indexB !== -1) return 1
 
@@ -197,15 +197,15 @@ const TearsheetCategoryContent: React.FC<TearsheetCategoryContentProps> = ({
 
   // Sort charts, tables, and cards based on category (memoized to prevent re-sorting on every render)
   const sortedCharts = React.useMemo(
-    () => sortStatItems(categoryData.charts),
+    () => sortAllItems(categoryData.charts),
     [categoryData.charts, categoryData.label]
   )
   const sortedTables = React.useMemo(
-    () => sortStatItems(categoryData.tables),
+    () => sortAllItems(categoryData.tables),
     [categoryData.tables, categoryData.label]
   )
   const sortedCards = React.useMemo(
-    () => sortStatItems(categoryData.cards),
+    () => sortAllItems(categoryData.cards),
     [categoryData.cards, categoryData.label]
   )
 

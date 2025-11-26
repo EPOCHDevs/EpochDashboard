@@ -65,6 +65,28 @@ import {
   generateChandeKrollPlotKindSeriesOptions,
 } from "./ChandeKrollStop"
 import { GAP_PLOT_KIND_DATA_KEYS, generateGapPlotElements } from "./Gap"
+import { ZONE_PLOT_KIND_DATA_KEYS, generateZonePlotElements } from "./Zone"
+import {
+  PIVOT_POINT_SR_PLOT_KIND_DATA_KEYS,
+  generatePivotPointSRPlotKindSeriesOptions,
+} from "./PivotPointSR"
+import {
+  CLOSE_LINE_PLOT_KIND_DATA_KEYS,
+  generateCloseLinePlotKindSeriesOptions,
+} from "./CloseLine"
+import {
+  PIVOT_POINT_DETECTOR_PLOT_KIND_DATA_KEYS,
+  generatePivotPointDetectorPlotKindSeriesOptions,
+} from "./PivotPointDetector"
+import { SENTIMENT_PLOT_KIND_DATA_KEYS, generateSentimentPlotKindSeriesOptions } from "./Sentiment"
+import { HMM_PLOT_KIND_DATA_KEYS, generateHMMPlotKindSeriesOptions } from "./HMM"
+import { FLAG_PATTERN_PLOT_KIND_DATA_KEYS, generateFlagPatternPlotElements } from "./FlagPattern"
+import { PENNANT_PATTERN_PLOT_KIND_DATA_KEYS, generatePennantPatternPlotElements } from "./PennantPattern"
+import { TRIANGLE_PATTERNS_PLOT_KIND_DATA_KEYS, generateTrianglePatternsPlotElements } from "./TrianglePatterns"
+import { CONSOLIDATION_BOX_PLOT_KIND_DATA_KEYS, generateConsolidationBoxPlotElements } from "./ConsolidationBox"
+import { DOUBLE_TOP_BOTTOM_PLOT_KIND_DATA_KEYS, generateDoubleTopBottomPlotElements } from "./DoubleTopBottom"
+import { HEAD_AND_SHOULDERS_PLOT_KIND_DATA_KEYS, generateHeadAndShouldersPlotElements } from "./HeadAndShoulders"
+import { INVERSE_HEAD_AND_SHOULDERS_PLOT_KIND_DATA_KEYS, generateInverseHeadAndShouldersPlotElements } from "./InverseHeadAndShoulders"
 
 // Interface for plot elements returned by plot kind handlers
 export interface PlotElements {
@@ -250,6 +272,12 @@ export const generatePlotElements = ({
         seriesConfig,
       })
     }
+    case PLOT_KIND.ZONE: {
+      return generateZonePlotElements({
+        data,
+        seriesConfig,
+      })
+    }
     case PLOT_KIND.ELDERS: {
       return generateEldersPlotElements({
         data,
@@ -325,6 +353,84 @@ export const generatePlotElements = ({
           seriesConfig,
         }),
       }
+    }
+    case PLOT_KIND.SENTIMENT: {
+      return generateSentimentPlotKindSeriesOptions({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.HMM: {
+      return generateHMMPlotKindSeriesOptions({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.PIVOT_POINT_SR: {
+      return {
+        series: generatePivotPointSRPlotKindSeriesOptions({
+          data,
+          seriesConfig,
+        }),
+      }
+    }
+    case PLOT_KIND.CLOSE_LINE: {
+      return {
+        series: generateCloseLinePlotKindSeriesOptions({
+          data,
+          seriesConfig,
+        }),
+      }
+    }
+    case PLOT_KIND.PIVOT_POINT_DETECTOR: {
+      return {
+        series: generatePivotPointDetectorPlotKindSeriesOptions({
+          data,
+          seriesConfig,
+        }),
+      }
+    }
+    case PLOT_KIND.FLAG_PATTERN: {
+      return generateFlagPatternPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.PENNANT_PATTERN: {
+      return generatePennantPatternPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.TRIANGLE_PATTERNS: {
+      return generateTrianglePatternsPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.CONSOLIDATION_BOX: {
+      return generateConsolidationBoxPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.DOUBLE_TOP_BOTTOM: {
+      return generateDoubleTopBottomPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.HEAD_AND_SHOULDERS: {
+      return generateHeadAndShouldersPlotElements({
+        data,
+        seriesConfig,
+      })
+    }
+    case PLOT_KIND.INVERSE_HEAD_AND_SHOULDERS: {
+      return generateInverseHeadAndShouldersPlotElements({
+        data,
+        seriesConfig,
+      })
     }
     default: {
       return null
@@ -407,6 +513,8 @@ export const extractPlotKindSeriesData = ({
         return LIGUIDITY_PLOT_KIND_DATA_KEYS
       case PLOT_KIND.SESSIONS:
         return SESSIONS_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.ZONE:
+        return ZONE_PLOT_KIND_DATA_KEYS
       case PLOT_KIND.ELDERS:
         return ELDERS_PLOT_KIND_DATA_KEYS
       case PLOT_KIND.MACD:
@@ -433,6 +541,30 @@ export const extractPlotKindSeriesData = ({
         return EXIT_LEVELS_PLOT_KIND_DATA_KEYS
       case PLOT_KIND.POSITION:
         return POSITION_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.SENTIMENT:
+        return SENTIMENT_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.HMM:
+        return HMM_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.PIVOT_POINT_SR:
+        return PIVOT_POINT_SR_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.CLOSE_LINE:
+        return CLOSE_LINE_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.PIVOT_POINT_DETECTOR:
+        return PIVOT_POINT_DETECTOR_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.FLAG_PATTERN:
+        return FLAG_PATTERN_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.PENNANT_PATTERN:
+        return PENNANT_PATTERN_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.TRIANGLE_PATTERNS:
+        return TRIANGLE_PATTERNS_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.CONSOLIDATION_BOX:
+        return CONSOLIDATION_BOX_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.DOUBLE_TOP_BOTTOM:
+        return DOUBLE_TOP_BOTTOM_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.HEAD_AND_SHOULDERS:
+        return HEAD_AND_SHOULDERS_PLOT_KIND_DATA_KEYS
+      case PLOT_KIND.INVERSE_HEAD_AND_SHOULDERS:
+        return INVERSE_HEAD_AND_SHOULDERS_PLOT_KIND_DATA_KEYS
       default:
         return []
     }

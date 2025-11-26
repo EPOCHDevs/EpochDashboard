@@ -44,12 +44,14 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
         </div>
       )}
 
-      {/* Highcharts chart */}
+      {/* Highcharts chart - use immutable=false to allow smooth updates */}
       <HighchartsReact
         key={chartKey || `${selectedTimeframe}-${assetId}`}
         highcharts={Highcharts}
         options={chartOptions}
         ref={chartRef}
+        immutable={false}
+        updateArgs={[true, true, true]}
         style={{
           opacity: 1,
           height: '100%',

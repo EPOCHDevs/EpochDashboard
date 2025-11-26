@@ -3,7 +3,8 @@
 import React from 'react'
 import clsx from 'clsx'
 import { AssetSelectorDialog } from './AssetSelectorDialog'
-import type { GetTradeAnalyticsMetadataResponseType } from '../../../types/TradeAnalyticsTypes'
+import { IndicatorVisibilityPanel } from './IndicatorVisibilityPanel'
+import type { GetTradeAnalyticsMetadataResponseType, ChartInfoType } from '../../../types/TradeAnalyticsTypes'
 
 interface DefaultTopToolbarProps {
   metadata?: GetTradeAnalyticsMetadataResponseType
@@ -12,6 +13,14 @@ interface DefaultTopToolbarProps {
   onAssetChange: (assetId: string) => void
   onTimeframeChange: (timeframe: string) => void
   rightControls?: React.ReactNode
+  // Indicator visibility props
+  timeframeConfig?: ChartInfoType
+  indicatorVisibility?: {
+    visibilityState: Record<string, boolean>
+    onToggleIndicator: (seriesId: string) => boolean
+    getVisibleCount: () => { visible: number; total: number }
+    canShowMore: () => boolean
+  }
 }
 
 export function DefaultTopToolbar({
@@ -21,6 +30,8 @@ export function DefaultTopToolbar({
   onAssetChange,
   onTimeframeChange,
   rightControls,
+  timeframeConfig,
+  indicatorVisibility,
 }: DefaultTopToolbarProps) {
   const availableAssets = metadata?.asset_info ? Object.keys(metadata.asset_info) : []
   const selectedAssetInfo = metadata?.asset_info?.[selectedAssetId]
@@ -59,6 +70,17 @@ export function DefaultTopToolbar({
               ))}
             </div>
           </div>
+        )}
+
+        {/* Indicator Visibility Panel */}
+        {indicatorVisibility && timeframeConfig && (
+          <IndicatorVisibilityPanel
+            timeframeConfig={timeframeConfig}
+            visibilityState={indicatorVisibility.visibilityState}
+            onToggleIndicator={indicatorVisibility.onToggleIndicator}
+            getVisibleCount={indicatorVisibility.getVisibleCount}
+            canShowMore={indicatorVisibility.canShowMore}
+          />
         )}
       </div>
 

@@ -25,6 +25,10 @@ export const generateBollingerBandsPlotKindSeriesOptions = ({
   seriesConfig,
   styleOptions,
 }: generateBollingerBandsPlotKindSeriesOptionsProps): SeriesOptionsType[] => {
+  // Check if middle band is enabled (not empty string)
+  const hasMiddleBand = seriesConfig.dataMapping?.bbands_middle &&
+                         seriesConfig.dataMapping.bbands_middle.trim() !== ''
+
   const extractedData = extractPlotKindSeriesData({
     seriesConfig,
     data,
@@ -45,7 +49,7 @@ export const generateBollingerBandsPlotKindSeriesOptions = ({
       lowerLineData.push([timestamp, lower])
     }
 
-    if (middle !== null && !isNaN(middle)) {
+    if (hasMiddleBand && middle !== null && !isNaN(middle)) {
       middleLineData.push([timestamp, middle])
     }
   })
@@ -81,21 +85,23 @@ export const generateBollingerBandsPlotKindSeriesOptions = ({
     linkedTo: `${seriesConfig.id}_range`,
   } as SeriesLineOptions)
 
-  // Middle band line
-  series.push({
-    ...getSharedPlotKindSeriesOptions(seriesConfig),
-    type: "line",
-    name: `${seriesConfig.name} Middle`,
-    id: `${seriesConfig.id}_middle`,
-    data: middleLineData,
-    color: styleOptions?.middleBandColor ?? "#64748b",
-    lineWidth: 1.5,
-    dashStyle: "Dash",
-    marker: {
-      enabled: false,
-    },
-    linkedTo: `${seriesConfig.id}_range`,
-  } as SeriesLineOptions)
+  // Middle band line - only if enabled
+  if (hasMiddleBand) {
+    series.push({
+      ...getSharedPlotKindSeriesOptions(seriesConfig),
+      type: "line",
+      name: `${seriesConfig.name} Middle`,
+      id: `${seriesConfig.id}_middle`,
+      data: middleLineData,
+      color: styleOptions?.middleBandColor ?? "#64748b",
+      lineWidth: 1.5,
+      dashStyle: "Dash",
+      marker: {
+        enabled: false,
+      },
+      linkedTo: `${seriesConfig.id}_range`,
+    } as SeriesLineOptions)
+  }
 
   // Lower band line
   series.push({

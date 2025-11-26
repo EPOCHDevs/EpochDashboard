@@ -1,4 +1,4 @@
-import { TooltipOptions, TooltipPositionerCallbackFunction, TooltipFormatterCallbackFunction } from 'highcharts'
+import Highcharts, { TooltipOptions, TooltipPositionerCallbackFunction, TooltipFormatterCallbackFunction } from 'highcharts'
 import { GetTradeAnalyticsMetadataResponseType } from '../../../../../types/TradeAnalyticsTypes'
 
 interface BuildTooltipOptionsParams {
@@ -10,6 +10,7 @@ interface BuildTooltipOptionsParams {
 /**
  * Build tooltip configuration for the chart
  * TradingView-style inline format with blue OHLCV values
+ * All series (including flags) display at top-left for consistency
  */
 export const buildTooltipOptions = ({
   sidebarWidth,
@@ -30,7 +31,10 @@ export const buildTooltipOptions = ({
       pointerEvents: 'none',
       zIndex: '20',
     },
-    positioner: function positioner() {
+    // Note: With split: true, Highcharts ignores the positioner function
+    // All series use default split positioning; flags are manually queried in formatter
+    positioner: function positioner(this: Highcharts.Tooltip, labelWidth: number, labelHeight: number, point: any) {
+      // All series use top-left positioning for consistency
       return {
         x: sidebarWidth + 10,
         y: 10,
@@ -52,13 +56,13 @@ export const buildTooltipOptions = ({
         )
       )
 
-      return `
-        ${orderedPointsBasedOnPositionY
-          ?.map((points) => {
-            return points
-              ?.map((point, index) => {
-                // TradingView-style inline format
-                const containerStyle = `
+      // Build tooltip content for regular series (OHLCV, indicators)
+      const regularContent = orderedPointsBasedOnPositionY
+        ?.map((points) => {
+          return points
+            ?.map((point, index) => {
+              // TradingView-style inline format
+              const containerStyle = `
                   background: transparent;
                   padding: 2px 4px;
                   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -137,6 +141,10 @@ export const buildTooltipOptions = ({
                       <span style="color: #3896D4; margin-left: 4px;">${formatValue(close)}</span>
                     </div>
                   `
+                } else if (point.series.type === 'flags') {
+                  // Flags are handled separately via manual query below
+                  // Skip here to avoid duplicate rendering
+                  return ''
                 } else {
                   // All other series (Volume, MACD, RSI, etc.)
                   const value = point.point.y || 0
@@ -166,11 +174,77 @@ export const buildTooltipOptions = ({
                     </div>
                   `
                 }
-              })
-              ?.join('')
-          })
-          ?.join('')}
-      `
+            })
+            ?.join('')
+        })
+        ?.join('') || ''
+
+      // Manually query flag series for tooltips
+      // Get chart reference from any available point (including flag points)
+      const anyPoint = this.points?.[0] || (this as any).point
+      const chart = (anyPoint?.series?.chart) as Highcharts.Chart | undefined
+      const currentX = this.x ?? anyPoint?.x
+      let flagContent = ''
+
+      if (chart && currentX !== undefined) {
+        chart.series.forEach((series: any) => {
+          if (series.type === 'flags' && series.visible) {
+            series.points?.forEach((flagPoint: any) => {
+              if (flagPoint.x === currentX) {
+                // Parse flag text (format: "<b>Title</b><br/>Description")
+                const rawText = flagPoint.text || ''
+
+                // Extract just the description part (after <br/>), not the title
+                // Since we already show series.name as the label
+                let displayText = ''
+                const brMatch = rawText.match(/<br\s*\/?>(.*)/i)
+                if (brMatch && brMatch[1]) {
+                  // Get text after <br/> and strip remaining HTML
+                  displayText = brMatch[1].replace(/<[^>]*>/g, '').trim()
+                } else {
+                  // Fallback: strip all HTML
+                  displayText = rawText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+                }
+
+                if (displayText) {
+                  // Position flags below all other series to avoid clashing with indicators
+                  const hasOHLCV = this.points?.some((p: any) => p.series?.type === 'candlestick')
+
+                  // Count how many regular (non-flag) series are displayed at this timestamp
+                  const regularSeriesCount = this.points?.filter((p: any) => p.series?.type !== 'flags').length || 0
+
+                  // Position flags below all regular series
+                  // Start from OHLCV position if available, then add space for each regular series
+                  const basePosition = hasOHLCV ? 0 : 0
+                  const topPosition = basePosition + (regularSeriesCount * 20)
+
+                  const flagContainerStyle = `
+                    background: transparent;
+                    padding: 2px 4px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    font-size: 11px;
+                    line-height: 1.2;
+                    color: #D1D4DC;
+                    white-space: nowrap;
+                    position: absolute;
+                    top: ${topPosition}px;
+                  `
+
+                  flagContent += `
+                    <div style="${flagContainerStyle}">
+                      <span style="color: #787B86;">${series.name || 'Flag'}</span>
+                      <span style="color: #3896D4; font-weight: 600; margin-left: 8px;">${displayText}</span>
+                    </div>
+                  `
+                }
+              }
+            })
+          }
+        })
+      }
+
+      // Combine regular content and flag content
+      return `${regularContent}${flagContent}`
     } as TooltipFormatterCallbackFunction,
   }
 }

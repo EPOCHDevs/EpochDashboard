@@ -24,7 +24,8 @@ export const buildYAxisOptions = ({
     .filter((pane) => pane && typeof pane.top === 'number' && typeof pane.height === 'number')
     .map((pane) => ({
       top: `${Math.max(0, Math.min(100, pane.top))}%`,
-      height: `${Math.max(1, Math.min(100, pane.height))}%`,
+      height: `${Math.max(0, Math.min(100, pane.height))}%`,
+      visible: pane.height > 0, // Hide axes with 0% height
       offset: 0,
       labels: {
         align: 'left',

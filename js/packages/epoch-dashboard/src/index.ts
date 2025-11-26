@@ -12,7 +12,7 @@ import './styles/globals.css'
 // PRIMARY EXPORT - Main TearsheetDashboard Component
 // ============================================================================
 
-export { default as TearsheetDashboard, DASHBOARD_LAYOUTS, VIEW_MODES } from './components/Dashboard/TearsheetDashboard'
+export { default as TearsheetDashboard, DASHBOARD_LAYOUTS } from './components/Dashboard/TearsheetDashboard'
 export type { ViewMode } from './components/Dashboard/TearsheetDashboard'
 
 // High-level container that fetches tearsheet data automatically

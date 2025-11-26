@@ -194,10 +194,10 @@ export const useSmartChartData = ({
       } else {
         // Direct API call (for standalone usage)
         response = await axios.get(
-          `${finalApiEndpoint}/api/v1/dashboard/analytics/${dataFetchRequest.strategyId}?${queryString}`,
+          `${apiEndpoint}/api/v1/dashboard/analytics/${dataFetchRequest.strategyId}?${queryString}`,
           {
             headers: {
-              'X-User-Id': finalUserId,
+              'X-User-Id': userId || 'guest',
             },
             responseType: 'arraybuffer',
             validateStatus: () => true // Don't throw on non-2xx status

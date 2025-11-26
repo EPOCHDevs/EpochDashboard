@@ -63,26 +63,26 @@ export function extractCategories(tearsheet: TearSheet): string[] {
 
   // Sort categories with custom order [S, R, T, A] based on first letter
   const categoriesArray = Array.from(categories)
-  const statOrder = ['S', 'R', 'T', 'A']
+  const allOrder = ['S', 'R', 'T', 'A']
 
   return categoriesArray.sort((a, b) => {
     // Get first letter (uppercase) of each category
     const firstLetterA = a.charAt(0).toUpperCase()
     const firstLetterB = b.charAt(0).toUpperCase()
 
-    // Find positions in STAT order
-    const indexA = statOrder.indexOf(firstLetterA)
-    const indexB = statOrder.indexOf(firstLetterB)
+    // Find positions in ALL order
+    const indexA = allOrder.indexOf(firstLetterA)
+    const indexB = allOrder.indexOf(firstLetterB)
 
-    // If both start with STAT letters, sort by STAT order
+    // If both start with ALL letters, sort by ALL order
     if (indexA !== -1 && indexB !== -1) {
       return indexA - indexB
     }
 
-    // If only A starts with STAT letter, it comes first
+    // If only A starts with ALL letter, it comes first
     if (indexA !== -1) return -1
 
-    // If only B starts with STAT letter, it comes first
+    // If only B starts with ALL letter, it comes first
     if (indexB !== -1) return 1
 
     // Otherwise, alphabetical sort

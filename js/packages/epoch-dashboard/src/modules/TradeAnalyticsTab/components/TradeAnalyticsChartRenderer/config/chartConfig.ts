@@ -206,6 +206,18 @@ export const buildChartConfig = ({
             },
           },
         },
+        flags: {
+          animation: false,
+          // Flags need mouse tracking for tooltip, but no visual interaction feedback
+          enableMouseTracking: true,
+          allowPointSelect: false,
+          cursor: 'default',
+          states: {
+            hover: {
+              enabled: false, // No visual hover effect
+            },
+          },
+        },
         line: {
           animation: false,
           enableMouseTracking: true,

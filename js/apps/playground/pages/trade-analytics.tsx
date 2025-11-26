@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 // Import the exportable container component
@@ -12,20 +12,14 @@ import { TradeAnalyticsContainer } from '../../../packages/epoch-dashboard/src/m
  */
 export default function TradeAnalyticsPage() {
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-
-  // Ensure we only render after client-side mount to prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Extract parameters from URL
   const { campaignId, userId } = router.query
   const campaignIdParam = (campaignId as string) || ''
   const userIdParam = (userId as string) || ''
 
-  // Show loading during SSR and initial client render
-  if (!mounted) {
+  // Show loading during SSR and until router is ready
+  if (!router.isReady) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>

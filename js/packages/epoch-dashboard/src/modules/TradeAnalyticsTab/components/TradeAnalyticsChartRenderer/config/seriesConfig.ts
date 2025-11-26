@@ -25,6 +25,7 @@ export interface SeriesConfigResult {
   series: SeriesOptionsType[]
   plotBands: XAxisPlotBandsOptions[]
   annotations: AnnotationsOptions[]
+  activeYAxisIndices: Set<number> // Track which yAxis indices have visible series
 }
 
 interface BuildSeriesConfigParams {
@@ -32,22 +33,26 @@ interface BuildSeriesConfigParams {
   tradeAnalyticsChartData: Table<Record<string | number | symbol, DataType>> | undefined
   selectedRoundTrips: IRoundTrip[]
   maxYAxisIndex: number
+  visibilityState?: Record<string, boolean> // Indicator visibility state
 }
 
 /**
  * Build series configuration from metadata
  * Generates series, plot bands, and annotations
  * Validates yAxis references and data integrity
+ * Filters series based on visibility state
  */
 export const buildSeriesConfig = ({
   timeframeConfig,
   tradeAnalyticsChartData,
   selectedRoundTrips,
   maxYAxisIndex,
+  visibilityState,
 }: BuildSeriesConfigParams): SeriesConfigResult | null => {
   const allSeries: Array<SeriesOptionsType> = []
   const allSeriesPlotBands: XAxisPlotBandsOptions[] = []
   const allAnnotations: AnnotationsOptions[] = []
+  const activeYAxisIndices = new Set<number>()
 
   // Safety check for timeframeConfig.series
   if (!timeframeConfig?.series || !Array.isArray(timeframeConfig.series)) {
@@ -64,6 +69,14 @@ export const buildSeriesConfig = ({
     if (UNHANDLED_PLOT_KINDS.includes(seriesConfig.type)) {
       return
     }
+
+    // Check visibility state - don't skip, just mark as hidden
+    // Candlestick is always visible regardless of state
+    const isVisible = seriesConfig.type === 'candlestick'
+      ? true
+      : visibilityState && seriesConfig.id
+        ? (visibilityState[seriesConfig.id] ?? true)
+        : true
 
     try {
       const plotElements = generatePlotElements({
@@ -86,12 +99,23 @@ export const buildSeriesConfig = ({
             options.id = seriesConfig.id
           }
 
+          // Set visibility based on state
+          options.visible = isVisible
+
           // Preserve yAxis assignment
+          let yAxisIndex = 0
           if (seriesConfig.yAxis !== undefined && seriesConfig.yAxis !== null) {
+            yAxisIndex = seriesConfig.yAxis
             ;(options as any).yAxis = seriesConfig.yAxis
           } else if (!(options as any).yAxis && seriesConfig.yAxis === 0) {
             // Handle yAxis = 0 (falsy but valid)
+            yAxisIndex = 0
             ;(options as any).yAxis = 0
+          }
+
+          // Track active yAxis indices (only for visible series)
+          if (isVisible) {
+            activeYAxisIndices.add(yAxisIndex)
           }
 
           // Handle linkedTo
@@ -107,13 +131,13 @@ export const buildSeriesConfig = ({
         })
       }
 
-      // Process plot bands
-      if (plotElements.plotBands && Array.isArray(plotElements.plotBands) && plotElements.plotBands.length > 0) {
+      // Process plot bands (only if visible)
+      if (isVisible && plotElements.plotBands && Array.isArray(plotElements.plotBands) && plotElements.plotBands.length > 0) {
         allSeriesPlotBands.push(...plotElements.plotBands)
       }
 
-      // Process annotations
-      if (plotElements.annotations && Array.isArray(plotElements.annotations) && plotElements.annotations.length > 0) {
+      // Process annotations (only if visible)
+      if (isVisible && plotElements.annotations && Array.isArray(plotElements.annotations) && plotElements.annotations.length > 0) {
         allAnnotations.push(...plotElements.annotations)
       }
     } catch (error) {
@@ -151,7 +175,10 @@ export const buildSeriesConfig = ({
       if (!seriesData || !Array.isArray(seriesData)) {
         return false
       }
-      if ((seriesData as unknown[]).length === 0) {
+      // Keep flag series (identified by onSeries property) even if empty
+      // Flag series are annotation-based and should persist without data
+      const isLinkedSeries = 'onSeries' in series && series.onSeries
+      if ((seriesData as unknown[]).length === 0 && !isLinkedSeries) {
         return false
       }
     }
@@ -162,5 +189,6 @@ export const buildSeriesConfig = ({
     series: validSeries,
     plotBands: allSeriesPlotBands,
     annotations: allAnnotations,
+    activeYAxisIndices,
   }
 }

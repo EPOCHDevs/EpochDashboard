@@ -18,6 +18,7 @@ import { useTimeframeManager } from './hooks/useTimeframeManager'
 import { usePaneManager } from './hooks/usePaneManager'
 import { useLazyLoading } from './hooks/useLazyLoading'
 import { useSmartChartData } from './hooks/useSmartChartData'
+import { useIndicatorVisibility } from './hooks/useIndicatorVisibility'
 
 // Config builders
 import { buildYAxisOptions } from './config/yAxisConfig'
@@ -31,7 +32,7 @@ import { ChartLoadingState } from './components/ChartLoadingState'
 import { ChartContainer } from './components/ChartContainer'
 
 // Utils
-import { DEFAULT_PADDING_CONFIGS } from './utils/BackendPaddingUtils'
+import { DEFAULT_PADDING_CONFIGS, getMsPerBar } from './utils/BackendPaddingUtils'
 import './styles.css'
 
 // Initialize Highcharts modules safely for SSR
@@ -73,6 +74,13 @@ interface TradeAnalyticsChartRendererProps extends Highcharts.Options {
   sidebarWidth?: number
   isAssetSwitching?: boolean
   initialDisplayBars?: number
+  // Expose indicator visibility for toolbar integration
+  onIndicatorVisibilityChange?: (visibility: {
+    visibilityState: Record<string, boolean>
+    onToggleIndicator: (seriesId: string) => boolean
+    getVisibleCount: () => { visible: number; total: number }
+    canShowMore: () => boolean
+  }) => void
 }
 
 const TradeAnalyticsChartRenderer = ({
@@ -93,6 +101,7 @@ const TradeAnalyticsChartRenderer = ({
   sidebarWidth = 56,
   isAssetSwitching = false,
   initialDisplayBars = 500,
+  onIndicatorVisibilityChange,
 }: TradeAnalyticsChartRendererProps) => {
   // Refs
   const internalChartRef = React.useRef<HighchartsReact.RefObject>(null)
@@ -100,7 +109,7 @@ const TradeAnalyticsChartRenderer = ({
   const chartContainerRef = useRef<HTMLDivElement>(null)
 
   // Custom hooks
-  const { height, width } = useChartDimensions(chartContainerRef)
+  const { height, width } = useChartDimensions(chartContainerRef as React.RefObject<HTMLDivElement>)
   const { selectedTimeframe, isTimeframeSwitching, chartKey } = useTimeframeManager(
     assetId,
     timeframe,
@@ -119,7 +128,31 @@ const TradeAnalyticsChartRenderer = ({
     return undefined
   }, [selectedTimeframe, tradeAnalyticsMetadata])
 
-  const paneStates = usePaneManager(timeframeConfig)
+  // Indicator visibility management
+  const indicatorVisibility = useIndicatorVisibility({
+    jobId: campaignId,
+    selectedTimeframe,
+    timeframeConfig,
+  })
+
+  // Expose indicator visibility to parent via callback
+  React.useEffect(() => {
+    if (onIndicatorVisibilityChange && timeframeConfig) {
+      onIndicatorVisibilityChange({
+        visibilityState: indicatorVisibility.visibilityState,
+        onToggleIndicator: indicatorVisibility.onToggleIndicator,
+        getVisibleCount: indicatorVisibility.getVisibleCount,
+        canShowMore: indicatorVisibility.canShowMore,
+      })
+    }
+  }, [
+    indicatorVisibility.visibilityState,
+    indicatorVisibility.onToggleIndicator,
+    indicatorVisibility.getVisibleCount,
+    indicatorVisibility.canShowMore,
+    onIndicatorVisibilityChange,
+    timeframeConfig,
+  ])
 
   // Asset details
   const selectedAssetDetails = useMemo(() => {
@@ -148,8 +181,34 @@ const TradeAnalyticsChartRenderer = ({
     userId: userId,
   })
 
+  // Build series configuration first to get activeYAxisIndices
+  const seriesConfigResult = useMemo(() => {
+    if (!timeframeConfig || !tradeAnalyticsChartData) {
+      return null
+    }
+
+    return buildSeriesConfig({
+      timeframeConfig,
+      tradeAnalyticsChartData,
+      selectedRoundTrips,
+      maxYAxisIndex: timeframeConfig.yAxis?.length ? timeframeConfig.yAxis.length - 1 : 0,
+      visibilityState: indicatorVisibility.visibilityState,
+    })
+  }, [timeframeConfig, tradeAnalyticsChartData, selectedRoundTrips, indicatorVisibility.visibilityState])
+
+  // Use activeYAxisIndices from seriesConfigResult for pane management
+  const paneStates = usePaneManager(timeframeConfig, seriesConfigResult?.activeYAxisIndices)
+
   // Lazy loading
   const { previousViewportRangeRef, createAfterSetExtremesHandler } = useLazyLoading()
+
+  // Extract selected timestamp from selectedRoundTrips for visual indicator
+  const selectedTimestamp = useMemo(() => {
+    if (selectedRoundTrips.length > 0 && selectedRoundTrips[0]?.open_datetime) {
+      return new Date(selectedRoundTrips[0].open_datetime).getTime()
+    }
+    return null
+  }, [selectedRoundTrips])
 
   // Build chart configuration
   const chartOptions = useMemo(() => {
@@ -176,14 +235,7 @@ const TradeAnalyticsChartRenderer = ({
       return undefined
     }
 
-    // Build series configuration
-    const seriesConfigResult = buildSeriesConfig({
-      timeframeConfig,
-      tradeAnalyticsChartData,
-      selectedRoundTrips,
-      maxYAxisIndex: yAxes.length - 1,
-    })
-
+    // Use pre-computed series configuration
     if (!seriesConfigResult) {
       return undefined
     }
@@ -198,10 +250,13 @@ const TradeAnalyticsChartRenderer = ({
     })
 
     // Build X-axis configuration
+    const barWidthMs = getMsPerBar(selectedTimeframe)
     const xAxis = buildXAxisOptions({
       highchartsTheme,
       themeColors,
       plotBands: seriesConfigResult.plotBands,
+      selectedTimestamp,
+      barWidthMs,
       afterSetExtremesHandler,
     })
 
@@ -235,6 +290,7 @@ const TradeAnalyticsChartRenderer = ({
     themeColors,
     selectedAssetDetails,
     selectedRoundTrips,
+    selectedTimestamp,
     height,
     width,
     sidebarWidth,
@@ -245,6 +301,7 @@ const TradeAnalyticsChartRenderer = ({
     isActuallyFetchingTradeAnalyticsChartData,
     onRangeExpansionNeeded,
     createAfterSetExtremesHandler,
+    seriesConfigResult,
   ])
 
   return (
@@ -262,7 +319,7 @@ const TradeAnalyticsChartRenderer = ({
             <ChartContainer
               chartOptions={chartOptions}
               chartKey={chartKey}
-              chartRef={chartRef}
+              chartRef={chartRef as React.RefObject<HighchartsReact.RefObject>}
               assetId={assetId}
               selectedTimeframe={selectedTimeframe}
               isActuallyFetching={isActuallyFetchingTradeAnalyticsChartData}

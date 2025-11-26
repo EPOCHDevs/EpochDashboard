@@ -7,8 +7,6 @@ import {
   Columns3,
   Columns2,
   ChevronDown,
-  Rows3,
-  Grid2x2,
 } from 'lucide-react'
 import { TearSheet } from '../../types/proto'
 import { groupByCategory, formatCategoryLabel } from '../../utils/tearsheetHelpers'
@@ -68,22 +66,6 @@ export const DASHBOARD_LAYOUTS = [
 // View Mode Types
 export type ViewMode = 'tabs' | 'unified'
 
-// View Mode Options
-export const VIEW_MODES = [
-  {
-    id: 'tabs',
-    title: 'Tab View',
-    icon: <Grid2x2 size={20} />,
-    value: 'tabs' as ViewMode
-  },
-  {
-    id: 'unified',
-    title: 'Unified View',
-    icon: <Rows3 size={20} />,
-    value: 'unified' as ViewMode
-  }
-]
-
 interface TearsheetDashboardProps {
   tearsheet: TearSheet
   className?: string
@@ -94,6 +76,7 @@ interface TearsheetDashboardProps {
   defaultViewMode?: ViewMode
   debug?: boolean
   rightControls?: React.ReactNode
+  highLevelCategory?: string // The high-level filter used to fetch this data (e.g., "ALL", "AAPL-Stocks")
 }
 
 // Memoized dropdown menu item to prevent re-renders
@@ -130,8 +113,17 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   defaultViewMode = 'tabs',
   debug = false,
   rightControls,
+  highLevelCategory,
 }) => {
+  // Auto-determine view mode based on high-level category
+  // ALL → Tab View (show sub-category tabs)
+  // Asset-specific → Unified View (show all assets together)
+  const autoViewMode: ViewMode = useMemo(() => {
+    return highLevelCategory === 'ALL' ? 'tabs' : 'unified'
+  }, [highLevelCategory])
+
   // Compute categories from tearsheet
+  // Always group by sub-categories for both ALL and asset-specific data
   const categories = useMemo(() => {
     if (!tearsheet) return []
 
@@ -215,12 +207,15 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
     isResponsive ? 'single' : 'columns_3'
   )
 
-  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode)
-
   // Update layout based on responsive state
   useEffect(() => {
     setSelectedLayout(isResponsive ? 'single' : 'columns_3')
   }, [isResponsive])
+
+  // Notify parent of view mode changes
+  useEffect(() => {
+    onViewModeChange?.(autoViewMode)
+  }, [autoViewMode, onViewModeChange])
 
   // Handle category change with transition to reduce blocking
   const handleCategoryChange = (categoryValue: string) => {
@@ -234,12 +229,6 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
   const handleLayoutChange = (layout: string) => {
     setSelectedLayout(layout)
     onLayoutChange?.(layout)
-  }
-
-  // Handle view mode change
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode)
-    onViewModeChange?.(mode)
   }
 
   // Get active category data
@@ -293,7 +282,7 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
           {/* Category Tabs - Desktop: show dynamically calculated tabs, rest in dropdown */}
           {/* Mobile: show dropdown */}
           {/* Only show category tabs in tab view mode */}
-          {viewMode === 'tabs' && categories.length > 0 && (
+          {autoViewMode === 'tabs' && categories.length > 0 && (
             <>
               {/* Show visible tabs on desktop, or use dropdown on mobile */}
               {!isResponsive ? (
@@ -381,39 +370,12 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
           )}
 
           {/* Divider */}
-          {!isResponsive && viewMode === 'tabs' && categories.length > 0 && (
-            <div className="w-px h-6 bg-border" />
-          )}
-
-          {/* View Mode Controls */}
-          {!isResponsive && (
-            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-              {VIEW_MODES.map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() => handleViewModeChange(mode.value)}
-                  className={clsx(
-                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2",
-                    viewMode === mode.value
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  )}
-                  title={mode.title}
-                >
-                  {mode.icon}
-                  <span>{mode.title}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Divider */}
-          {!isResponsive && !hideLayoutControls && viewMode === 'tabs' && categories.length > 0 && (
+          {!isResponsive && !hideLayoutControls && autoViewMode === 'tabs' && categories.length > 0 && (
             <div className="w-px h-6 bg-border" />
           )}
 
           {/* Layout Controls - Only show in tab view mode */}
-          {!isResponsive && !hideLayoutControls && viewMode === 'tabs' && (
+          {!isResponsive && !hideLayoutControls && autoViewMode === 'tabs' && (
             <div className="flex items-center gap-1">
               {DASHBOARD_LAYOUTS.filter(layout =>
                 layout.value !== 'single' // Hide single column on desktop
@@ -455,8 +417,8 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
         (isPending || isStale) && "opacity-60"
       )}>
         <Suspense fallback={<ContentLoadingSkeleton />}>
-          {viewMode === 'tabs' ? (
-            // Tab View - Show single category
+          {autoViewMode === 'tabs' ? (
+            // Tab View - Show single category (for ALL)
             <div className="glass rounded-lg p-6">
               {deferredCategoryData ? (
                 <TearsheetCategoryContent
@@ -478,7 +440,7 @@ const TearsheetDashboard: React.FC<TearsheetDashboardProps> = ({
               )}
             </div>
           ) : (
-            // Unified View - Show all categories
+            // Unified View - Show all categories (for asset-specific)
             <UnifiedCategoryView
               categories={categories}
               layout={selectedLayout}

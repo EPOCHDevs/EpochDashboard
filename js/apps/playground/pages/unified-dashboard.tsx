@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 // Import the unified container
@@ -11,20 +11,14 @@ import { UnifiedDashboardContainer } from '@epochlab/epoch-dashboard'
  */
 export default function UnifiedDashboardPage() {
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-
-  // Ensure we only render after client-side mount to prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Extract parameters from URL
   const { campaignId, userId } = router.query
   const campaignIdParam = (campaignId as string) || ''
   const userIdParam = (userId as string) || 'guest'
 
-  // Show loading during SSR and initial client render
-  if (!mounted) {
+  // Show loading during SSR and until router is ready
+  if (!router.isReady) {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

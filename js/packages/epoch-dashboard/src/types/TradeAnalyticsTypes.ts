@@ -52,6 +52,27 @@ export enum PLOT_KIND {
   VWAP = "vwap",
   EXIT_LEVELS = "exit_levels",
   POSITION = "position",
+
+  // NEW - Core indicators
+  PIVOT_POINT_SR = "pivot_point_sr",
+  PIVOT_POINT_DETECTOR = "pivot_point_detector",
+  CLOSE_LINE = "close_line",
+
+  // NEW - ML/Advanced
+  HMM = "hmm",
+  SENTIMENT = "sentiment",
+
+  // NEW - Zone feature
+  ZONE = "zone",
+
+  // NEW - Pattern detection
+  FLAG_PATTERN = "flag_pattern",
+  PENNANT_PATTERN = "pennant_pattern",
+  TRIANGLE_PATTERNS = "triangle_patterns",
+  CONSOLIDATION_BOX = "consolidation_box",
+  DOUBLE_TOP_BOTTOM = "double_top_bottom",
+  HEAD_AND_SHOULDERS = "head_and_shoulders",
+  INVERSE_HEAD_AND_SHOULDERS = "inverse_head_and_shoulders",
 }
 
 export interface SeriesConfig {

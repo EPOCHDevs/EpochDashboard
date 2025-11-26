@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import clsx from 'clsx'
 import TearsheetDashboard from './TearsheetDashboard'
 import { TearSheet, TearSheetClass } from '../../types/proto'
+import { DashboardModeSelector, DashboardViewMode } from './DashboardModeSelector'
+import { AssetSelectorDialog } from '../../modules/TradeAnalyticsTab/components/AssetSelectorDialog'
+import { useTradeMetadata } from '../../modules/TradeAnalyticsTab/TradeAnalyticsContainer'
+import type { GetTradeAnalyticsMetadataResponseType } from '../../types/TradeAnalyticsTypes'
 
 // Create a query client for React Query (exported for use in UnifiedDashboardContainer)
 export const dashboardQueryClient = new QueryClient({
@@ -179,13 +183,21 @@ export function DashboardContent({
   rightControls,
 }: DashboardContainerProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<DashboardViewMode>('overview')
 
-  // Fetch metadata to get available categories
+  // Fetch Dashboard metadata to get available categories
   const {
     data: metadata,
     isLoading: isLoadingMetadata,
     error: metadataError
   } = useTearsheetMetadata(apiEndpoint, campaignId, userId)
+
+  // Fetch Charts metadata to get asset_info (for AssetSelectorDialog)
+  const {
+    data: chartsMetadata,
+    isLoading: isLoadingChartsMetadata,
+    error: chartsMetadataError
+  } = useTradeMetadata(apiEndpoint, campaignId, userId)
 
   // Get available categories from metadata
   const categories = useMemo(() => {
@@ -193,12 +205,83 @@ export function DashboardContent({
     return Object.keys(metadata.tearsheet_metadata)
   }, [metadata])
 
+  // Extract asset categories (non-ALL categories) for filtering
+  const assetCategories = useMemo(() => {
+    return categories.filter(cat => cat !== 'ALL')
+  }, [categories])
+
+  // Check if Overview mode is available (ALL category exists)
+  const hasOverview = useMemo(() => {
+    return categories.includes('ALL')
+  }, [categories])
+
+  // Check if By Asset mode is available (asset categories exist)
+  const hasByAsset = useMemo(() => {
+    return assetCategories.length > 0
+  }, [assetCategories])
+
+  // Filter Charts metadata to only include assets that exist in Dashboard
+  const filteredChartsMetadata = useMemo<GetTradeAnalyticsMetadataResponseType | undefined>(() => {
+    if (!chartsMetadata?.asset_info) return undefined
+
+    // Filter asset_info to only include assets that have categories in Dashboard
+    const filteredAssetInfo = Object.keys(chartsMetadata.asset_info)
+      .filter(assetId => assetCategories.includes(assetId))
+      .reduce((acc, assetId) => {
+        acc[assetId] = chartsMetadata.asset_info![assetId]
+        return acc
+      }, {} as Record<string, any>)
+
+    return {
+      ...chartsMetadata,
+      asset_info: filteredAssetInfo
+    }
+  }, [chartsMetadata, assetCategories])
+
   // Set initial category when metadata loads
+  // Auto-select the available mode based on what data exists
   useEffect(() => {
     if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0])
+      if (hasOverview) {
+        // Overview (ALL) is available - default to it
+        setSelectedCategory('ALL')
+        setViewMode('overview')
+      } else if (hasByAsset) {
+        // Only By Asset mode is available
+        setSelectedCategory(assetCategories[0])
+        setViewMode('by_asset')
+      }
     }
-  }, [categories, selectedCategory])
+  }, [categories, selectedCategory, hasOverview, hasByAsset, assetCategories])
+
+  // Handle view mode changes
+  const handleViewModeChange = (mode: DashboardViewMode) => {
+    // Prevent switching to unavailable modes
+    if (mode === 'overview' && !hasOverview) return
+    if (mode === 'by_asset' && !hasByAsset) return
+
+    setViewMode(mode)
+
+    if (mode === 'overview') {
+      // Switch to ALL category
+      setSelectedCategory('ALL')
+    } else {
+      // Switch to first asset category
+      const firstAsset = assetCategories[0]
+      if (firstAsset) {
+        setSelectedCategory(firstAsset)
+      }
+    }
+  }
+
+  // Handle asset selection from AssetSelectorDialog
+  const handleAssetChange = (assetId: string) => {
+    setSelectedCategory(assetId)
+  }
+
+  // Determine if "By Asset" mode should be disabled
+  // Disable if: no asset categories OR Charts metadata not loaded OR Charts metadata has errors
+  const isByAssetDisabled = !hasByAsset || !filteredChartsMetadata || isLoadingChartsMetadata
 
   // Fetch tearsheet data for selected category
   const {
@@ -223,14 +306,14 @@ export function DashboardContent({
     )
   }
 
-  if (metadataError || tearsheetError) {
+  if (metadataError || tearsheetError || chartsMetadataError) {
     return (
       <div className={clsx("relative h-full bg-background", className)}>
         <div className="absolute inset-0 flex items-center justify-center p-4">
           <div className="bg-card border border-destructive/50 rounded-lg p-8 max-w-2xl">
             <h2 className="text-xl font-bold text-destructive mb-4">Error Loading Data</h2>
             <p className="text-muted-foreground mb-4">
-              {metadataError || tearsheetError || "Unable to load the dashboard! Please try again later."}
+              {metadataError || tearsheetError || chartsMetadataError || "Unable to load the dashboard! Please try again later."}
             </p>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Campaign ID: <span className="font-mono text-accent">{campaignId}</span></p>
@@ -288,6 +371,37 @@ export function DashboardContent({
     )
   }
 
+  // Create view mode controls
+  const viewModeControls = (
+    <div className="flex items-center gap-2">
+      {/* Mode Selector: Overview vs By Asset - auto-hides when only one mode available */}
+      <DashboardModeSelector
+        mode={viewMode}
+        onModeChange={handleViewModeChange}
+        disabled={isByAssetDisabled}
+        hasOverview={hasOverview}
+        hasByAsset={hasByAsset}
+      />
+
+      {/* Asset Selector: Only show in By Asset mode */}
+      {viewMode === 'by_asset' && filteredChartsMetadata && (
+        <AssetSelectorDialog
+          metadata={filteredChartsMetadata}
+          selectedAssetId={selectedCategory || assetCategories[0] || ''}
+          onAssetChange={handleAssetChange}
+        />
+      )}
+    </div>
+  )
+
+  // Combine view mode controls with user-provided rightControls
+  const combinedRightControls = (
+    <>
+      {!showHeader && viewModeControls}
+      {rightControls}
+    </>
+  )
+
   return (
     <div className={clsx("flex flex-col h-full w-full", className)}>
       {showHeader && (
@@ -301,6 +415,9 @@ export function DashboardContent({
               User: <span className="text-accent font-mono ml-2">{userId}</span>
             </p>
           </div>
+
+          {/* View Mode Controls (Overview vs By Asset) */}
+          {viewModeControls}
         </div>
       )}
 
@@ -310,7 +427,8 @@ export function DashboardContent({
           tearsheet={tearsheet}
           hideLayoutControls={hideLayoutControls}
           defaultViewMode={defaultViewMode}
-          rightControls={rightControls}
+          rightControls={combinedRightControls}
+          highLevelCategory={selectedCategory || undefined}
           onCategoryChange={(category) => {
             // This is for internal category changes within the tearsheet
           }}
